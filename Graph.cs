@@ -12,7 +12,7 @@ namespace CommonRDF
 
         public void GetItembyId(string id)
         {
-                RecordEx re;
+            RecordEx re;
             if (dics.TryGetValue(id, out re))
             {
                 Console.WriteLine("{0} {1}", id, re.rtype);
@@ -28,27 +28,16 @@ namespace CommonRDF
         }
         public void Test()
         {
-            string ss = "марч";
-            //SearchByN4(dics, n4, ss);
-
             //string id = "w20070417_5_8436";
             string id = "piu_200809051791";
             GetItembyId(id);
-                //foreach (var p in re.inverse)
-                //{
-                //    Console.WriteLine("\t{0}", p.predicate);
-                //    foreach (var v in p.variants)
-                //    {
-                //        Console.WriteLine("\t\t{0}", v);
-                //    }
-                //}
+            string ss = "марч";
             SearchByN4(ss);
         }
 
         public void Load(string path)
         {
             XElement db = XElement.Load(path);
-
             
             List<Quad> quads = new List<Quad>();
             List<KeyValuePair<string, string>> id_names = new List<KeyValuePair<string, string>>();
