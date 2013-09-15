@@ -1,11 +1,6 @@
 ﻿using System;
 
-
-using System.Diagnostics;
-using System.IO;
-using CommonRDF;
-
-namespace SimpleRDF
+namespace CommonRDF
 {
 
 
@@ -23,6 +18,8 @@ namespace SimpleRDF
 
             MagProgram mprog = new MagProgram(gr);
             mprog.Run();
+            LeshProgram l=new LeshProgram(gr);
+            l.Run();
         }
     }
 }

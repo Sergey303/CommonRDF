@@ -138,7 +138,7 @@ namespace CommonRDF
                     return new
                     {
                         id = q1.Key,
-                        recExArr = new RecordEx() {rtype = type_id, direct = direct, inverse = inverse, data = data}
+                        recExArr = new RecordEx() { rtype = q1.Key, direct = direct, inverse = inverse, data = data }
                     };
                 })
                 //.ToArray();
