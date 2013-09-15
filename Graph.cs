@@ -5,11 +5,71 @@ using System.Xml.Linq;
 
 namespace CommonRDF
 {
+    public struct PredicateEntityPair
+    {
+        public string predicate;
+        public string entity;
+        public PredicateEntityPair(string predicate, string entity)
+        {
+            this.predicate = predicate;
+            this.entity = entity;
+        }
+    }
+    public struct PredicateDataTriple
+    {
+        public string predicate;
+        public string data;
+        public string lang;
+        public PredicateDataTriple(string predicate, string data, string lang)
+        {
+            this.predicate = predicate;
+            this.data = data;
+            this.lang = lang;
+        }
+    }
     public class Graph
     {
+        public IEnumerable<string> GetEntities()
+        {
+            return dics.Select(pair => pair.Key);
+        }
+        public IEnumerable<PredicateEntityPair> GetDirect(string id)
+        {
+            RecordEx rec;
+            if (dics.TryGetValue(id, out rec))
+            {
+                var qu = rec.direct.SelectMany(axe =>
+                {
+                    string predicate = axe.predicate;
+                    return axe.variants.Select(v => new PredicateEntityPair(predicate, v));
+                });
+                return qu;
+            }
+            else return Enumerable.Empty<PredicateEntityPair>();
+        }
+        public IEnumerable<PredicateEntityPair> GetInverse(string id)
+        {
+            RecordEx rec;
+            if (dics.TryGetValue(id, out rec))
+            {
+                var qu = rec.inverse.SelectMany(axe =>
+                {
+                    string predicate = axe.predicate;
+                    return axe.variants.Select(v => new PredicateEntityPair(predicate, v));
+                });
+                return qu;
+            }
+            else return Enumerable.Empty<PredicateEntityPair>();
+        }
+        public IEnumerable<PredicateDataTriple> GetData()
+        {
+
+        }
+
         private Dictionary<string, RecordEx> dics;
         private Dictionary<string, string[]> n4;
         public Dictionary<string, RecordEx> Dics { get { return dics; } }
+
 
         public void GetItembyId(string id)
         {
