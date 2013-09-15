@@ -214,3 +214,12 @@ pip-log.txt
 #Mr Developer
 .mr.developer.cfg
 /0001.xml
+/Program.cs.BASE.cs
+/Program.cs.LOCAL.cs
+/Program.cs.REMOTE.cs
+/Common.cs.BASE.cs
+/Common.cs.LOCAL.cs
+/Common.cs.REMOTE.cs
+/Graph.cs.BASE.cs
+/Graph.cs.LOCAL.cs
+/Graph.cs.REMOTE.cs

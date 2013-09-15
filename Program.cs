@@ -1,10 +1,17 @@
 ﻿using System;
 
-namespace CommonRDF
+
+using System.Diagnostics;
+using System.IO;
+using CommonRDF;
+
+namespace SimpleRDF
 {
-    class Program
+
+
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             DateTime tt0 = DateTime.Now;
             Graph gr = new Graph();
