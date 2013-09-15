@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-namespace CommonRDF
+﻿namespace CommonRDF
 {
     // Четверка, получаемая из тройки (триплета). Поле vid {0|1|2} обозначает вид квада (direct, inverse, data)
     // entity - идентификатор сущности. Для нулевого и второго вариантов - это субъект, для первого - объект

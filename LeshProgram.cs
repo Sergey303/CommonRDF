@@ -19,7 +19,7 @@ namespace CommonRDF
             timer.Stop();
             using (var f = new StreamWriter(@"..\..\Output.txt", false))
                 f.WriteLine("read query time {0}ms {1}ticks, memory {2}"
-       , timer.ElapsedMilliseconds, timer.ElapsedTicks / 10000L,
+       , timer.ElapsedMilliseconds, timer.Elapsed.Ticks / 10000L,
        GC.GetTotalMemory(true) / (1024L * 1024L));
 
             timer = new Stopwatch();
@@ -28,7 +28,7 @@ namespace CommonRDF
             timer.Stop();
             using (var f = new StreamWriter(@"..\..\Output.txt", true))
                 f.WriteLine("run query time {0}ms {1}ticks, memory {2}"
-      , timer.ElapsedMilliseconds, timer.ElapsedTicks / 10000L,
+      , timer.ElapsedMilliseconds, timer.Elapsed.Ticks / 10000L,
       GC.GetTotalMemory(true) / (1024L * 1024L));
 
             if (query.SelectParameters.Count == 0)
