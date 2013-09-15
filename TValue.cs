@@ -10,12 +10,11 @@ namespace CommonRDF
         Data = 1,
         Obj = 2,
         HasItem = 4,
-        IsOpen = 8
+        IsOpen = 8,
     }
 
     public class TValue
     {
-        public bool IsNewParametr;
         public static Graph gr;
         public static RecordEx ItemCtor(string id)
         {
@@ -28,7 +27,7 @@ namespace CommonRDF
         public RecordEx item;
         public string Value;
         public TState State=TState.Nan;
-
+        public bool IsNewParameter;
         public void SetTargetTypeObj()
         {
             if (State.HasFlag(TState.Data))
@@ -57,8 +56,7 @@ namespace CommonRDF
         {
            
             if (ReferenceEquals(value, Value)) return;
-           //State &=  ~TState.IsNewParametr;
-            IsNewParametr = false;
+            IsNewParameter = false;
             Value = value;
             State &= ~TState.HasItem;//ItemCtor(value);
         }
@@ -66,8 +64,8 @@ namespace CommonRDF
         public void SetValue(string value, RecordEx itm)
         {
            // if (ReferenceEquals(value, item)) return;
-          //  State &= ~TState.IsNewParametr;
-            IsNewParametr = false;
+            //State &= ~TState.IsNewParametr;
+            IsNewParameter = false;
             Value = value;
             item = itm;
             State |= TState.HasItem;
