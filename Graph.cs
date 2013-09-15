@@ -27,6 +27,12 @@ namespace CommonRDF
             this.lang = lang;
         }
     }
+    public struct DataLangPair
+    {
+        string data;
+        string lang;
+        public DataLangPair(string data, string lang) { this.data = data; this.lang = lang; }
+    }
     public class Graph
     {
         public IEnumerable<string> GetEntities()
@@ -63,7 +69,50 @@ namespace CommonRDF
         }
         public IEnumerable<PredicateDataTriple> GetData()
         {
-
+            return Enumerable.Empty<PredicateDataTriple>();
+        }
+        public IEnumerable<string> GetDirect(string id, string predicate)
+        {
+            RecordEx rec;
+            if (dics.TryGetValue(id, out rec))
+            {
+                Axe found = rec.direct.FirstOrDefault(ax => ax.predicate == predicate);
+                if (found == null) return Enumerable.Empty<string>();
+                return found.variants;
+            }
+            else return Enumerable.Empty<string>();
+        }
+        public IEnumerable<string> GetInverse(string id, string predicate)
+        {
+            RecordEx rec;
+            if (dics.TryGetValue(id, out rec))
+            {
+                Axe found = rec.inverse.FirstOrDefault(ax => ax.predicate == predicate);
+                if (found == null) return Enumerable.Empty<string>();
+                return found.variants;
+            }
+            else return Enumerable.Empty<string>();
+        }
+        public IEnumerable<DataLangPair> GetData(string id, string predicate)
+        {
+            RecordEx rec;
+            if (dics.TryGetValue(id, out rec))
+            {
+                Axe found = rec.data.FirstOrDefault(ax => ax.predicate == predicate);
+                if (found == null) return Enumerable.Empty<DataLangPair>();
+                return found.variants.Select(d => 
+                {
+                    int ind = d.LastIndexOf("@");
+                    string lang = null;
+                    if (ind >= 0 && ind > d.Length - 6)
+                    {
+                        lang = d.Substring(ind + 1);
+                        d = d.Substring(0, ind);
+                    }
+                    return new DataLangPair(d, lang);
+                });
+            }
+            else return Enumerable.Empty<DataLangPair>();
         }
 
         private Dictionary<string, RecordEx> dics;
@@ -198,7 +247,7 @@ namespace CommonRDF
                     return new
                     {
                         id = q1.Key,
-                        recExArr = new RecordEx() {rtype = type_id, direct = direct, inverse = inverse, data = data}
+                        recExArr = new RecordEx() { rtype = q1.Key, direct = direct, inverse = inverse, data = data }
                     };
                 })
                 //.ToArray();

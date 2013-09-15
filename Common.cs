@@ -1,4 +1,7 @@
-﻿namespace CommonRDF
+﻿using System.Collections.Generic;
+using System.Linq;
+
+namespace CommonRDF
 {
     // Четверка, получаемая из тройки (триплета). Поле vid {0|1|2} обозначает вид квада (direct, inverse, data)
     // entity - идентификатор сущности. Для нулевого и второго вариантов - это субъект, для первого - объект
@@ -33,6 +36,47 @@
         public Axe[] direct;
         public Axe[] inverse;
         public Axe[] data;
+
+
+        public IEnumerable<string> DirectAndDataAxeValues(string predicate, TValue parameter)
+        {
+            var pre = direct.FirstOrDefault(d=>d.predicate==predicate);
+            if (pre!=null)
+                foreach (var value in pre.variants)
+                    yield return value;
+            else
+            {
+                pre = data.FirstOrDefault(d=>d.predicate==predicate);
+                if (pre==null ) yield break;//|| !pre.variants.Any()
+                parameter.IsData = true;
+                foreach (var value in pre.variants)
+                    yield return value;
+            }
+        }
+        public IEnumerable<string> InverseAxeValues(string predicate)
+        {
+            var pre = inverse.FirstOrDefault(d => d.predicate == predicate);
+            if (pre == null) yield break;
+            foreach (var value in pre.variants)
+                yield return value;
+        }
+
+
+        public bool DirectAxeContains(string predicate, TValue parameter)
+        {
+            if (parameter.IsData)
+            {
+                var pre1 = data.FirstOrDefault(d => d.predicate == predicate);
+                return pre1 != null && pre1.variants.Contains(parameter.Value);
+            }
+            var pre = direct.FirstOrDefault(d => d.predicate == predicate);
+            return pre != null && pre.variants.Contains(parameter.Value);
+        }
+        public bool InverseAxeContains(string predicate, string value)
+        {
+            var pre = inverse.FirstOrDefault(d => d.predicate == predicate);
+            return pre != null && pre.variants.Contains(value);
+        }
     }
 
     // =============== Структуры для Sparql ================

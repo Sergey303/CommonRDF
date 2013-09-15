@@ -1,11 +1,6 @@
 ﻿using System;
 
-
-using System.Diagnostics;
-using System.IO;
-using CommonRDF;
-
-namespace SimpleRDF
+namespace CommonRDF
 {
 
 
@@ -21,8 +16,10 @@ namespace SimpleRDF
             gr.Test();
             Console.WriteLine("Test ok duration========================" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
 
-            MagProgram mprog = new MagProgram(gr);
-            mprog.Run();
+            //MagProgram mprog = new MagProgram(gr);
+            //mprog.Run();
+            LeshProgram l=new LeshProgram(gr);
+            l.Run();
         }
     }
 }

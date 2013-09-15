@@ -30,7 +30,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject />
+    <StartupObject>CommonRDF.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -49,7 +49,15 @@
     <Compile Include="ONames.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Query.cs" />
     <Compile Include="SimpleSparql.cs" />
+    <Compile Include="TValue.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Output.txt" />
+    <Content Include="query Organizations and events in which participated Andrey Ershov.txt" />
+    <Content Include="query.txt" />
+    <Content Include="querySimpleЕршов.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
