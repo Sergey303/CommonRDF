@@ -3,12 +3,19 @@
 namespace CommonRDF
 
 {
-    public enum TargetType :byte
-        {
-           unkn, data,obj
-        }
+    [Flags]
+    public enum TState :byte
+    {
+        Nan=0,
+        Data = 1,
+        Obj = 2,
+        HasItem = 4,
+        IsOpen = 8
+    }
+
     public class TValue
     {
+        public bool IsNewParametr;
         public static Graph gr;
         public static RecordEx ItemCtor(string id)
         {
@@ -19,33 +26,29 @@ namespace CommonRDF
         }
         //public static readonly Hashtable Cach = new Hashtable();(RecordEx)(Cach[id] ?? (Cach[id] = 
         public RecordEx item;
-        public bool IsNewParametr;
         public string Value;
-        public bool IsOpen;
-        public bool HasCashItem;
-        
-        public TargetType AsTargetType;
+        public TState State=TState.Nan;
 
         public void SetTargetTypeObj()
         {
-            if (AsTargetType.HasFlag(TargetType.data))
+            if (State.HasFlag(TState.Data))
                 throw new Exception("to object sets data");
-            AsTargetType = TargetType.obj;
+            State |= TState.Obj;
         }
 
         public void SetTargetTypeData()
         {
-            if (AsTargetType.HasFlag(TargetType.obj))
+            if (State.HasFlag(TState.Obj))
                 throw new Exception("to data sets object");
-            AsTargetType = TargetType.data;
+            State |= TState.Data;
         }
         
         public RecordEx Item
         {
             get
             {
-                if (HasCashItem) return item;
-                HasCashItem = true;
+                if (State.HasFlag(TState.HasItem)) return item;
+                State |= TState.HasItem;
                  return item = ItemCtor(Value);
             }
         }
@@ -54,18 +57,20 @@ namespace CommonRDF
         {
            
             if (ReferenceEquals(value, Value)) return;
+           //State &=  ~TState.IsNewParametr;
             IsNewParametr = false;
             Value = value;
-            HasCashItem = false; //ItemCtor(value);
+            State &= ~TState.HasItem;//ItemCtor(value);
         }
         
         public void SetValue(string value, RecordEx itm)
         {
            // if (ReferenceEquals(value, item)) return;
+          //  State &= ~TState.IsNewParametr;
             IsNewParametr = false;
             Value = value;
             item = itm;
-            HasCashItem = true;
+            State |= TState.HasItem;
         }
 
 

@@ -11,7 +11,7 @@ namespace CommonRDF
     {
         public QueryTriplet[] triplets;
         public List<string> SelectParameters;
-       // public TValue[] Parameters;
+        // public TValue[] Parameters;
         public string[] ParametersNames;
         public List<string> FiterList;
         public QueryTriplet[] Optionals;
@@ -23,16 +23,16 @@ namespace CommonRDF
 
         public TValue[] ParametersWithMultiValues;
         private List<string[]> parametrsValuesList = new List<string[]>();
-       
+
         public Query(string filePath, Graph graph)
         {
             TValue.gr = graph;
             SelectParameters = new List<string>();
-         //   var parameterTests = new Dictionary<TValue, List<QueryTriplet>>();
-           // var parametesWithMultiValues = new HashSet<TValue>();
+            //   var parameterTests = new Dictionary<TValue, List<QueryTriplet>>();
+            // var parametesWithMultiValues = new HashSet<TValue>();
             var tripletsList = new List<QueryTriplet>();
             var paramByName = new Dictionary<string, TValue>();
-            var optionals=new List<QueryTriplet>();
+            var optionals = new List<QueryTriplet>();
             using (var f = new StreamReader(filePath))
             {
                 var qs = f.ReadToEnd();
@@ -52,7 +52,7 @@ namespace CommonRDF
                         var s = tripletMatch.Groups["s"];
                         string p, o;
                         var ptriplet = new QueryTriplet();
-                        bool isOptional=false, isData;
+                        bool isOptional = false, isData;
                         if (s.Success)
                         {
                             p = tripletMatch.Groups["p"].Value;
@@ -68,22 +68,24 @@ namespace CommonRDF
                         ;
 
                         ptriplet.S = TestParameter(s.Value.TrimStart('<').TrimEnd('>'), paramByName);
-                            ptriplet.P = TestParameter(p.TrimStart('<').TrimEnd('>'), paramByName);
-                            ptriplet.O = TestParameter((isData = o.StartsWith("'")) 
-                                ? o.Trim('\'') : o.TrimStart('<').TrimEnd('>')
-                                , paramByName);
+                        ptriplet.P = TestParameter(p.TrimStart('<').TrimEnd('>'), paramByName);
+                        ptriplet.O = TestParameter((isData = o.StartsWith("'"))
+                            ? o.Trim('\'') : o.TrimStart('<').TrimEnd('>')
+                            , paramByName);
 
                         if (isData)
                             ptriplet.O.SetTargetTypeData();
+                        else if(!ptriplet.O.IsNewParametr)
+                            ptriplet.O.State|=TState.Obj;
                         ptriplet.S.SetTargetTypeObj();
 
-                        if(isOptional)
+                        if (isOptional)
                             optionals.Add(ptriplet);
                         else
                             tripletsList.Add(ptriplet);
                     }
 
-                }  
+                }
             }
             triplets = tripletsList.ToArray();
             Parameters = paramByName.Values.ToArray();
@@ -98,23 +100,25 @@ namespace CommonRDF
 
         public TValue[] Parameters { get; set; }
 
-      private static TValue TestParameter(string spo, Dictionary<string,TValue> paramByName)
+        private static TValue TestParameter(string spo, Dictionary<string, TValue> paramByName)
         {
             TValue value;
-            if (!spo.StartsWith("?")) return new TValue {Value = spo};
+            if (!spo.StartsWith("?")) return new TValue { Value = spo };
             if (paramByName.TryGetValue(spo, out value)) return value;
-            paramByName.Add(spo, value = new TValue {IsNewParametr = true});
+            paramByName.Add(spo, value = new TValue());
+            value.IsNewParametr = true;
             return value;
         }
+
         private void ObserveQuery(int i)
         {
             if (i == triplets.Length)
             {
                 foreach (var parameter in Parameters.Where(p => p.IsNewParametr))
-                    parameter.IsOpen = true;
+                    parameter.State |= TState.IsOpen;
                 ObserveOptional(0);
-                foreach (var parameter in Parameters.Where(p => p.IsOpen))
-                    parameter.IsOpen = false;
+                foreach (var parameter in Parameters.Where(p => p.State.HasFlag(TState.IsOpen)))
+                    parameter.State &= ~TState.IsOpen;
             }
             else
             {
@@ -122,11 +126,11 @@ namespace CommonRDF
                 TValue s = cqt.S,
                     p = cqt.P,
                     o = cqt.O;
-                bool hasValueS = !s.IsNewParametr,
-                    hasValueP = !p.IsNewParametr,
-                    hasValueO = !o.IsNewParametr;
+                //bool hasValueS = !s.IsNewParametr,
+                //    hasValueP = !p.IsNewParametr,
+                //    hasValueO = !o.IsNewParametr;
 
-                ObserveTriplet(i, hasValueP, hasValueS, hasValueO, s, p, o);
+                ObserveTriplet(i, !p.IsNewParametr, !s.IsNewParametr, !o.IsNewParametr, s, p, o);
             }
         }
 
@@ -153,7 +157,7 @@ namespace CommonRDF
                 }
                 if (hasValueO)
                 {
-                    if (o.AsTargetType.HasFlag(TargetType.data)) //Data predicate, S-param, O has value
+                    if (o.State.HasFlag(TState.Data)) //Data predicate, S-param, O has value
                     {
                         foreach (var itm in GetSubjectsByProperty(p.Value, o.Value))
                             s.SetValue(itm.Key, itm.Value);
@@ -170,7 +174,7 @@ namespace CommonRDF
                     return;
                 }
                 // s & o new params
-                foreach (var iditm in GetSubjectsByProperty( p.Value))
+                foreach (var iditm in GetSubjectsByProperty(p.Value))
                 {
                     var pre = DirectAndDataAxeValues(iditm.Value, p.Value, o);
 
@@ -214,15 +218,15 @@ namespace CommonRDF
 
         private void ObserveOptional(int i)
         {
-            if(i==Optionals.Length)
-             parametrsValuesList.Add(Parameters.Select(par => par.Value).ToArray());
+            if (i == Optionals.Length)
+                parametrsValuesList.Add(Parameters.Select(par => par.Value).ToArray());
             else
             {
                 var current = Optionals[i];
                 ObserveOptionalTriplet(current.S, current.P, current.O, i,
-                    !current.S.IsOpen,
-                    !current.P.IsOpen,
-                    !current.O.IsOpen);
+                    !current.S.State.HasFlag(TState.IsOpen),
+                    !current.P.State.HasFlag(TState.IsOpen),
+                    !current.O.State.HasFlag(TState.IsOpen));
             }
         }
 
@@ -232,7 +236,7 @@ namespace CommonRDF
             bool hasFixedValueS, bool hasFixedValueP, bool hasFixedValueO)
         {
             if (hasFixedValueP)
-            {            
+            {
                 IEnumerable<string> newValues;
                 if (hasFixedValueS)
                 {
@@ -256,6 +260,7 @@ namespace CommonRDF
                             }
                             if (oldValue != null) o.SetValue(oldValue);
                             else o.IsNewParametr = true;
+
                         }
                         else
                         {
@@ -300,18 +305,23 @@ namespace CommonRDF
 
         public IEnumerable<string> DirectAndDataAxeValues(RecordEx item, string predicate, TValue parameter)
         {
-            var pre = item.direct.FirstOrDefault(d => d.predicate == predicate);
-            if (pre != null)
-                foreach (var value in pre.variants)
-                    yield return value;
-            else
+            Axe pre;
+            if (!parameter.State.HasFlag(TState.Data))
             {
-                pre = item.data.FirstOrDefault(d => d.predicate == predicate);
-                if (pre == null) yield break;//|| !pre.variants.Any()
-                parameter.SetTargetTypeData();
-                foreach (var value in pre.variants)
-                    yield return value;
+                pre = item.direct.FirstOrDefault(d => d.predicate == predicate);
+                if (pre != null)
+                {
+                    parameter.State |= TState.Obj;
+                    foreach (var value in pre.variants)
+                        yield return value;
+                }
             }
+            if (parameter.State.HasFlag(TState.Obj)) yield break;
+            pre = item.data.FirstOrDefault(d => d.predicate == predicate);
+            if (pre == null) yield break; //|| !pre.variants.Any()
+            parameter.SetTargetTypeData();
+            foreach (var value in pre.variants)
+                yield return value;
         }
         public IEnumerable<string> InverseAxeValues(RecordEx item, string predicate)
         {
@@ -324,14 +334,19 @@ namespace CommonRDF
 
         public bool DirectAxeContains(RecordEx item, string predicate, TValue parameter)
         {
-            if (parameter.AsTargetType.HasFlag(TargetType.data))
-            {
-                var pre1 = item.data.FirstOrDefault(d => d.predicate == predicate);
-                return pre1 != null && pre1.variants.Contains(parameter.Value);
-            }
-            var pre = item.direct.FirstOrDefault(d => d.predicate == predicate);
-            return pre != null && pre.variants.Contains(parameter.Value);
+            bool containsInData = false, containsInObj = false;
+            Axe pre;
+            if (!parameter.State.HasFlag(TState.Obj)
+                && (pre = item.data.FirstOrDefault(d => d.predicate == predicate)) != null
+                && (containsInData = pre.variants.Contains(parameter.Value)))
+                parameter.State |= TState.Data;
+            if (!parameter.State.HasFlag(TState.Data)
+                && (pre = item.direct.FirstOrDefault(d => d.predicate == predicate)) != null
+                && (containsInObj = pre.variants.Contains(parameter.Value)))
+                parameter.State |= TState.Obj;
+            return containsInData || containsInObj;
         }
+
         public bool InverseAxeContains(RecordEx item, string predicate, string value)
         {
             var pre = item.inverse.FirstOrDefault(d => d.predicate == predicate);
