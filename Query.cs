@@ -65,119 +65,38 @@ namespace CommonRDF
                             isOptional = true;
                         }
                         else throw new Exception("strange query triplet: " + tripletMatch.Value);
-                        isData = o.StartsWith("'");
-                        string sParamName = s.Value.Trim('\'', '>', '<');
-                            ptriplet.S = TestParameter(sParamName, paramByName);
-                            ptriplet.P = TestParameter(p=p.Trim('\'', '>', '<'), paramByName);
-                            ptriplet.O = TestParameter(o=o.Trim('\'', '>', '<'), paramByName);   
+                        ;
+
+                        ptriplet.S = TestParameter(s.Value.TrimStart('<').TrimEnd('>'), paramByName);
+                            ptriplet.P = TestParameter(p.TrimStart('<').TrimEnd('>'), paramByName);
+                            ptriplet.O = TestParameter((isData = o.StartsWith("'")) 
+                                ? o.Trim('\'') : o.TrimStart('<').TrimEnd('>')
+                                , paramByName);
+
                         if (isData)
-                            ptriplet.O.IsData = true;
+                            ptriplet.O.SetTargetTypeData();
+                        ptriplet.S.SetTargetTypeObj();
+
                         if(isOptional)
                             optionals.Add(ptriplet);
-                        else // if (ptriplet.S.IsNewParametr && ptriplet.O.IsNewParametr) // both params
+                        else
                             tripletsList.Add(ptriplet);
-                        //else //!ptriplet.P.IsNewParametr
-                        //    if (p == ONames.p_name) //if (ptriplet.S.IsNewParametr) meaning true
-                        //        parametesWithMultiValues.Add(
-                        //            ptriplet.S.Interselect(graph.GetEntriesByName(o).Select(TValue.ItemCtor)));
-                        //    else if (isData
-                        //             || ((p == ONames.rdftypestring || p == "a") && !ptriplet.O.IsNewParametr))
-                        //    {
-                        //        List<QueryTriplet> list;
-                        //        if (!parameterTests.TryGetValue(ptriplet.S, out list))
-                        //            parameterTests.Add(ptriplet.S, list = new List<QueryTriplet>());
-                        //        list.Add(ptriplet);
-                        //    } /*object prop */
-                        //    else if (ptriplet.S.IsNewParametr)
-                        //    {
-                        //        if (ptriplet.O.Item == null || !ptriplet.O.Item.ContainsKey(p))
-                        //            throw new NotImplementedException();//TODO
-                        //        parametesWithMultiValues.Add(
-                        //            ptriplet.S.Interselect(
-                        //                ((HashSet<string>) ptriplet.O.Item[p]).Select(TValue.ItemCtor)));
-                        //    }
-                        //    else //if (ptriplet.O.IsNewParametr)
-                        //    {
-                        //        if (ptriplet.S.Item == null || !ptriplet.S.Item.ContainsKey(p))
-                        //            throw new NotImplementedException();//TODO
-                                
-                        //        parametesWithMultiValues.Add(
-                        //            ptriplet.O.Interselect((IEnumerable<string>) ptriplet.S.Item[p]));
-                        //    }
                     }
 
                 }  
             }
-                        //foreach (var entry in parameterTests)
-                        //    if (entry.Key.Items != null)
-                        //        foreach (var queryTriplet in entry.Value)
-                        //        {
-                        //            QueryTriplet triplet = queryTriplet;
-                        //            entry.Key.Items = new HashSet<Item>(entry.Key.Items
-                        //                .Where(item => item.ContainsKey(triplet.P.Value)
-                        //                               &&
-                        //                               ((HashSet<string>)item[triplet.P.Value]).Contains(triplet.O.Value)));
-                        //        }
-                        //    else
-                        //        tripletsList.AddRange(entry.Value);
-            triplets = tripletsList
-                //.OrderByDescending(t => 
-            //    parametesWithMultiValues.Contains(t.S)
-            //    ? (parametesWithMultiValues.Contains(t.O) ? 2 : 1)
-            //    : (parametesWithMultiValues.Contains(t.O) ? 1 : 0))
-            .ToArray();
+            triplets = tripletsList.ToArray();
             Parameters = paramByName.Values.ToArray();
             ParametersNames = paramByName.Keys.ToArray();
-            //ParametersWithMultiValues = parametesWithMultiValues.ToArray(); //OrderBy(p => p.items.Count);
             Optionals = optionals.ToArray();
         }
 
         public void Run()
         {
             ObserveQuery(0);
-          //SetValueKnownParameters(0);
-            //if(ParametersWithMultiValues.Length==0)
-            //{ ObserveQuery(0); return;}
-            
-            //var min = ParametersWithMultiValues.First();
-            //int minCount = min.IsObject ? min.Items.Count : min.DataVaues.Count;
-            //if(ParametersWithMultiValues.Length>1)
-            //foreach (var parameterWithMultiValue in ParametersWithMultiValues)
-            //{
-            //    int current = parameterWithMultiValue.IsObject
-            //        ? parameterWithMultiValue.Items.Count
-            //        : parameterWithMultiValue.DataVaues.Count;
-            //    if (minCount <= current) continue;
-            //    min = parameterWithMultiValue;
-            //    minCount = current;
-            //}
-
         }
 
-        //private void SetValueKnownParameters(int i)
-        //{
-        //    Action forEachValue = ParametersWithMultiValues.Length == i+1
-        //        ? (Action)(() => ObserveQuery(0)) 
-        //        : (() => SetValueKnownParameters(i+1));
-        //    var current = ParametersWithMultiValues[i];
-        //    if(current.IsObject)
-        //    foreach (var item in current.Items)
-        //        {
-        //            current.SetValue(item);
-        //            forEachValue();
-        //        }
-        //    else
-        //    {
-        //        foreach (var item in current.DataVaues)
-        //        {
-        //            current.SetValue(item);
-        //            forEachValue();
-        //        }    
-        //    }
-        //}
-
         public TValue[] Parameters { get; set; }
-
 
       private static TValue TestParameter(string spo, Dictionary<string,TValue> paramByName)
         {
@@ -207,90 +126,91 @@ namespace CommonRDF
                     hasValueP = !p.IsNewParametr,
                     hasValueO = !o.IsNewParametr;
 
-                if (s.IsData) return;
-                if (hasValueP)
+                ObserveTriplet(i, hasValueP, hasValueS, hasValueO, s, p, o);
+            }
+        }
+
+        private void ObserveTriplet(int i, bool hasValueP, bool hasValueS, bool hasValueO, TValue s, TValue p, TValue o)
+        {
+            if (hasValueP)
+            {
+                if (hasValueS)
                 {
-                    Axe predicate;
-                    if (hasValueS)
-                    {
-                        if (hasValueO)
-                        {
-                                if (s.Item.DirectAxeContains(p.Value, o))
-                                ObserveQuery(i + 1);
-                            return;
-                        }
-                        //else
-                        foreach (string values in s.Item.DirectAndDataAxeValues(p.Value, o))
-                        {
-                            o.SetValue(values);
-                            ObserveQuery(i + 1);
-                        }
-                        o. IsNewParametr = true;
-                        return;
-                    }
                     if (hasValueO)
                     {
-                        if (o.IsData) //Data predicate, S-param, O has value
-                        {
-                            foreach (var itm in GetSubjectsByProperty(gr, p.Value, o.Value))
-                                s.SetValue(itm.Key, itm.Value);
-                            s.IsNewParametr = true;
-                            return;
-                        }
-                        //else
-                        foreach (string values in o.Item.InverseAxeValues(p.Value))
-                        {
-                            s.SetValue(values);
+                        if (DirectAxeContains(s.Item, p.Value, o))
                             ObserveQuery(i + 1);
-                        }
+                        return;
+                    }
+                    //else
+                    foreach (string values in DirectAndDataAxeValues(s.Item, p.Value, o))
+                    {
+                        o.SetValue(values);
+                        ObserveQuery(i + 1);
+                    }
+                    o.IsNewParametr = true;
+                    return;
+                }
+                if (hasValueO)
+                {
+                    if (o.AsTargetType.HasFlag(TargetType.data)) //Data predicate, S-param, O has value
+                    {
+                        foreach (var itm in GetSubjectsByProperty(p.Value, o.Value))
+                            s.SetValue(itm.Key, itm.Value);
                         s.IsNewParametr = true;
                         return;
                     }
-                    // s & o new params
-                    foreach (var Iditm in GetSubjectsByProperty(gr, p.Value))
+                    //else
+                    foreach (string values in InverseAxeValues(o.Item, p.Value))
                     {
-                        var pre = Iditm.Value.DirectAndDataAxeValues(p.Value, o);
-
-                        s.SetValue(Iditm.Key, Iditm.Value);
-                        foreach (var v in pre)
-                        {
-                            o.SetValue(v);
-                            ObserveQuery(i + 1);
-                        }
+                        s.SetValue(values);
+                        ObserveQuery(i + 1);
                     }
-                    s. IsNewParametr = true;
-                    o. IsNewParametr = true;
+                    s.IsNewParametr = true;
                     return;
                 }
-                throw new NotImplementedException();
-                // p & (s or o) new params
-                if (!hasValueS || !hasValueO)  //p  & (s xor o) new params
+                // s & o new params
+                foreach (var iditm in GetSubjectsByProperty( p.Value))
                 {
+                    var pre = DirectAndDataAxeValues(iditm.Value, p.Value, o);
 
-                    //if (!isNPs && !isNPo) 
-                    //    foreach (var property in
-                    //        (isNPo ? item.direct : item.inverse)
-                    //            .Where(property => property.Variants.Contains(p.V)))
-                    //    {
-                    //        p.SetValue(property.Predicate, isOpt);
-                    //        ObserveQuery(i + 1);
-                    //    }
-                    //else // p
-                    //{
-                    //    var properties = isNPs ? item.inverse : item.direct;
-                    //    foreach (var prp in properties)
-                    //        ObserveTriplet(i, s, p.SetValue(prp.Predicate, isOpt), o,
-                    //            isNPs, false, isNPo, isOpt, item, prp, false, false);
-                    //}
-                    //p.DropValue(false);
+                    s.SetValue(iditm.Key, iditm.Value);
+                    foreach (var v in pre)
+                    {
+                        o.SetValue(v);
+                        ObserveQuery(i + 1);
+                    }
                 }
-                else // all params new
-                {
-
-                }
+                s.IsNewParametr = true;
+                o.IsNewParametr = true;
+                return;
+            }
+            throw new NotImplementedException();
+            // p & (s or o) new params
+            if (!hasValueS || !hasValueO) //p  & (s xor o) new params
+            {
+                //if (!isNPs && !isNPo) 
+                //    foreach (var property in
+                //        (isNPo ? item.direct : item.inverse)
+                //            .Where(property => property.Variants.Contains(p.V)))
+                //    {
+                //        p.SetValue(property.Predicate, isOpt);
+                //        ObserveQuery(i + 1);
+                //    }
+                //else // p
+                //{
+                //    var properties = isNPs ? item.inverse : item.direct;
+                //    foreach (var prp in properties)
+                //        ObserveTriplet(i, s, p.SetValue(prp.Predicate, isOpt), o,
+                //            isNPs, false, isNPo, isOpt, item, prp, false, false);
+                //}
+                //p.DropValue(false);
+            }
+            else // all params new
+            {
             }
         }
-       
+
 
         private void ObserveOptional(int i)
         {
@@ -322,7 +242,7 @@ namespace CommonRDF
                     {
 
                         string oldValue = o.IsNewParametr ? null : o.Value;
-                        if ((newValues = s.Item.DirectAndDataAxeValues(p.Value, o).ToList()).Any())
+                        if ((newValues = DirectAndDataAxeValues(s.Item, p.Value, o).ToList()).Any())
                         {
                             if (oldValue != null)
                             {
@@ -348,7 +268,7 @@ namespace CommonRDF
                 else if (hasFixedValueO)
                 {
                     string oldValue = s.IsNewParametr ? null : s.Value;
-                    if ((newValues = s.Item.InverseAxeValues(p.Value).ToList()).Any())
+                    if ((newValues = InverseAxeValues(s.Item, p.Value).ToList()).Any())
                     {
                         if (oldValue != null)
                         {
@@ -373,12 +293,50 @@ namespace CommonRDF
             }
         }
 
-        public IEnumerable<KeyValuePair<string, RecordEx>> GetSubjectsByProperty(Graph gr, string predicate, string data = null)
+        public IEnumerable<KeyValuePair<string, RecordEx>> GetSubjectsByProperty(string predicate, string data = null)
         {
             throw new NotImplementedException();
         }
-    
 
+        public IEnumerable<string> DirectAndDataAxeValues(RecordEx item, string predicate, TValue parameter)
+        {
+            var pre = item.direct.FirstOrDefault(d => d.predicate == predicate);
+            if (pre != null)
+                foreach (var value in pre.variants)
+                    yield return value;
+            else
+            {
+                pre = item.data.FirstOrDefault(d => d.predicate == predicate);
+                if (pre == null) yield break;//|| !pre.variants.Any()
+                parameter.SetTargetTypeData();
+                foreach (var value in pre.variants)
+                    yield return value;
+            }
+        }
+        public IEnumerable<string> InverseAxeValues(RecordEx item, string predicate)
+        {
+            var pre = item.inverse.FirstOrDefault(d => d.predicate == predicate);
+            if (pre == null) yield break;
+            foreach (var value in pre.variants)
+                yield return value;
+        }
+
+
+        public bool DirectAxeContains(RecordEx item, string predicate, TValue parameter)
+        {
+            if (parameter.AsTargetType.HasFlag(TargetType.data))
+            {
+                var pre1 = item.data.FirstOrDefault(d => d.predicate == predicate);
+                return pre1 != null && pre1.variants.Contains(parameter.Value);
+            }
+            var pre = item.direct.FirstOrDefault(d => d.predicate == predicate);
+            return pre != null && pre.variants.Contains(parameter.Value);
+        }
+        public bool InverseAxeContains(RecordEx item, string predicate, string value)
+        {
+            var pre = item.inverse.FirstOrDefault(d => d.predicate == predicate);
+            return pre != null && pre.variants.Contains(value);
+        }
 
         internal void OutputParamsAll(string outPath)
         {
