@@ -5,10 +5,11 @@ using System.Xml.Linq;
 
 namespace CommonRDF
 {
-    class Graph
+    public class Graph
     {
         private Dictionary<string, RecordEx> dics;
         private Dictionary<string, string[]> n4;
+        public Dictionary<string, RecordEx> Dics { get { return dics; } }
 
         public void GetItembyId(string id)
         {

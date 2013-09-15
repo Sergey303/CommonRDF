@@ -36,6 +36,8 @@
     }
 
     // =============== Структуры для Sparql ================
+    // Переменные выстраиваются в структуру DescrVar[] в порядке появления в Sparql-конструкциях, значения динамически 
+    // появляются в процессе вычислений 
     public class DescrVar
     {
         public bool isEntity = true;
@@ -43,12 +45,14 @@
         public string varValue;
     }
     public enum TripletVid { op, dp }
+    // Все значения, появляющиеся в строчках запросов или пременные или константы. Индекс - позиция в массиве DescrVar[] 
     public class TVariable
     {
         public bool isVariable;
         public string value;
         public int index;
     }
+    // Кострукция строчки запроса: вид утверждения, индекс первой еще не вычисленной переменной, остальное - очевидно
     public class Sample
     {
         public TripletVid vid;

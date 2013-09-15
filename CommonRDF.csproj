@@ -44,9 +44,12 @@
   <ItemGroup>
     <Compile Include="Common.cs" />
     <Compile Include="Graph.cs" />
+    <Compile Include="LeshProgram.cs" />
+    <Compile Include="MagProgram.cs" />
     <Compile Include="ONames.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SimpleSparql.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
