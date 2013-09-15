@@ -29,8 +29,8 @@ namespace CommonRDF
     }
     public struct DataLangPair
     {
-        string data;
-        string lang;
+        public string data;
+        public string lang;
         public DataLangPair(string data, string lang) { this.data = data; this.lang = lang; }
     }
     public class Graph
@@ -93,7 +93,18 @@ namespace CommonRDF
             }
             else return Enumerable.Empty<string>();
         }
-        public IEnumerable<DataLangPair> GetData(string id, string predicate)
+        public IEnumerable<string> GetData(string id, string predicate)
+        {
+            RecordEx rec;
+            if (dics.TryGetValue(id, out rec))
+            {
+                Axe found = rec.data.FirstOrDefault(ax => ax.predicate == predicate);
+                if (found == null) return Enumerable.Empty<string>();
+                return found.variants;
+            }
+            else return Enumerable.Empty<string>();
+        }
+        public IEnumerable<DataLangPair> GetDataLangPairs(string id, string predicate)
         {
             RecordEx rec;
             if (dics.TryGetValue(id, out rec))

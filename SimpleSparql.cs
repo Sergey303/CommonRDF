@@ -45,11 +45,11 @@ namespace CommonRDF
             };
             // Попытка написать вычисление
             int nextsample = 0;
-            bool bresult = Match(dics, testquery, testvars, nextsample);
+            bool bresult = Match(gr, testquery, testvars, nextsample);
             if (!bresult) Console.WriteLine("false");
         }
         // Возвращает истину если сопоставление состоялось
-        private static bool Match(Dictionary<string, RecordEx> dics, Sample[] testquery, DescrVar[] testvars, int nextsample)
+        private static bool Match(Graph gr, Sample[] testquery, DescrVar[] testvars, int nextsample)
         {
             // Вывести если дошли до конца
             if (nextsample >= testquery.Length)
@@ -76,23 +76,36 @@ namespace CommonRDF
             if (variant == 1)
             {
                 string idd = sam.subject.isVariable ? testvars[sam.subject.index].varValue : sam.subject.value;
-                RecordEx erec;
-                if (dics.TryGetValue(idd, out erec))
-                {
-                    Axe[] predicate_group = sam.vid == TripletVid.dp ? erec.data : erec.direct;
-                    Axe found_predicate = predicate_group.FirstOrDefault(ax => ax.predicate == sam.predicate.value); // не проверяется, что предикат - константа
-                    if (found_predicate != null)
+                // В зависимости от вида, будут использоваться данные разных осей
+                if (sam.vid == TripletVid.dp)
+                { // Dataproperty
+                    foreach (var data in gr.GetData(idd, sam.predicate.value))
                     {
-                        foreach (var v in found_predicate.variants)
-                        {
-                            testvars[sam.obj.index].varValue = v;
-                            bool br = Match(dics, testquery, testvars, nextsample + 1);
-                        }
-                        // Надо бы еще посмотреть случай пустого количества вариантов 
+                        testvars[sam.obj.index].varValue = data;
+                        Match(gr, testquery, testvars, nextsample + 1);
                     }
-                    else return sam.option ? Match(dics, testquery, testvars, nextsample + 1) : false; // Здесь должны быть особенности в связи с опциями
                 }
-                else throw new Exception("can't find " + idd);
+                else
+                {
+                    return sam.option ? Match(gr, testquery, testvars, nextsample + 1) : false;
+                }
+                //RecordEx erec;
+                //if (dics.TryGetValue(idd, out erec))
+                //{
+                //    Axe[] predicate_group = sam.vid == TripletVid.dp ? erec.data : erec.direct;
+                //    Axe found_predicate = predicate_group.FirstOrDefault(ax => ax.predicate == sam.predicate.value); // не проверяется, что предикат - константа
+                //    if (found_predicate != null)
+                //    {
+                //        foreach (var v in found_predicate.variants)
+                //        {
+                //            testvars[sam.obj.index].varValue = v;
+                //            bool br = Match(dics, testquery, testvars, nextsample + 1);
+                //        }
+                //        // Надо бы еще посмотреть случай пустого количества вариантов 
+                //    }
+                //    else return sam.option ? Match(dics, testquery, testvars, nextsample + 1) : false; // Здесь должны быть особенности в связи с опциями
+                //}
+                //else throw new Exception("can't find " + idd);
             }
             else if (variant == 2) // obj - known, subj - unknown
             {
