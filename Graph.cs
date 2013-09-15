@@ -1,43 +1,56 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 
 namespace CommonRDF
 {
-    class Graph
+    public class Graph
     {
         private Dictionary<string, RecordEx> dics;
         private Dictionary<string, string[]> n4;
 
-        public void GetItembyId(string id)
+        public RecordEx GetItembyId(string id)
         {
-            RecordEx re;
-            if (dics.TryGetValue(id, out re))
+                RecordEx re;
+            if (!dics.TryGetValue(id, out re)) return re;
+            Console.WriteLine("{0} {1}", id, re.Id);
+            foreach (DictionaryEntry p in re.direct)
             {
-                Console.WriteLine("{0} {1}", id, re.rtype);
-                foreach (var p in re.direct)
+                Console.WriteLine("\t{0}", p.Key);
+                var axe = p.Value as Axe;
+                if (axe == null) continue;
+                foreach (var v in axe)
                 {
-                    Console.WriteLine("\t{0}", p.predicate);
-                    foreach (var v in p.variants)
-                    {
-                        Console.WriteLine("\t\t{0}", v);
-                    }
+                    Console.WriteLine("\t\t{0}", v);
                 }
             }
+            return re;
         }
         public void Test()
         {
+            string ss = "марч";
+            //SearchByN4(dics, n4, ss);
+
             //string id = "w20070417_5_8436";
             string id = "piu_200809051791";
             GetItembyId(id);
-            string ss = "марч";
+                //foreach (var p in re.inverse)
+                //{
+                //    Console.WriteLine("\t{0}", p.predicate);
+                //    foreach (var v in p.variants)
+                //    {
+                //        Console.WriteLine("\t\t{0}", v);
+                //    }
+                //}
             SearchByN4(ss);
         }
 
         public void Load(string path)
         {
             XElement db = XElement.Load(path);
+
             
             List<Quad> quads = new List<Quad>();
             List<KeyValuePair<string, string>> id_names = new List<KeyValuePair<string, string>>();
@@ -92,9 +105,9 @@ namespace CommonRDF
                 .Select(q1 =>
                 {
                     string type_id = null;
-                    Axe[] direct = null;
-                    Axe[] inverse = new Axe[0];
-                    Axe[] data = null;
+                    Hashtable direct = null;
+                    Hashtable inverse = null;
+                    Hashtable data = null;
                     var rea = q1.GroupBy(q => q.vid)
                         .Select(q2 => new
                         {
@@ -114,30 +127,29 @@ namespace CommonRDF
                                 type_id = qw.preds.First();
                                 //qw.preds.RemoveAt(0); // Уничтожение ссылки на тип
                             }
-                            direct = va.predvalues
-                                .Select(pv => new Axe() {predicate = pv.p, variants = pv.preds.ToArray()})
-                                .ToArray();
+                                direct = new Hashtable(va.predvalues.ToDictionary(predvalue=>predvalue.p,
+                                   predvalue=> new Axe(predvalue.preds) {Direction = PropertyType.data})); 
                         }
                         else if (va.vid == 1)
                         {
-                            inverse = va.predvalues
-                                .Select(pv => new Axe() {predicate = pv.p, variants = pv.preds.ToArray()})
-                                .ToArray();
+                            inverse = new Hashtable(va.predvalues
+                                .ToDictionary(pv => pv.p,
+                                    pv => new Axe(pv.preds) {Direction = PropertyType.inv}));
                         }
                         else if (va.vid == 2)
                         {
-                            data = va.predvalues
-                                .Select(pv => new Axe() {predicate = pv.p, variants = pv.preds.ToArray()})
-                                .ToArray();
+                            data = new Hashtable(va.predvalues
+                               .ToDictionary(pv => pv.p,
+                                   pv => new Axe(pv.preds) { Direction = PropertyType.data }));
                         }
-                        if (direct == null) direct = new Axe[0];
-                        if (inverse == null) inverse = new Axe[0];
-                        if (data == null) data = new Axe[0];
+                        if (direct == null) direct = new Hashtable();
+                        if (inverse == null) inverse = new Hashtable();
+                        if (data == null) data = new Hashtable();
                     }
                     return new
                     {
                         id = q1.Key,
-                        recExArr = new RecordEx() {rtype = type_id, direct = direct, inverse = inverse, data = data}
+                        recExArr = new RecordEx() { Id = q1.Key, direct = direct, inverse = inverse, data = data }
                     };
                 })
                 //.ToArray();
@@ -159,7 +171,7 @@ namespace CommonRDF
              foreach (var id in ids)
              {
                  //var r = dics[id];
-                 string[] names = dics[id].data.First(ax => ax.predicate == sema2012m.ONames.p_name).variants;
+                 string[] names = ((Axe)dics[id].direct[sema2012m.ONames.p_name]).ToArray();
                  Console.Write(id);
                  foreach (var n in names)
                      Console.Write(" " + n);
@@ -167,5 +179,10 @@ namespace CommonRDF
              }
              return ids;
         }
+
+         internal IEnumerable<string> GetSubjectsByProperty(string value, string p=null)
+         {
+             throw new NotImplementedException();
+         }
     }
 }

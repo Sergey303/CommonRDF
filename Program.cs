@@ -1,20 +1,67 @@
 ﻿using System;
 
-namespace CommonRDF
+
+using System.Diagnostics;
+using System.IO;
+using CommonRDF;
+
+namespace SimpleRDF
 {
-    class Program
+
+
+    internal class Program
     {
-        static void Main(string[] args)
+        private static Query query;
+        private static void Main(string[] args)
         {
-            DateTime tt0 = DateTime.Now;
-            Graph gr = new Graph();
-            Console.WriteLine("Graph ok duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
-            gr.Load(@"..\..\0001.xml");
-            Console.WriteLine("Graph ok duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
-            gr.Test();
-            Console.WriteLine("Graph ok duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
+            Stopwatch timer = new Stopwatch();
+
+            Graph gr;
+            var directoryInfo = new DirectoryInfo(Environment.CurrentDirectory);
+            if (directoryInfo.Parent == null || directoryInfo.Parent.Parent == null) return;
+            string dataPath = directoryInfo.Parent.Parent.FullName +
+                              @"\data\";
+            Console.WriteLine("Hello!");
+
+            string path = args.Length > 0 ? args[0] :dataPath;
+            var dir = new DirectoryInfo(path);
+            if (!dir.Exists)
+            {
+                try
+                {
+                    dir.Create();
+                }
+                catch
+                {
+                    path = Path.GetTempPath();
+                    Console.WriteLine("Path - " + path + " is wrong. Application will be use temp path");
+                }
+            }
+             gr = new Graph();
+            gr.Load(dataPath + "0001.xml");
+
+            TValue.gr = gr;
+            timer.Restart();
+            query = new Query(@"..\..\query.txt", gr);
+            timer.Stop();
+            using (var f = new StreamWriter(@"..\..\Output.txt", false))
+                f.WriteLine("read query time {0}ms {1}ticks, memory {2}"
+       , timer.ElapsedMilliseconds, timer.ElapsedTicks / 10000L,
+       GC.GetTotalMemory(true) / (1024L * 1024L));
+
+            timer.Restart();
+         query.Run();
+            timer.Stop();
+            using (var f = new StreamWriter(@"..\..\Output.txt", true))
+                f.WriteLine("run query time {0}ms {1}ticks, memory {2}"
+      , timer.ElapsedMilliseconds, timer.ElapsedTicks / 10000L,
+      GC.GetTotalMemory(true) / (1024L * 1024L));
+
+            if (query.SelectParameters.Count == 0)
+                query.OutputParamsAll(@"..\..\Output.txt");
+            else
+                query.OutputParamsBySelect(@"..\..\Output.txt");
         }
 
-      
     }
 }

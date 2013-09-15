@@ -1,4 +1,7 @@
-﻿namespace CommonRDF
+﻿using System.Collections;
+using System.Collections.Generic;
+
+namespace CommonRDF
 {
     // Четверка, получаемая из тройки (триплета). Поле vid {0|1|2} обозначает вид квада (direct, inverse, data)
     // entity - идентификатор сущности. Для нулевого и второго вариантов - это субъект, для первого - объект
@@ -21,18 +24,47 @@
     }
     // В поле rest для данных - сохраняется константа и дополнительные квалификаторы. Пока поддерживается только язык
     // Для языковых спецификаторов используем синтетическую строчку вида "данные@lang". При этом @ должен находиться не далее 6 символов от конца @US-en 
-    public class Axe
+    public class Axe:HashSet<string>
     {
-        public string predicate;
-        public string[] variants;
+        public PropertyType Direction;
+
+        public Axe(IEnumerable<string> vsList):base(vsList)
+        {
+            
+        }
     }
-    // Это стуктура, которая ставится в соответствие идентификатору сущности. В ней собираются все исходящие, входящие дуги и поля данных 
-    public struct RecordEx
+    public class RecordEx
     {
-        public string rtype;
-        public Axe[] direct;
-        public Axe[] inverse;
-        public Axe[] data;
+        public string Id;
+        public Hashtable direct;
+        public Hashtable inverse;
+        public Hashtable data;
+
+        public Axe this[string value, bool isDirect]
+        {
+            get
+            {
+                if (isDirect)
+                {
+                    object o = (data[value] ?? direct[value]);
+                    if(o!=null)
+                    return o as Axe;
+                }
+                else
+                {
+                    object o = (inverse[value]);
+                    if (o != null)
+                        return o as Axe;
+                }
+                return null;
+            }
+        }
+    }
+
+    
+ public   enum PropertyType:byte
+    {
+         dir, data, inv
     }
 
     // =============== Структуры для Sparql ================
@@ -57,3 +89,4 @@
         public bool option = false;
     }
 }
+
