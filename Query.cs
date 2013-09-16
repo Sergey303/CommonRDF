@@ -87,9 +87,9 @@ namespace CommonRDF
                         }
                         else
                         {
-                            if (ptriplet.P.IsObj.HasValue)
+                            if (ptriplet.P.IsObj!=null)
                                 ptriplet.O.SetTargetType(ptriplet.P.IsObj.Value);
-                            else if (ptriplet.O.IsObj.HasValue)
+                            else if (ptriplet.O.IsObj!=null)
                                 ptriplet.P.SetTargetType(ptriplet.O.IsObj.Value);
                             else //both unkown
                             {
@@ -164,7 +164,7 @@ namespace CommonRDF
                 {
                     IEnumerable<string> enumerable = null;
                     ///не уверен в правильности конкатенации
-                    if (!o.IsObj.HasValue) enumerable = gr.GetDirect(s.Value, p.Value).Concat(gr.GetData(s.Value, p.Value));
+                    if (o.IsObj==null) enumerable = gr.GetDirect(s.Value, p.Value).Concat(gr.GetData(s.Value, p.Value));
                     else if (o.IsObj.Value) enumerable = gr.GetDirect(s.Value, p.Value);
                     else if (!o.IsObj.Value) enumerable = gr.GetData(s.Value, p.Value);
 
@@ -187,7 +187,7 @@ namespace CommonRDF
                 if (hasValueO)
                 {
 
-                    var SValues = !o.IsObj.HasValue
+                    var SValues = o.IsObj==null
                         ? gr.GetInverse(o.Value, p.Value).Concat(GetSubjectsByProperty(p.Value, o, o.Value))
                         : o.IsObj.Value ? gr.GetInverse(o.Value, p.Value) : GetSubjectsByProperty(p.Value, o, o.Value);
 
@@ -216,7 +216,7 @@ namespace CommonRDF
             // p & (s or o) new params
             bool isNotData = true; /// !p.State.HasFlag(TState.Data); - syncronized
             bool isObj = false;
-            if (o.IsObj.HasValue)
+            if (o.IsObj!=null)
                 isNotData = isObj = o.IsObj.Value;
             if (hasValueS)
             {
@@ -353,7 +353,7 @@ namespace CommonRDF
             Axe pre;
             return gr.Dics.Where(id_item =>
                 (pre =
-                    (o.IsObj.HasValue
+                    (o.IsObj!=null
                         ? id_item.Value.direct.Concat(id_item.Value.data)
                         : (o.IsObj.Value
                             ? id_item.Value.direct
@@ -367,7 +367,7 @@ namespace CommonRDF
         public IEnumerable<KeyValuePair<string, Axe>> GetSubjectsByProperty(string predicate, TValue o)
         {
             Axe axe = null;
-            if (!o.IsObj.HasValue)
+            if (!o.IsObj!=null)
                 return
                 gr.Dics.Where(
                     id_item => DirectPredicates(id_item.Value, predicate, o, ref axe))
