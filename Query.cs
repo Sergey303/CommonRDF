@@ -163,6 +163,7 @@ namespace CommonRDF
                 if (hasValueS)
                 {
                     IEnumerable<string> enumerable = null;
+                    ///не уверен в правильности конкатенации
                     if (o.IsObj == null) enumerable = gr.GetDirect(s.Value, p.Value).Concat(gr.GetData(s.Value, p.Value));
                     else if (o.IsObj.Value) enumerable = gr.GetDirect(s.Value, p.Value);
                     else if (!o.IsObj.Value) enumerable = gr.GetData(s.Value, p.Value);
@@ -173,7 +174,8 @@ namespace CommonRDF
                             Match(i + 1);
                         return;
                     }
-                    //else
+                    //else 
+                    ///Если o.IsObj не известен, то он не устанавливается, потому что, потом его не изменить 
                     foreach (string values in enumerable)
                     {
                         o.SetValue(values);
@@ -187,7 +189,10 @@ namespace CommonRDF
                     if (o.IsObj != null && !o.IsObj.Value) //Data object and predicate(pre computed to de equal), S-param, O has value
                     {
                         foreach (var itm in GetSubjectsByProperty(p.Value, o, o.Value))
+                        {
                             s.SetValue(itm);
+                            Match(i+1);
+                        }
                         s.IsNewParameter = true;
                         return;
                     }
