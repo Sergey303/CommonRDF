@@ -15,15 +15,13 @@ namespace sema2012m
                 XName xn = XName.Get(uristring.Substring(pos + 1), uristring.Substring(0, pos + 1));
                 return xn;
             }
-            else if (uristring.Contains(':')) // Префикс и локальное имя
+            if (uristring.Contains(':')) // Префикс и локальное имя
             {
                 return XName.Get(uristring.Replace(':', '_').Replace('$', '_'));
             }
-            else // Без пространства имен
-            {
-                return XName.Get(uristring);
-            }
+            return XName.Get(uristring);
         }
+
         //public static XName GetXName(string prop)
         //{
         //    int pos = prop.LastIndexOf('#'); if (pos == -1) pos = prop.LastIndexOf('/');

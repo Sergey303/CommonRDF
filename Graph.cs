@@ -51,7 +51,7 @@ namespace CommonRDF
                 });
                 return qu;
             }
-            else return Enumerable.Empty<PredicateEntityPair>();
+            return Enumerable.Empty<PredicateEntityPair>();
         }
         public IEnumerable<PredicateEntityPair> GetInverse(string id)
         {
@@ -65,7 +65,7 @@ namespace CommonRDF
                 });
                 return qu;
             }
-            else return Enumerable.Empty<PredicateEntityPair>();
+            return Enumerable.Empty<PredicateEntityPair>();
         }
         public IEnumerable<PredicateDataTriple> GetData()
         {
@@ -80,7 +80,7 @@ namespace CommonRDF
                 if (found == null) return Enumerable.Empty<string>();
                 return found.variants;
             }
-            else return Enumerable.Empty<string>();
+            return Enumerable.Empty<string>();
         }
         public IEnumerable<string> GetInverse(string id, string predicate)
         {
@@ -91,7 +91,7 @@ namespace CommonRDF
                 if (found == null) return Enumerable.Empty<string>();
                 return found.variants;
             }
-            else return Enumerable.Empty<string>();
+            return Enumerable.Empty<string>();
         }
         public IEnumerable<string> GetData(string id, string predicate)
         {
@@ -102,7 +102,7 @@ namespace CommonRDF
                 if (found == null) return Enumerable.Empty<string>();
                 return found.variants;
             }
-            else return Enumerable.Empty<string>();
+            return Enumerable.Empty<string>();
         }
         public IEnumerable<DataLangPair> GetDataLangPairs(string id, string predicate)
         {
@@ -123,7 +123,7 @@ namespace CommonRDF
                     return new DataLangPair(d, lang);
                 });
             }
-            else return Enumerable.Empty<DataLangPair>();
+            return Enumerable.Empty<DataLangPair>();
         }
 
         private Dictionary<string, RecordEx> dics;

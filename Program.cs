@@ -18,8 +18,8 @@ namespace CommonRDF
 
             MagProgram mprog = new MagProgram(gr);
             mprog.Run();
-            //LeshProgram l=new LeshProgram(gr);
-            //l.Run();
+            LeshProgram l = new LeshProgram(gr);
+            l.Run();
         }
     }
 }

@@ -54,6 +54,7 @@
     <Compile Include="TValue.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Comments.txt" />
     <Content Include="Output.txt" />
     <Content Include="query Organizations and events in which participated Andrey Ershov.txt" />
     <Content Include="query.txt" />
