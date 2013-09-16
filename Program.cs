@@ -9,9 +9,9 @@ namespace CommonRDF
         private static void Main(string[] args)
         {
             DateTime tt0 = DateTime.Now;
-            Graph gr = new Graph();
+            GraphDB gr = new GraphDB();
             Console.WriteLine("Graph ok duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
-            gr.Load(@"..\..\0001.xml");
+            gr.Load(@"..\..\");//0001.xml
             Console.WriteLine("Graph ok duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
             gr.Test();
             Console.WriteLine("Test ok duration========================" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
