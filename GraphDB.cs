@@ -3,22 +3,14 @@ namespace CommonRDF
 {
     class GraphDB : Graph
     {
-        private PaCell paGraph;
         private PxCell pxGraph;
         public new void Load(string path)
         {
-            if (paGraph != null) paGraph.Close();
-            paGraph = new PaCell(tp_graph, path + "\\data.pac", true);
             if (pxGraph != null) pxGraph.Close();
             pxGraph = new PxCell(tp_graph, path + "\\data.pxc", true);
             if (pxGraph.IsEmpty)
             {
-                if (paGraph.IsEmpty)
-                {
-                    base.Load(path);
-                }
-                pxGraph.Fill2(paGraph.Root.Get().Value);
-                paGraph.Close();
+             
             }
 
         }
