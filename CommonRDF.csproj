@@ -33,6 +33,9 @@
     <StartupObject>CommonRDF.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="PolarDB">
+      <HintPath>dlls\PolarDB.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
