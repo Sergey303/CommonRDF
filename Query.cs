@@ -87,9 +87,9 @@ namespace CommonRDF
                         }
                         else
                         {
-                            if (ptriplet.P.IsObj != null)
+                            if (ptriplet.P.IsObj.HasValue)
                                 ptriplet.O.SetTargetType(ptriplet.P.IsObj.Value);
-                            else if (ptriplet.O.IsObj != null)
+                            else if (ptriplet.O.IsObj.HasValue)
                                 ptriplet.P.SetTargetType(ptriplet.O.IsObj.Value);
                             else //both unkown
                             {
@@ -164,7 +164,7 @@ namespace CommonRDF
                 {
                     IEnumerable<string> enumerable = null;
                     ///не уверен в правильности конкатенации
-                    if (o.IsObj == null) enumerable = gr.GetDirect(s.Value, p.Value).Concat(gr.GetData(s.Value, p.Value));
+                    if (!o.IsObj.HasValue) enumerable = gr.GetDirect(s.Value, p.Value).Concat(gr.GetData(s.Value, p.Value));
                     else if (o.IsObj.Value) enumerable = gr.GetDirect(s.Value, p.Value);
                     else if (!o.IsObj.Value) enumerable = gr.GetData(s.Value, p.Value);
 
@@ -186,18 +186,12 @@ namespace CommonRDF
                 }
                 if (hasValueO)
                 {
-                    if (o.IsObj != null && !o.IsObj.Value) //Data object and predicate(pre computed to de equal), S-param, O has value
-                    {
-                        foreach (var itm in GetSubjectsByProperty(p.Value, o, o.Value))
-                        {
-                            s.SetValue(itm);
-                            Match(i+1);
-                        }
-                        s.IsNewParameter = true;
-                        return;
-                    }
-                    //else
-                    foreach (string values in gr.GetInverse(o.Value, p.Value))
+
+                    var SValues = !o.IsObj.HasValue
+                        ? gr.GetInverse(o.Value, p.Value).Concat(GetSubjectsByProperty(p.Value, o, o.Value))
+                        : o.IsObj.Value ? gr.GetInverse(o.Value, p.Value) : GetSubjectsByProperty(p.Value, o, o.Value);
+
+                    foreach (string values in SValues)
                     {
                         s.SetValue(values);
                         Match(i + 1);
@@ -222,7 +216,7 @@ namespace CommonRDF
             // p & (s or o) new params
             bool isNotData = true; /// !p.State.HasFlag(TState.Data); - syncronized
             bool isObj = false;
-            if (o.IsObj != null)
+            if (o.IsObj.HasValue)
                 isNotData = isObj = o.IsObj.Value;
             if (hasValueS)
             {
@@ -359,7 +353,7 @@ namespace CommonRDF
             Axe pre;
             return gr.Dics.Where(id_item =>
                 (pre =
-                    (o.IsObj == null
+                    (o.IsObj.HasValue
                         ? id_item.Value.direct.Concat(id_item.Value.data)
                         : (o.IsObj.Value
                             ? id_item.Value.direct
@@ -373,7 +367,7 @@ namespace CommonRDF
         public IEnumerable<KeyValuePair<string, Axe>> GetSubjectsByProperty(string predicate, TValue o)
         {
             Axe axe = null;
-            if (o.IsObj == null)
+            if (!o.IsObj.HasValue)
                 return
                 gr.Dics.Where(
                     id_item => DirectPredicates(id_item.Value, predicate, o, ref axe))

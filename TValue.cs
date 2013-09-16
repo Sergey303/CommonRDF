@@ -42,7 +42,7 @@ namespace CommonRDF
         {
             Action<bool> connectOnWhenObjSetted = null;
            connectOnWhenObjSetted= 
-               v=> {
+               v=> { 
                    connect.whenObjSetted -= connectOnWhenObjSetted;
                    this.SetTargetType(v);
                };
