@@ -4,15 +4,17 @@ using System.Linq;
 
 namespace CommonRDF
 {
+    public interface IReceiver
+    {
+        void Restart();
+        void Receive(string[] row);
+    }
     public class SimpleSparql
     {
-        private Dictionary<string, RecordEx> dics;
-        public SimpleSparql(Dictionary<string, RecordEx> dics, string id)
+        private Sample[] testquery = new Sample[0];
+        private DescrVar[] testvars = new DescrVar[0];
+        public SimpleSparql(string id)
         {
-            this.dics = dics;
-            // Sparql section
-            Sample[] testquery = new Sample[0];
-            DescrVar[] testvars = new DescrVar[0];
             testquery = new Sample[] 
             {
                 new Sample() { vid = TripletVid.op, firstunknown = 0, 
@@ -43,23 +45,26 @@ namespace CommonRDF
                 new DescrVar() { isEntity = false, varName="?orgname" },
                 new DescrVar() { isEntity = false, varName="?fd" },
             };
-            // Попытка написать вычисление
-            //int nextsample = 0;
-            //bool bresult = Match(gr, testquery, testvars, nextsample);
-            //if (!bresult) Console.WriteLine("false");
         }
-        // Возвращает истину если сопоставление состоялось
-        private static bool Match(Graph gr, Sample[] testquery, DescrVar[] testvars, int nextsample)
+        public bool Match(Graph gr, IReceiver receive) { return Match(gr, 0, receive); } 
+        // Возвращает истину если сопоставление состоялось хотя бы один раз
+        private bool Match(Graph gr, int nextsample, IReceiver receive)
         {
             // Вывести если дошли до конца
             if (nextsample >= testquery.Length)
             {
-                Console.Write("R:"); // Здесь будет вывод значения переменных
-                foreach (var va in testvars)
+                string[] row = new string[testvars.Length];
+                for ( int i = 0; i < testvars.Length; i++)
                 {
-                    Console.Write(va.varName + "=" + va.varValue + " ");
+                    row[i] = testvars[i].varValue;
                 }
-                Console.WriteLine();
+                receive.Receive(row);
+                //Console.Write("R:"); // Здесь будет вывод значения переменных
+                //foreach (var va in testvars)
+                //{
+                //    Console.Write(va.varName + "=" + va.varValue + " ");
+                //}
+                //Console.WriteLine();
                 return true;
             }
             // Match
@@ -67,7 +72,6 @@ namespace CommonRDF
             // Разметить пустыми значениями, если option
             if (sam.option)
             {
-                //for (int i = nextsample; i < // нужен цикл!
                 if (sam.firstunknown < testvars.Length) testvars[sam.firstunknown].varValue = null;
             }
             // Пока считаю предикаты известными. Вариантов 4: 0 - обе части неизвестны, 1 - субъект известен, 2 - объект известен, 3 - все известно
@@ -76,36 +80,25 @@ namespace CommonRDF
             if (variant == 1)
             {
                 string idd = sam.subject.isVariable ? testvars[sam.subject.index].varValue : sam.subject.value;
+                bool atleastonce = false; 
                 // В зависимости от вида, будут использоваться данные разных осей
                 if (sam.vid == TripletVid.dp)
                 { // Dataproperty
                     foreach (var data in gr.GetData(idd, sam.predicate.value))
                     {
                         testvars[sam.obj.index].varValue = data;
-                        Match(gr, testquery, testvars, nextsample + 1);
+                        Match(gr, nextsample + 1, receive);
                     }
                 }
                 else
-                {
-                    return sam.option ? Match(gr, testquery, testvars, nextsample + 1) : false;
+                { // Objectproperty
+                    foreach (var directid in gr.GetDirect(idd, sam.predicate.value))
+                    {
+                        testvars[sam.obj.index].varValue = directid;
+                        Match(gr, nextsample + 1, receive);
+                    }
                 }
-                //RecordEx erec;
-                //if (dics.TryGetValue(idd, out erec))
-                //{
-                //    Axe[] predicate_group = sam.vid == TripletVid.dp ? erec.data : erec.direct;
-                //    Axe found_predicate = predicate_group.FirstOrDefault(ax => ax.predicate == sam.predicate.value); // не проверяется, что предикат - константа
-                //    if (found_predicate != null)
-                //    {
-                //        foreach (var v in found_predicate.variants)
-                //        {
-                //            testvars[sam.obj.index].varValue = v;
-                //            bool br = Match(dics, testquery, testvars, nextsample + 1);
-                //        }
-                //        // Надо бы еще посмотреть случай пустого количества вариантов 
-                //    }
-                //    else return sam.option ? Match(dics, testquery, testvars, nextsample + 1) : false; // Здесь должны быть особенности в связи с опциями
-                //}
-                //else throw new Exception("can't find " + idd);
+                if (!atleastonce) return sam.option ? Match(gr, nextsample + 1, receive) : false;
             }
             else if (variant == 2) // obj - known, subj - unknown
             {
@@ -113,46 +106,29 @@ namespace CommonRDF
                 // Пока будем обрабатывать только объектные ссылки
                 if (sam.vid == TripletVid.op)
                 {
-                    RecordEx erec;
-                    //if (dics.TryGetValue(ido, out erec))
-                    //{
-                    //    Axe[] predicate_group = erec.inverse;
-                    //    Axe found_predivate = predicate_group.FirstOrDefault(ax => ax.predicate == sam.predicate.value); // не проверяется, что предикат - константа
-                    //    if (found_predivate != null)
-                    //    {
-                    //        foreach (var v in found_predivate.variants)
-                    //        {
-                    //            testvars[sam.subject.index].varValue = v;
-                    //            bool br = Match(dics, testquery, testvars, nextsample + 1);
-                    //        }
-                    //    }
-                    //    else return sam.option ? Match(dics, testquery, testvars, nextsample + 1) : false; // Здесь должны быть особенности в связи с опциями
-                    //}
-                    //else throw new Exception("can't find " + ido);
+                    foreach (var inverseid in gr.GetInverse(ido, sam.predicate.value))
+                    {
+                        testvars[sam.obj.index].varValue = inverseid;
+                        Match(gr, nextsample + 1, receive);
+                    }
+                    //TODO: Нужен ли вариант с опцией?
                 }
-                else throw new Exception("datatype properties are not implemented to inverse direction");
+                else
+                { //TODO: Здесь нужен вариант, когда данное известно
+                    throw new Exception("datatype properties are not implemented to inverse direction");
+                }
             }
             else if (variant == 3)
             {
                 string idd = sam.subject.isVariable ? testvars[sam.subject.index].varValue : sam.subject.value;
                 string obj = sam.obj.isVariable ? testvars[sam.obj.index].varValue : sam.obj.value;
-                RecordEx erec;
-                //if (dics.TryGetValue(idd, out erec))
-                //{
-                //    Axe[] predicate_group = sam.vid == TripletVid.dp ? erec.data : erec.direct;
-                //    Axe found_predivate = predicate_group.FirstOrDefault(ax => ax.predicate == sam.predicate.value); // не проверяется, что предикат - константа
-                //    if (found_predivate != null)
-                //    {
-                //        foreach (var v in found_predivate.variants)
-                //        {
-                //            string objvalue = sam.obj.isVariable ? testvars[sam.obj.index].varValue : sam.obj.value;
-                //            if (objvalue != v) continue;
-                //            bool br = Match(dics, testquery, testvars, nextsample + 1);
-                //        }
-                //    }
-                //    else return sam.option ? Match(dics, testquery, testvars, nextsample + 1) : false; // Здесь должны быть особенности в связи с опциями
-                //}
-                //else throw new Exception("can't find " + idd);
+                foreach (var directid in gr.GetDirect(idd, sam.predicate.value))
+                {
+                    string objvalue = sam.obj.isVariable ? testvars[sam.obj.index].varValue : sam.obj.value;
+                    if (objvalue != directid) continue;
+                    bool br = Match(gr, nextsample + 1, receive);
+                }
+                //TODO: Нужен ли вариант, связанный с опциями?
             }
             else
             {
