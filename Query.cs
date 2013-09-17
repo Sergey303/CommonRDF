@@ -25,7 +25,7 @@ namespace CommonRDF
         public TValue[] ParametersWithMultiValues;
         private List<string[]> parametrsValuesList = new List<string[]>();
 
-        public Query(string filePath, Graph graph)
+        public Query(string filePath, GraphBase graph)
         {
             gr = graph;
             SelectParameters = new List<string>();
@@ -278,7 +278,7 @@ namespace CommonRDF
             }
         }
 
-        public Graph gr;
+        public GraphBase gr;
         //   private static readonly Dictionary<Triplet<string>, bool> Cache = new Dictionary<Triplet<string>, bool>();
         public void MatchptionalTriplet(TValue s, TValue p, TValue o, int i,
             bool hasFixedValueS, bool hasFixedValueP, bool hasFixedValueO)

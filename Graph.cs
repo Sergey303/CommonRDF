@@ -5,41 +5,21 @@ using System.Xml.Linq;
 
 namespace CommonRDF
 {
-    public struct PredicateEntityPair
+
+    public class Graph : GraphBase
     {
-        public string predicate;
-        public string entity;
-        public PredicateEntityPair(string predicate, string entity)
+        protected Dictionary<string, RecordEx> dics;
+        protected Dictionary<string, string[]> n4;
+        public override Dictionary<string, RecordEx> Dics
         {
-            this.predicate = predicate;
-            this.entity = entity;
+            get {  return dics; } 
         }
-    }
-    public struct PredicateDataTriple
-    {
-        public string predicate;
-        public string data;
-        public string lang;
-        public PredicateDataTriple(string predicate, string data, string lang)
-        {
-            this.predicate = predicate;
-            this.data = data;
-            this.lang = lang;
-        }
-    }
-    public struct DataLangPair
-    {
-        public string data;
-        public string lang;
-        public DataLangPair(string data, string lang) { this.data = data; this.lang = lang; }
-    }
-    public class Graph
-    {
-        public IEnumerable<string> GetEntities()
+
+        public override IEnumerable<string> GetEntities()
         {
             return dics.Select(pair => pair.Key);
         }
-        public IEnumerable<PredicateEntityPair> GetDirect(string id)
+        public override IEnumerable<PredicateEntityPair> GetDirect(string id)
         {
             RecordEx rec;
             if (dics.TryGetValue(id, out rec))
@@ -53,7 +33,7 @@ namespace CommonRDF
             }
             return Enumerable.Empty<PredicateEntityPair>();
         }
-        public IEnumerable<PredicateEntityPair> GetInverse(string id)
+        public override IEnumerable<PredicateEntityPair> GetInverse(string id)
         {
             RecordEx rec;
             if (dics.TryGetValue(id, out rec))
@@ -67,11 +47,24 @@ namespace CommonRDF
             }
             return Enumerable.Empty<PredicateEntityPair>();
         }
-        public IEnumerable<PredicateDataTriple> GetData()
+        public override IEnumerable<PredicateDataTriple> GetData(string id)
         {
+            RecordEx rec;
+            if (dics.TryGetValue(id, out rec))
+            {
+                var qu = rec.data.SelectMany(axe =>
+                {
+                    string predicate = axe.predicate;
+                    return axe.variants
+                        .Select(data => data.Split('@'))
+                        .Select(v => new PredicateDataTriple(predicate, v[0],
+                            v.Length == 1 && v.Last().Length <= 4 ? v.Last() : null));
+                });
+                return qu;
+            }
             return Enumerable.Empty<PredicateDataTriple>();
         }
-        public IEnumerable<string> GetDirect(string id, string predicate)
+        public override IEnumerable<string> GetDirect(string id, string predicate)
         {
             RecordEx rec;
             if (dics.TryGetValue(id, out rec))
@@ -82,7 +75,7 @@ namespace CommonRDF
             }
             return Enumerable.Empty<string>();
         }
-        public IEnumerable<string> GetInverse(string id, string predicate)
+        public override IEnumerable<string> GetInverse(string id, string predicate)
         {
             RecordEx rec;
             if (dics.TryGetValue(id, out rec))
@@ -93,7 +86,7 @@ namespace CommonRDF
             }
             return Enumerable.Empty<string>();
         }
-        public IEnumerable<string> GetData(string id, string predicate)
+        public override IEnumerable<string> GetData(string id, string predicate)
         {
             RecordEx rec;
             if (dics.TryGetValue(id, out rec))
@@ -104,7 +97,7 @@ namespace CommonRDF
             }
             return Enumerable.Empty<string>();
         }
-        public IEnumerable<DataLangPair> GetDataLangPairs(string id, string predicate)
+        public override IEnumerable<DataLangPair> GetDataLangPairs(string id, string predicate)
         {
             RecordEx rec;
             if (dics.TryGetValue(id, out rec))
@@ -126,12 +119,7 @@ namespace CommonRDF
             return Enumerable.Empty<DataLangPair>();
         }
 
-        private Dictionary<string, RecordEx> dics;
-        private Dictionary<string, string[]> n4;
-        public Dictionary<string, RecordEx> Dics { get { return dics; } }
-
-
-        public void GetItembyId(string id)
+        public override void GetItembyId(string id)
         {
             RecordEx re;
             if (dics.TryGetValue(id, out re))
@@ -147,7 +135,7 @@ namespace CommonRDF
                 }
             }
         }
-        public void Test()
+        public override void Test()
         {
             //string id = "w20070417_5_8436";
             string id = "piu_200809051791";
@@ -156,7 +144,7 @@ namespace CommonRDF
             SearchByN4(ss);
         }
 
-        public void Load(string path)
+        public override void Load(string path)
         {
             XElement db = XElement.Load(path);
             
@@ -272,7 +260,7 @@ namespace CommonRDF
            // var nn = n4.Select(pair => pair.Value.Length).Max();
 
         }
-         public string[] SearchByN4(string ss)
+         public override string[] SearchByN4(string ss)
         {
             string[] ids = null;
              if (!n4.TryGetValue(ss, out ids)) return ids;

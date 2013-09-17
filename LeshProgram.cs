@@ -6,8 +6,8 @@ namespace CommonRDF
 {
     class LeshProgram
     {
-        private Graph gr;
-        public LeshProgram(Graph gr)
+        private GraphBase gr;
+        public LeshProgram(GraphBase gr)
         {
             this.gr = gr;
         }

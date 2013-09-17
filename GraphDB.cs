@@ -1,17 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using PolarDB;
 namespace CommonRDF
 {
-    class GraphDB : Graph
+    class GraphDB : GraphBase
     {
         private PxCell pxGraph;
-        public new void Load(string path)
+        private string path;
+        public GraphDB(string path)
         {
+            this.path = path;
             if (pxGraph != null) pxGraph.Close();
             pxGraph = new PxCell(tp_graph, path + "\\data.pxc", false);
+        }
+        public override void Load(string path)
+        {
+            this.path = path;
           //  if (pxGraph.IsEmpty) return;
             XElement db = XElement.Load(path+"\\0001.xml");
 
@@ -97,13 +104,13 @@ namespace CommonRDF
                         else if (va.vid == 1)
                         {
                             inverse = va.predvalues
-                                .Select(pv => new Axe() { predicate = pv.p, variants = pv.preds.ToArray() })
+                                .Select(pv => new Axe { predicate = pv.p, variants = pv.preds.ToArray() })
                                 .ToArray();
                         }
                         else if (va.vid == 2)
                         {
                             data = va.predvalues
-                                .Select(pv => new Axe() { predicate = pv.p, variants = pv.preds.ToArray() })
+                                .Select(pv => new Axe { predicate = pv.p, variants = pv.preds.ToArray() })
                                 .ToArray();
                         }
                         
@@ -113,13 +120,32 @@ namespace CommonRDF
                     return
                         new[] { (object)q1.Key, (object)q1.Key, direct.Select(Axe2Objects).ToArray(), inverse.Select(Axe2Objects).ToArray(), data.Select(Axe2Objects).ToArray() };
                 })
+                .OrderBy(x => x[0])
                 .ToArray());
+
         }
 
         private static object[]  Axe2Objects(Axe axe)
         {
             return new[]{(object)axe.predicate, axe.variants.Cast<object>().ToArray()};
         }
+
+
+        public override void Test()
+        {
+          string id = "w20070417_5_8436";
+            //string id = "piu_200809051791";
+            var qu = pxGraph.Root.BinarySearchFirst(ent => - id.CompareTo(ent.Field(0).Get().Value));
+            if (qu.IsEmpty) Console.WriteLine("no entry");
+            else
+            {
+                var valu = qu.Get();
+                Console.WriteLine(valu.Type.Interpret(valu.Value));
+            }
+        //    string ss = "марч";
+         //   SearchByN4(ss);
+        }
+
         public static readonly PType tp_axe= new PTypeRecord(
                 new NamedType("predicate", new PType(PTypeEnumeration.sstring)),
                 new NamedType("variants", new PTypeSequence(new PType(PTypeEnumeration.sstring))));
@@ -129,5 +155,100 @@ namespace CommonRDF
                 new NamedType("direct", new PTypeSequence(tp_axe)),
                 new NamedType("inverse", new PTypeSequence(tp_axe)),
                 new NamedType("data", new PTypeSequence(tp_axe))));
+
+
+        public override Dictionary<string, RecordEx> Dics
+        {
+            get { throw new NotImplementedException(); }
+        }
+
+        public override IEnumerable<string> GetEntities()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override IEnumerable<PredicateEntityPair> GetDirect(string id)
+        {
+            return GetProperties<PredicateEntityPair>(id, 2, predicate => value => new PredicateEntityPair(predicate, value));
+        }
+
+        public override IEnumerable<PredicateEntityPair> GetInverse(string id)
+        {
+            return GetProperties<PredicateEntityPair>(id, 3, predicate=> value => new PredicateEntityPair(predicate, value));
+        }
+
+       // public static Regex LangRegex=new Regex("");
+        public override IEnumerable<PredicateDataTriple> GetData(string id)
+        {
+            return GetProperties<PredicateDataTriple>(id, 4, predicate => value =>
+            {
+                int ind = value.LastIndexOf("@");
+                string lang = null;
+                if (ind >= 0 && ind > value.Length - 6)
+                {
+                    lang = value.Substring(ind + 1);
+                    value = value.Substring(0, ind);
+                }
+                return new PredicateDataTriple(predicate, value,lang);
+            });
+        }
+
+        private IEnumerable<T> GetProperties<T>(string id, int direction, Func<string,Func<string,T>> selector)
+        {
+            var qu = pxGraph.Root.BinarySearchFirst(ent => -id.CompareTo(ent.Field(0).Get().Value));
+            if (qu.IsEmpty) return Enumerable.Empty<T>();
+            return ((object[])((object[])qu.Get().Value)[direction])
+                .Cast<object[]>()
+                .SelectMany(axe => ((object[]) axe[1]).Cast<string>().Select(selector((string) axe[0])));
+        }
+        public override IEnumerable<string> GetDirect(string id, string predicate)
+        {
+            return GetProperties(id, predicate, 2);
+        }
+
+        public override IEnumerable<string> GetInverse(string id, string predicate)
+        {
+            return GetProperties(id, predicate, 3);
+        }
+
+        private IEnumerable<string> GetProperties(string id, string predicate, int direction)
+        {
+            var qu = pxGraph.Root.BinarySearchFirst(ent => -id.CompareTo(ent.Field(0).Get().Value));
+            if (qu.IsEmpty) return Enumerable.Empty<string>();
+            var axe = ((object[]) ((object[]) qu.Get().Value)[direction])
+                .Cast<object[]>()
+                .FirstOrDefault(axe1 => (string) axe1[0] == predicate);
+            return axe == null ? Enumerable.Empty<string>() : ((object[])axe[1]).Cast<string>();
+        }
+
+        public override IEnumerable<string> GetData(string id, string predicate)
+        {
+            return GetProperties(id, predicate, 4);
+        }
+
+        public override IEnumerable<DataLangPair> GetDataLangPairs(string id, string predicate)
+        {
+            return GetData(id, predicate)
+                .Select(data => data.Split('@'))
+                .Select(dataLang=>new DataLangPair(dataLang[0],
+                    dataLang.Length == 1 && dataLang.Last().Length <= 4 ? dataLang.Last() : null));
+        }
+        public override void GetItembyId(string id)
+        {
+            var qu = pxGraph.Root.BinarySearchFirst(ent => -id.CompareTo(ent.Field(0).Get().Value));
+            if (qu.IsEmpty) Console.WriteLine("no entry");
+            else
+            {
+                var valu = qu.Get();
+                Console.WriteLine(valu.Type.Interpret(valu.Value));
+            }
+        }
+
+      
+
+        public override string[] SearchByN4(string ss)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

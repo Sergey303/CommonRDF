@@ -44,6 +44,7 @@
   <ItemGroup>
     <Compile Include="Common.cs" />
     <Compile Include="Graph.cs" />
+    <Compile Include="GraphBase.cs" />
     <Compile Include="GraphDB.cs" />
     <Compile Include="LeshProgram.cs" />
     <Compile Include="MagProgram.cs" />

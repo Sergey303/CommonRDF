@@ -46,9 +46,9 @@ namespace CommonRDF
                 new DescrVar() { isEntity = false, varName="?fd" },
             };
         }
-        public bool Match(Graph gr, IReceiver receive) { return Match(gr, 0, receive); } 
+        public bool Match(GraphBase gr, IReceiver receive) { return Match(gr, 0, receive); } 
         // Возвращает истину если сопоставление состоялось хотя бы один раз
-        private bool Match(Graph gr, int nextsample, IReceiver receive)
+        private bool Match(GraphBase gr, int nextsample, IReceiver receive)
         {
             // Вывести если дошли до конца
             if (nextsample >= testquery.Length)
