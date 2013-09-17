@@ -5,9 +5,9 @@ namespace CommonRDF
 {
     class MagProgram : IReceiver
     {
-        private Graph gr;
+        private GraphBase gr;
         private List<string[]> receive_list;
-        public MagProgram(Graph gr)
+        public MagProgram(GraphBase gr)
         {
             this.gr = gr;
             Restart();
