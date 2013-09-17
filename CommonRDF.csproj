@@ -33,6 +33,9 @@
     <StartupObject>CommonRDF.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="PolarDB">
+      <HintPath>dlls\PolarDB.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -44,6 +47,7 @@
   <ItemGroup>
     <Compile Include="Common.cs" />
     <Compile Include="Graph.cs" />
+    <Compile Include="GraphDB.cs" />
     <Compile Include="LeshProgram.cs" />
     <Compile Include="MagProgram.cs" />
     <Compile Include="ONames.cs" />
