@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace CommonRDF
 {
@@ -32,7 +33,6 @@ namespace CommonRDF
     }
     public abstract class GraphBase
     {
-        public abstract Dictionary<string, RecordEx> Dics { get; }
         public abstract IEnumerable<string> GetEntities();
         public abstract IEnumerable<PredicateEntityPair> GetDirect(string id);
         public abstract IEnumerable<PredicateEntityPair> GetInverse(string id);
@@ -43,7 +43,16 @@ namespace CommonRDF
         public abstract IEnumerable<DataLangPair> GetDataLangPairs(string id, string predicate);
         public abstract void GetItembyId(string id);
         public abstract void Test();
-        public abstract void Load(string path);
+        public abstract void Load(string[] rdfFiles);
         public abstract string[] SearchByN4(string ss);
+
+        public static Regex LangRegex = new Regex("^(.*)@([^@]{1,5})$", RegexOptions.Compiled);
+        public static DataLangPair SplitLang(string dataLang)
+        {
+            var m = LangRegex.Match(dataLang);
+            return m.Success
+                ? new DataLangPair(m.Groups[0].Value, m.Groups[1].Value) 
+                :new DataLangPair(dataLang, null);
+        }
     }
 }

@@ -11,8 +11,7 @@ namespace CommonRDF
         //public static readonly Hashtable Cach = new Hashtable();(RecordEx)(Cach[id] ?? (Cach[id] = 
         public string Value;
         public bool IsNewParameter;
-        private bool hasItem;
-        public bool IsOpen;
+        public bool HasOptValue;
         public bool? IsObj;
         private event Action<bool> whenObjSetted;
         public event Action<bool> WhenObjSetted
@@ -47,15 +46,6 @@ namespace CommonRDF
                    this.SetTargetType(v);
                };
             connect.WhenObjSetted += connectOnWhenObjSetted;
-        }
-        
-        public void SetValue(string value)
-        {
-           
-            if (ReferenceEquals(value, Value)) return;
-            IsNewParameter = false;
-            Value = value;
-            hasItem = false;
         }
     }
 

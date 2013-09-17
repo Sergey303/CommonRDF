@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
@@ -13,116 +14,123 @@ namespace CommonRDF
         public GraphDB(string path)
         {
             this.path = path;
-            if (pxGraph != null) pxGraph.Close();
+
             pxGraph = new PxCell(tp_graph, path + "\\data.pxc", false);
         }
-        public override void Load(string path)
+        public override void Load(string[] rdfFiles)
         {
-            this.path = path;
-          //  if (pxGraph.IsEmpty) return;
-            XElement db = XElement.Load(path+"\\0001.xml");
-
-            List<Quad> quads = new List<Quad>();
-            List<KeyValuePair<string, string>> id_names = new List<KeyValuePair<string, string>>();
-            var query = db.Elements() //.Take(1000)
-                .Where(el => el.Attribute(sema2012m.ONames.rdfabout) != null);
-            foreach (XElement record in query)
+            //  if (pxGraph.IsEmpty) return;
+            foreach (var rdfFile in rdfFiles)
             {
-                string about = record.Attribute(sema2012m.ONames.rdfabout).Value;
-                // Зафиксировать тип
-                quads.Add(new Quad(
-                    0,
-                    about,
-                    sema2012m.ONames.rdftypestring,
-                    record.Name.NamespaceName + record.Name.LocalName));
-                // Сканировать элементы
-                foreach (var prop in record.Elements())
+                XElement db = XElement.Load(rdfFile);
+
+                List<Quad> quads = new List<Quad>();
+                List<KeyValuePair<string, string>> id_names = new List<KeyValuePair<string, string>>();
+                var query = db.Elements() //.Take(1000)
+                    .Where(el => el.Attribute(sema2012m.ONames.rdfabout) != null);
+                foreach (XElement record in query)
                 {
-                    // Есть разница между объектными свойствами и полями данных
-                    string prop_name = prop.Name.NamespaceName + prop.Name.LocalName;
-                    XAttribute rdfresource_att = prop.Attribute(sema2012m.ONames.rdfresource);
-                    if (rdfresource_att != null)
+                    string about = record.Attribute(sema2012m.ONames.rdfabout).Value;
+                    // Зафиксировать тип
+                    quads.Add(new Quad(
+                        0,
+                        about,
+                        sema2012m.ONames.rdftypestring,
+                        record.Name.NamespaceName + record.Name.LocalName));
+                    // Сканировать элементы
+                    foreach (var prop in record.Elements())
                     {
-                        quads.Add(new Quad(
-                            0,
-                            about,
-                            prop_name,
-                            rdfresource_att.Value));
-                        quads.Add(new Quad(
-                            1,
-                            rdfresource_att.Value,
-                            prop_name,
-                            about));
-                    }
-                    else
-                    {
-                        string ex_data = prop.Value; // Надо продолжить!
-                        XAttribute lang_att = prop.Attribute(sema2012m.ONames.xmllang);
-                        if (lang_att != null) ex_data += "@" + lang_att.Value;
-                        quads.Add(new Quad(
-                            2,
-                            about,
-                            prop_name,
-                            ex_data));
-                        if (prop_name == "http://fogid.net/o/name")
-                            id_names.Add(new KeyValuePair<string, string>(about, prop.Value));
+                        // Есть разница между объектными свойствами и полями данных
+                        string prop_name = prop.Name.NamespaceName + prop.Name.LocalName;
+                        XAttribute rdfresource_att = prop.Attribute(sema2012m.ONames.rdfresource);
+                        if (rdfresource_att != null)
+                        {
+                            quads.Add(new Quad(
+                                0,
+                                about,
+                                prop_name,
+                                rdfresource_att.Value));
+                            quads.Add(new Quad(
+                                1,
+                                rdfresource_att.Value,
+                                prop_name,
+                                about));
+                        }
+                        else
+                        {
+                            string ex_data = prop.Value; // Надо продолжить!
+                            XAttribute lang_att = prop.Attribute(sema2012m.ONames.xmllang);
+                            if (lang_att != null) ex_data += "@" + lang_att.Value;
+                            quads.Add(new Quad(
+                                2,
+                                about,
+                                prop_name,
+                                ex_data));
+                            if (prop_name == "http://fogid.net/o/name")
+                                id_names.Add(new KeyValuePair<string, string>(about, prop.Value));
+                        }
                     }
                 }
-            }
-            // Буду строить вот такую структуру:
+                // Буду строить вот такую структуру:
 
-          pxGraph.Fill2(quads.GroupBy(q => q.entity)
-                .Select(q1 =>
-                {
-                    string type_id = null;
-                    Axe[] direct = null;
-                    Axe[] inverse = new Axe[0];
-                    Axe[] data = null;
-                    var rea = q1.GroupBy(q => q.vid)
-                        .Select(q2 => new
-                        {
-                            vid = q2.Key,
-                            predvalues = q2.GroupBy(q => q.predicate)
-                                .Select(q3 => new { p = q3.Key, preds = q3.Select(q => q.rest).ToList() })
-                                .ToArray()
-                        }).ToArray();
-                    foreach (var va in rea)
+                pxGraph.Fill2(quads.GroupBy(q => q.entity)
+                    .Select(q1 =>
                     {
-                        if (va.vid == 0)
-                        {
-                            // Поиск первого типа (может не надо уничтожать запись???)
-                            var qw = va.predvalues.FirstOrDefault(p => p.p == sema2012m.ONames.rdftypestring);
-                            if (qw != null)
+                        string type_id = null;
+                        Axe[] direct = null;
+                        Axe[] inverse = new Axe[0];
+                        Axe[] data = null;
+                        var rea = q1.GroupBy(q => q.vid)
+                            .Select(q2 => new
                             {
-                                type_id = qw.preds.First();
-                                //qw.preds.RemoveAt(0); // Уничтожение ссылки на тип
+                                vid = q2.Key,
+                                predvalues = q2.GroupBy(q => q.predicate)
+                                    .Select(q3 => new {p = q3.Key, preds = q3.Select(q => q.rest).ToList()})
+                                    .ToArray()
+                            }).ToArray();
+                        foreach (var va in rea)
+                        {
+                            if (va.vid == 0)
+                            {
+                                // Поиск первого типа (может не надо уничтожать запись???)
+                                var qw = va.predvalues.FirstOrDefault(p => p.p == sema2012m.ONames.rdftypestring);
+                                if (qw != null)
+                                {
+                                    type_id = qw.preds.First();
+                                    //qw.preds.RemoveAt(0); // Уничтожение ссылки на тип
+                                }
+                                direct = va.predvalues
+                                    .Select(pv => new Axe() {predicate = pv.p, variants = pv.preds.ToArray()})
+                                    .ToArray();
                             }
-                            direct = va.predvalues
-                                .Select(pv => new Axe() { predicate = pv.p, variants = pv.preds.ToArray() })
-                                .ToArray();
+                            else if (va.vid == 1)
+                            {
+                                inverse = va.predvalues
+                                    .Select(pv => new Axe {predicate = pv.p, variants = pv.preds.ToArray()})
+                                    .ToArray();
+                            }
+                            else if (va.vid == 2)
+                            {
+                                data = va.predvalues
+                                    .Select(pv => new Axe {predicate = pv.p, variants = pv.preds.ToArray()})
+                                    .ToArray();
+                            }
+
                         }
-                        else if (va.vid == 1)
-                        {
-                            inverse = va.predvalues
-                                .Select(pv => new Axe { predicate = pv.p, variants = pv.preds.ToArray() })
-                                .ToArray();
-                        }
-                        else if (va.vid == 2)
-                        {
-                            data = va.predvalues
-                                .Select(pv => new Axe { predicate = pv.p, variants = pv.preds.ToArray() })
-                                .ToArray();
-                        }
-                        
-                    }if (direct == null) direct = new Axe[0];
+                        if (direct == null) direct = new Axe[0];
                         if (inverse == null) inverse = new Axe[0];
                         if (data == null) data = new Axe[0];
-                    return
-                        new[] { (object)q1.Key, (object)q1.Key, direct.Select(Axe2Objects).ToArray(), inverse.Select(Axe2Objects).ToArray(), data.Select(Axe2Objects).ToArray() };
-                })
-                .OrderBy(x => x[0])
-                .ToArray());
+                        return
+                            new[]
+                            {
+                                (object) q1.Key, (object) q1.Key, direct.Select(Axe2Objects).ToArray(),
+                                inverse.Select(Axe2Objects).ToArray(), data.Select(Axe2Objects).ToArray()
+                            };
+                    })
+                    .OrderBy(x => x[0])
+                    .ToArray());
 
+            }
         }
 
         private static object[]  Axe2Objects(Axe axe)
@@ -157,11 +165,6 @@ namespace CommonRDF
                 new NamedType("data", new PTypeSequence(tp_axe))));
 
 
-        public override Dictionary<string, RecordEx> Dics
-        {
-            get { throw new NotImplementedException(); }
-        }
-
         public override IEnumerable<string> GetEntities()
         {
             throw new NotImplementedException();
@@ -182,14 +185,8 @@ namespace CommonRDF
         {
             return GetProperties<PredicateDataTriple>(id, 4, predicate => value =>
             {
-                int ind = value.LastIndexOf("@");
-                string lang = null;
-                if (ind >= 0 && ind > value.Length - 6)
-                {
-                    lang = value.Substring(ind + 1);
-                    value = value.Substring(0, ind);
-                }
-                return new PredicateDataTriple(predicate, value,lang);
+                var dataLang = SplitLang(value);
+                return new PredicateDataTriple(predicate, dataLang.data,dataLang.lang);
             });
         }
 
@@ -229,9 +226,7 @@ namespace CommonRDF
         public override IEnumerable<DataLangPair> GetDataLangPairs(string id, string predicate)
         {
             return GetData(id, predicate)
-                .Select(data => data.Split('@'))
-                .Select(dataLang=>new DataLangPair(dataLang[0],
-                    dataLang.Length == 1 && dataLang.Last().Length <= 4 ? dataLang.Last() : null));
+                .Select(SplitLang);
         }
         public override void GetItembyId(string id)
         {

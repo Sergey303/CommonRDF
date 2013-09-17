@@ -1,5 +1,38 @@
-﻿namespace CommonRDF
+﻿using System;
+
+namespace CommonRDF
 {
+
+    public abstract class Triplet
+    {
+        public string s, p;
+        /// <summary>
+        /// Порождает объект класса Triplet по объектному представлению триплета 
+        /// </summary>
+        /// <param name="valu">Объектное представление триплета</param>
+        /// <returns></returns>
+        public static Triplet Create(object valu)
+        {
+            object[] uni = (object[])valu;
+            int tag = (int)uni[0];
+            object[] rec = (object[])uni[1];
+            if (tag == 1) return new OProp((string)rec[0], (string)rec[1], (string)rec[2]);
+            else if (tag == 2) return new DProp((string)rec[0], (string)rec[1], (string)rec[2], (string)rec[3]);
+            else throw new Exception("Can't create instance of Triplet class");
+        }
+    }
+    public class OProp : Triplet
+    {
+        public string o;
+        public OProp(string s, string p, string o) { this.s = s; this.p = p; this.o = o; }
+    }
+    public class DProp : Triplet
+    {
+        public string d; public string lang;
+        public DProp(string s, string p, string d) { this.s = s; this.p = p; this.d = d; }
+        public DProp(string s, string p, string d, string l) { this.s = s; this.p = p; this.d = d; this.lang = l; }
+    }
+
     // Четверка, получаемая из тройки (триплета). Поле vid {0|1|2} обозначает вид квада (direct, inverse, data)
     // entity - идентификатор сущности. Для нулевого и второго вариантов - это субъект, для первого - объект
     // predicate - идентификатор предиката триплета
