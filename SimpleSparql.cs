@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using sema2012m;
 
 namespace CommonRDF
 {
@@ -19,23 +20,23 @@ namespace CommonRDF
             {
                 new Sample() { vid = TripletVid.op, firstunknown = 0, 
                     subject= new TVariable() { isVariable=true, value="?s", index=0 },
-                    predicate = new TVariable() { isVariable=false, value=sema2012m.ONames.p_participant },
+                    predicate = new TVariable() { isVariable=false, value=ONames.p_participant },
                     obj = new TVariable() { isVariable = false, value=id}},
                 new Sample() { vid = TripletVid.op, firstunknown = 1, 
                     subject= new TVariable() { isVariable=true, value="?s", index=0 },
-                    predicate = new TVariable() { isVariable=false, value=sema2012m.ONames.p_inorg },
+                    predicate = new TVariable() { isVariable=false, value=ONames.p_inorg },
                     obj = new TVariable() { isVariable = true, value="?inorg", index=1 }},
                 new Sample() { vid = TripletVid.op, firstunknown = 2, 
                     subject= new TVariable() { isVariable=true, value=id, index=0 },
-                    predicate = new TVariable() { isVariable=false, value=sema2012m.ONames.rdftypestring },
+                    predicate = new TVariable() { isVariable=false, value=ONames.rdftypestring },
                     obj = new TVariable() { isVariable = false, value="http://fogid.net/o/participation"}},
                 new Sample() { vid = TripletVid.dp, firstunknown = 2, 
                     subject= new TVariable() { isVariable=true, value="?inorg", index=1 },
-                    predicate = new TVariable() { isVariable=false, value=sema2012m.ONames.p_name },
+                    predicate = new TVariable() { isVariable=false, value=ONames.p_name },
                     obj = new TVariable() { isVariable = true, value="?orgname", index=2 }},
                 new Sample() { vid = TripletVid.dp, firstunknown = 3, 
                     subject= new TVariable() { isVariable=true, value="?s", index=0 },
-                    predicate = new TVariable() { isVariable=false, value=sema2012m.ONames.p_fromdate },
+                    predicate = new TVariable() { isVariable=false, value=ONames.p_fromdate },
                     obj = new TVariable() { isVariable = true, value="?fd", index=3 }, option = true },
             };
             testvars = new DescrVar[] 

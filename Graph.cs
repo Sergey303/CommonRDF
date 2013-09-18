@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
+using sema2012m;
 
 namespace CommonRDF
 {
@@ -137,10 +138,10 @@ namespace CommonRDF
             string id = "piu_200809051791";
             GetItembyId(id);
             string ss = "марч";
-            SearchByN4(ss);
+            SearchByName(ss);
         }
 
-        public override void Load(string[] rdfFiles)
+        public override void Load(params string[] rdfFiles)
         {
             foreach (var rdfFile in rdfFiles)
             {
@@ -149,22 +150,22 @@ namespace CommonRDF
                 List<Quad> quads = new List<Quad>();
                 List<KeyValuePair<string, string>> id_names = new List<KeyValuePair<string, string>>();
                 var query = db.Elements() //.Take(1000)
-                    .Where(el => el.Attribute(sema2012m.ONames.rdfabout) != null);
+                    .Where(el => el.Attribute(ONames.rdfabout) != null);
                 foreach (XElement record in query)
                 {
-                    string about = record.Attribute(sema2012m.ONames.rdfabout).Value;
+                    string about = record.Attribute(ONames.rdfabout).Value;
                     // Зафиксировать тип
                     quads.Add(new Quad(
                         0,
                         about,
-                        sema2012m.ONames.rdftypestring,
+                        ONames.rdftypestring,
                         record.Name.NamespaceName + record.Name.LocalName));
                     // Сканировать элементы
                     foreach (var prop in record.Elements())
                     {
                         // Есть разница между объектными свойствами и полями данных
                         string prop_name = prop.Name.NamespaceName + prop.Name.LocalName;
-                        XAttribute rdfresource_att = prop.Attribute(sema2012m.ONames.rdfresource);
+                        XAttribute rdfresource_att = prop.Attribute(ONames.rdfresource);
                         if (rdfresource_att != null)
                         {
                             quads.Add(new Quad(
@@ -181,7 +182,7 @@ namespace CommonRDF
                         else
                         {
                             string ex_data = prop.Value; // Надо продолжить!
-                            XAttribute lang_att = prop.Attribute(sema2012m.ONames.xmllang);
+                            XAttribute lang_att = prop.Attribute(ONames.xmllang);
                             if (lang_att != null) ex_data += "@" + lang_att.Value;
                             quads.Add(new Quad(
                                 2,
@@ -215,7 +216,7 @@ namespace CommonRDF
                             if (va.vid == 0)
                             {
                                 // Поиск первого типа (может не надо уничтожать запись???)
-                                var qw = va.predvalues.FirstOrDefault(p => p.p == sema2012m.ONames.rdftypestring);
+                                var qw = va.predvalues.FirstOrDefault(p => p.p == ONames.rdftypestring);
                                 if (qw != null)
                                 {
                                     type_id = qw.preds.First();
@@ -260,7 +261,7 @@ namespace CommonRDF
             }
         }
 
-        public override string[] SearchByN4(string ss)
+        public override string[] SearchByName(string ss)
         {
             string[] ids = null;
              if (!n4.TryGetValue(ss, out ids)) return ids;
@@ -268,7 +269,7 @@ namespace CommonRDF
              foreach (var id in ids)
              {
                  //var r = dics[id];
-                 string[] names = dics[id].data.First(ax => ax.predicate == sema2012m.ONames.p_name).variants;
+                 string[] names = dics[id].data.First(ax => ax.predicate == ONames.p_name).variants;
                  Console.Write(id);
                  foreach (var n in names)
                      Console.Write(" " + n);

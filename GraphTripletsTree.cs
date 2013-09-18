@@ -71,15 +71,15 @@ namespace CommonRDF
         }
 
         private IEnumerable<Triplet> GetProperty(string id, int direction,
-            Predicate<Triplet> predicateValuesTest, int predicateSC = -1)
+            Predicate<Triplet> predicateValuesTest, int? predicateSC = null)
         {
             PxEntry found = GetEntryById(id);
             if (found.IsEmpty) return null;
             Triplet first4Test;
             IEnumerable<PxEntry> pxEntries = found.Field(direction).Elements();
-            if (predicateSC != -1)
+            if (predicateSC != null)
                 pxEntries = pxEntries
-                    .Where(pRec => (int) pRec.Field(0).Get().Value == predicateSC);
+                    .Where(pRec => (int) pRec.Field(0).Get().Value == predicateSC.Value);
             return pxEntries
                 .Select(pRec =>
                     pRec.Field(1)
@@ -135,11 +135,24 @@ namespace CommonRDF
 
         public override void Test()
         {
-            throw new NotImplementedException();
+            Console.WriteLine(string.Join(" ", SearchByName("Ершов Андрей Петрович")));
         }
-        public override string[] SearchByN4(string ss)
+        public override string[] SearchByName(string ss)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrWhiteSpace(ss)) return new string[0];
+            //ss = ss;
+            var name4 = (ss.Length > 4 ? ss.Substring(0, 4) : ss).ToLower();
+            return n4_x.Root.BinarySearchAll(
+                e => String.Compare((string) e.Field(1).Get().Value, name4, StringComparison.Ordinal))
+                .Select(e => e.Field(0).Get().Value)
+                .Cast<long>()
+                .Select(GetTriplet)
+                .Select(Triplet.Create)
+                .Where(t => t is DProp) // && predicate is name
+                .Cast<DProp>()
+                .Where(t => t.d == ss)
+                .Select(t=>t.s)
+                .ToArray();
         }
 
         // =============== Методы доступа к данным ==================
@@ -153,13 +166,13 @@ namespace CommonRDF
             });
             return found;
         }
-        public override void Load(string[] rdf_files)
+        public override void Load(params string[] rdf_files)
         {
             DateTime tt0 = DateTime.Now;
             // Закроем использование
             if (triplets != null) { triplets.Close(); triplets = null; }
             if (graph_x != null) { graph_x.Close(); graph_x = null; }
-            if (n4_x != null) { n4_x.Close(); graph_x = null; }
+            if (n4_x != null) { n4_x.Close(); n4_x = null; }
             // Создадим ячейки
             triplets = new PaCell(tp_triplets, path + "triplets.pac", false);
             triplets.Clear();
@@ -191,6 +204,8 @@ namespace CommonRDF
             triplets.Close();
             quads.Close(); File.Delete(path + "quads.pac");
             graph_a.Close(); File.Delete(path + "graph_a.pac");
+            n4.Close(); File.Delete(path + "n4.pac");
+            n4_x.Close();
             graph_x.Close();
             // Откроем для использования
             InitCells();
@@ -211,7 +226,7 @@ namespace CommonRDF
             bool firstprop = true;
             foreach (object[] el in quads.Root.Elements().Select(e => e.Value))
             {
-                FourFields record = new FourFields((int)el[0], (int)el[1], (int)el[2], (long)el[3]);
+                var record = new FourFields((int)el[0], (int)el[1], (int)el[2], (long)el[3]);
                 if (firsttime || record.e_hs != hs_e)
                 { // Начало новой записи
                     firstprop = true;
@@ -298,18 +313,22 @@ namespace CommonRDF
             public long off;
             public FourFields(int a, int b, int c, long d)
             {
-                this.e_hs = a; this.vid = b; this.p_hs = c; this.off = d;
+                e_hs = a; vid = b; p_hs = c; off = d;
             }
         }
 
 
         private void InitCells()
         {
-            if (!File.Exists(path + "triplets.pac")
-                || !File.Exists(path + "graph_x.pxc")) return;
-            triplets = new PaCell(tp_triplets, path + "triplets.pac");
+            string filePathTriplets = path + "triplets.pac";
+            string filePathGraph = path + "graph_x.pxc";
+            string filePathN4 = path + "n4_x.pxc";
+            if (!File.Exists(filePathTriplets)
+                || !File.Exists(filePathGraph) || !File.Exists(filePathN4)) return;
+            triplets = new PaCell(tp_triplets, filePathTriplets);
             any_triplet = triplets.Root.Element(0);
-            graph_x = new PxCell(tp_graph, path + "graph_x.pxc");
+            graph_x = new PxCell(tp_graph, filePathGraph);
+            n4_x=new PxCell(tp_n4, filePathN4);
         }
         private static void TripletSerialInput(ISerialFlow sflow, IEnumerable<string> rdf_filenames)
         {
@@ -324,7 +343,7 @@ namespace CommonRDF
             sflow.EndSerialFlow();
         }
         private delegate void QuadAction(string id, string property,
-             string value, bool isDirect = false, string lang = null);
+             string value, bool isObj = true, string lang = null);
 
         private static string langAttributeName = "xml:lang",
             rdfAbout = "rdf:about",
@@ -335,7 +354,7 @@ namespace CommonRDF
         private static void ReadXML2Quad(string url, QuadAction quadAction)
         {
             string resource;
-            bool isDirect;
+            bool isObj;
             string id = string.Empty;
             using (var xml = new XmlTextReader(url))
                 while (xml.Read())
@@ -344,9 +363,9 @@ namespace CommonRDF
                             quadAction(id, ONames.rdftypestring, NS + xml.Name);
                         else if (xml.Depth == 2 && id != null)
                             quadAction(id, NS + xml.Name,
-                                isDirect: isDirect = (resource = xml[rdfResource]) != null,
-                                lang: isDirect ? null : xml[langAttributeName],
-                                value: isDirect ? resource : xml.ReadString());
+                                isObj: isObj = (resource = xml[rdfResource]) != null,
+                                lang: isObj ? null : xml[langAttributeName],
+                                value: isObj ? resource : xml.ReadString());
         }
         private void LoadQuadsAndSort(PaCell n4, PaCell quads)
         {
@@ -359,22 +378,22 @@ namespace CommonRDF
                 object[] tri_uni = (object[])tri.Value;
                 int tag = (int)tri_uni[0];
                 object[] rec = (object[])tri_uni[1];
-                int hs_s = ((string)rec[0]).GetHashCode();
-                int hs_p = ((string)rec[1]).GetHashCode();
+                int hs_s = rec[0].GetHashCode();
+                int hs_p = rec[1].GetHashCode();
                 if (tag == 1) // объектое свойство
                 {
-                    int hs_o = ((string)rec[2]).GetHashCode();
+                    int hs_o = rec[2].GetHashCode();
                     quads.V(new object[] { hs_s, 0, hs_p, tri.Offset });
                     quads.V(new object[] { hs_o, 1, hs_p, tri.Offset });
                 }
                 else // поле данных
                 {
                     quads.V(new object[] { hs_s, 2, hs_p, tri.Offset });
-                    if ((string)rec[1] != sema2012m.ONames.p_name) continue;
+                    if ((string)rec[1] != ONames.p_name) continue;
                     // Поместим информацию в таблицу имен n4
                     string name = (string)rec[2];
                     string name4 = name.Length <= 4 ? name : name.Substring(0, 4);
-                    n4.V(new object[] { hs_s, name4.ToLower() });
+                    n4.V(new object[] { tri.Offset, name4.ToLower() });
                 }
             }
             quads.Se();
@@ -404,7 +423,7 @@ namespace CommonRDF
                 object[] v2 = (object[])o2;
                 string s1 = (string)v1[1];
                 string s2 = (string)v2[1];
-                return s1.CompareTo(s2);
+                return String.Compare(s1, s2, StringComparison.Ordinal);
             });
         }
         private void InitTypes()
@@ -449,7 +468,7 @@ namespace CommonRDF
                             new NamedType("hs_p", new PType(PTypeEnumeration.integer)),
                             new NamedType("off", new PTypeSequence(new PType(PTypeEnumeration.longinteger))))))));
             tp_n4 = new PTypeSequence(new PTypeRecord(
-                new NamedType("hs_triplets", new PTypeSequence(new PType(PTypeEnumeration.longinteger))),
+                new NamedType("hs_triplets", new PType(PTypeEnumeration.longinteger)),
                 new NamedType("s4", new PTypeFString(4))));
         }
     }

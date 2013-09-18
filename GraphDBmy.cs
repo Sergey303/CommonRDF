@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using PolarDB;
+using sema2012m;
 
 namespace CommonRDF
 {
@@ -60,22 +61,22 @@ namespace CommonRDF
             List<Quad> quads = new List<Quad>();
             //List<KeyValuePair<string, string>> id_names = new List<KeyValuePair<string, string>>();
             var query = db.Elements() //.Take(1000)
-                .Where(el => el.Attribute(sema2012m.ONames.rdfabout) != null);
+                .Where(el => el.Attribute(ONames.rdfabout) != null);
             foreach (XElement record in query)
             {
-                string about = record.Attribute(sema2012m.ONames.rdfabout).Value;
+                string about = record.Attribute(ONames.rdfabout).Value;
                 // Зафиксировать тип
                 quads.Add(new Quad(
                     0,
                     about,
-                    sema2012m.ONames.rdftypestring,
+                    ONames.rdftypestring,
                     record.Name.NamespaceName + record.Name.LocalName));
                 // Сканировать элементы
                 foreach (var prop in record.Elements())
                 {
                     // Есть разница между объектными свойствами и полями данных
                     string prop_name = prop.Name.NamespaceName + prop.Name.LocalName;
-                    XAttribute rdfresource_att = prop.Attribute(sema2012m.ONames.rdfresource);
+                    XAttribute rdfresource_att = prop.Attribute(ONames.rdfresource);
                     if (rdfresource_att != null)
                     {
                         quads.Add(new Quad(
@@ -92,7 +93,7 @@ namespace CommonRDF
                     else
                     {
                         string ex_data = prop.Value; // Надо продолжить!
-                        XAttribute lang_att = prop.Attribute(sema2012m.ONames.xmllang);
+                        XAttribute lang_att = prop.Attribute(ONames.xmllang);
                         if (lang_att != null) ex_data += "@" + lang_att.Value;
                         quads.Add(new Quad(
                             2,
@@ -127,7 +128,7 @@ namespace CommonRDF
                         if (va.vid == 0)
                         {
                             // Поиск первого типа (может не надо уничтожать запись???)
-                            var qw = va.predvalues.FirstOrDefault(p => p.p == sema2012m.ONames.rdftypestring);
+                            var qw = va.predvalues.FirstOrDefault(p => p.p == ONames.rdftypestring);
                             if (qw != null)
                             {
                                 type_id = qw.preds.First();

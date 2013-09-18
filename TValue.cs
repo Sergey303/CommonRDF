@@ -41,7 +41,7 @@ namespace CommonRDF
            connectOnWhenObjSetted= 
                v=> { 
                    connect.whenObjSetted -= connectOnWhenObjSetted;
-                   this.SetTargetType(v);
+                   SetTargetType(v);
                };
             connect.WhenObjSetted += connectOnWhenObjSetted;
         }

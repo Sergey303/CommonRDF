@@ -43,8 +43,8 @@ namespace CommonRDF
         public abstract IEnumerable<DataLangPair> GetDataLangPairs(string id, string predicate);
         public abstract void GetItembyId(string id);
         public abstract void Test();
-        public abstract void Load(string[] rdfFiles);
-        public abstract string[] SearchByN4(string ss);
+        public abstract void Load(params string[] rdfFiles);
+        public abstract string[] SearchByName(string ss);
 
         public static Regex LangRegex = new Regex("^(.*)@([^@]{1,5})$", RegexOptions.Compiled);
         public static DataLangPair SplitLang(string dataLang)

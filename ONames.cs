@@ -37,7 +37,7 @@ namespace sema2012m
         public static XName rdfdescription = "{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description";
         public static XName AttRdf = XName.Get("rdf", XNamespace.Xmlns.NamespaceName);
         public static string rdftypestring = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
-        public static XName xNameDatatypeProperty = XName.Get("name", sema2012m.ONames.FOG);
+        public static XName xNameDatatypeProperty = XName.Get("name", FOG);
 
 
         public static XName TagDelete = XName.Get("delete", FOG);

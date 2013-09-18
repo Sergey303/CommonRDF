@@ -387,7 +387,7 @@ namespace CommonRDF
         public IEnumerable<string> GetSubjectsByProperty(string predicate, TValue o, string data)
         {
             if (predicate == ONames.p_name)
-                return gr.SearchByN4(data).Where(id => gr.GetData(id, ONames.p_name).Contains(data));
+                return gr.SearchByName(data).Where(id => gr.GetData(id, ONames.p_name).Contains(data));
             Axe pre;
             throw new NotImplementedException();
             return null;
