@@ -10,8 +10,6 @@ namespace CommonRDF
     {
         //public static readonly Hashtable Cach = new Hashtable();(RecordEx)(Cach[id] ?? (Cach[id] = 
         public string Value;
-        public bool IsNewParameter;
-        public bool HasOptValue;
         public bool? IsObj;
         private event Action<bool> whenObjSetted;
         public event Action<bool> WhenObjSetted
@@ -49,8 +47,15 @@ namespace CommonRDF
         }
     }
 
-    public class QueryTriplet
+    public struct QueryTriplet
     {
         public TValue S, P, O;
+        public bool IsNewS, IsNewP, IsNewO;
+    }
+    public struct QueryTripletOptional
+    {
+        public TValue S, P, O;
+        public bool IsNewS, IsNewP, IsNewO;
+        public bool HasSOptValue, HasPOptValue, HasOOptValue;
     }
 }
