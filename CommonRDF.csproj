@@ -67,6 +67,7 @@
     <Content Include="query Organizations and events in which participated Andrey Ershov.txt" />
     <Content Include="query.txt" />
     <Content Include="querySimpleЕршов.txt" />
+    <Content Include="orgs with portraits.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

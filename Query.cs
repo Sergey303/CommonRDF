@@ -31,6 +31,8 @@ namespace CommonRDF
         private readonly List<QueryTriplet> triplets;
         public readonly List<string[]> ParametrsValuesList;
 
+        #region Read
+
         public Query(string filePath, GraphBase graph)
         {
             ParametrsValuesList = new List<string[]>();
@@ -39,7 +41,7 @@ namespace CommonRDF
             //   var parameterTests = new Dictionary<TValue, List<QueryTriplet>>();
             // var parametesWithMultiValues = new HashSet<TValue>();
             triplets = new List<QueryTriplet>();
-            Optionals=new List<QueryTripletOptional>();
+            Optionals = new List<QueryTripletOptional>();
             var paramByName = new Dictionary<string, TValue>();
             var optParamHasValues = new HashSet<string>();
             var constsByValue = new Dictionary<string, TValue>();
@@ -51,7 +53,8 @@ namespace CommonRDF
                 {
                     string parameters2Select = selectMatch.Groups["selectGroups"].Value.Trim();
                     if (parameters2Select != "*")
-                        SelectParameters = parameters2Select.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                        SelectParameters =
+                            parameters2Select.Split(new[] {' '}, StringSplitOptions.RemoveEmptyEntries).ToList();
                 }
                 var whereMatch = QueryWhereReg.Match(qs);
                 if (whereMatch.Success)
@@ -67,7 +70,7 @@ namespace CommonRDF
                         {
                             pValue = tripletMatch.Groups["p"].Value;
                             oValue = tripletMatch.Groups["o"].Value;
-                               
+
                         }
                         else if ((sMatch = tripletMatch.Groups["os"]).Success)
                         {
@@ -81,9 +84,9 @@ namespace CommonRDF
                         string sValue = sMatch.Value.TrimStart('<').TrimEnd('>');
                         bool isNewS = TestParameter(sValue,
                             out s, constsByValue, paramByName);
-                        bool isNewP = TestParameter(pValue=pValue.TrimStart('<').TrimEnd('>'), 
+                        bool isNewP = TestParameter(pValue = pValue.TrimStart('<').TrimEnd('>'),
                             out p, constsByValue, paramByName);
-                        bool isNewO = TestParameter(oValue=(isData = oValue.StartsWith("'"))
+                        bool isNewO = TestParameter(oValue = (isData = oValue.StartsWith("'"))
                             ? oValue.Trim('\'')
                             : oValue.TrimStart('<').TrimEnd('>'), out o, constsByValue, paramByName);
 
@@ -141,10 +144,6 @@ namespace CommonRDF
             ParametersNames = paramByName.Keys.ToArray();
         }
 
-        public void Run()
-        {
-            Match(0);
-        }
         private static bool HasOpt(bool isNew, HashSet<string> optParamHasValues, string spoValue)
         {
             bool hasOptS;
@@ -157,23 +156,35 @@ namespace CommonRDF
                 hasOptS = optParamHasValues.Contains(spoValue);
             return hasOptS;
         }
-        private static bool TestParameter(string spoValue, out TValue spo, 
+
+        private static bool TestParameter(string spoValue, out TValue spo,
             Dictionary<string, TValue> constsByValue, Dictionary<string, TValue> paramByName)
         {
             if (!spoValue.StartsWith("?"))
             {
                 if (!constsByValue.TryGetValue(spoValue, out spo))
-                    constsByValue.Add(spoValue, spo = new TValue { Value = spoValue });
+                    constsByValue.Add(spoValue, spo = new TValue {Value = spoValue});
             }
             else
             {
                 if (paramByName.TryGetValue(spoValue, out spo))
-                    return false; 
-                paramByName.Add(spoValue, spo = new TValue()); 
+                    return false;
+                paramByName.Add(spoValue, spo = new TValue());
                 return true;
             }
             return false;
         }
+
+        #endregion
+
+
+        #region Run
+
+        public void Run()
+        {
+            Match(0);
+        }
+
 
         private void Match(int i)
         {
@@ -213,7 +224,7 @@ namespace CommonRDF
                         foreach (string value in Gr.GetDirect(s.Value, p.Value))
                         {
                             isObj = true;
-                            o.Value =value;
+                            o.Value = value;
                             Match(i + 1);
                         }
                     if (isObj) return;
@@ -244,12 +255,12 @@ namespace CommonRDF
                 // s & o new params
                 foreach (string id in Gr.GetEntities())
                 {
-                    s.Value =id;
-                    if(isNotData)
+                    s.Value = id;
+                    if (isNotData)
                         foreach (var v in Gr.GetDirect(id, p.Value))
                         {
                             isObj = true;
-                            o.Value=v;
+                            o.Value = v;
                             Match(i + 1);
                         }
                     if (isObj) continue;
@@ -260,8 +271,8 @@ namespace CommonRDF
                     }
                 }
                 return;
-            }// p new param
-          
+            } // p new param
+
             if (hasValueS)
             {
                 if (hasValueO)
@@ -271,7 +282,7 @@ namespace CommonRDF
                             .Where(pe => pe.entity == o.Value))
                         {
                             p.Value = pe.predicate;
-                            Match(i+1);
+                            Match(i + 1);
                         }
                     if (isObj) return;
                     foreach (var pd in Gr.GetData(s.Value)
@@ -286,7 +297,7 @@ namespace CommonRDF
                     foreach (PredicateEntityPair axe in Gr.GetDirect(s.Value))
                     {
                         p.Value = axe.predicate;
-                        o.Value =  axe.entity;
+                        o.Value = axe.entity;
                         Match(i + 1);
                     }
                 if (isObj) return;
@@ -303,8 +314,8 @@ namespace CommonRDF
                 if (isNotData)
                     foreach (PredicateEntityPair axe in Gr.GetInverse(o.Value))
                     {
-                        p.Value =axe.predicate;
-                        s.Value=axe.entity;
+                        p.Value = axe.predicate;
+                        s.Value = axe.entity;
                         Match(i + 1);
                     }
                 if (isObj) return;
@@ -348,7 +359,9 @@ namespace CommonRDF
                             foreach (var newOptV in (
                                 unKnown.IsObj == null
                                     ? Gr.GetData(known, current.P.Value).Concat(Gr.GetDirect(known, current.P.Value))
-                                    : unKnown.IsObj.Value ? Gr.GetDirect(known, current.P.Value) : Gr.GetData(known, current.P.Value))
+                                    : unKnown.IsObj.Value
+                                        ? Gr.GetDirect(known, current.P.Value)
+                                        : Gr.GetData(known, current.P.Value))
                                 .Where(newOptV => newOptV != oldValue))
                             {
                                 unKnown.Value = newOptV;
@@ -360,7 +373,9 @@ namespace CommonRDF
                         bool any = false;
                         foreach (var newOptV in (unKnown.IsObj == null
                             ? Gr.GetData(known, current.P.Value).Concat(Gr.GetDirect(known, current.P.Value))
-                            : unKnown.IsObj.Value ? Gr.GetDirect(known, current.P.Value) : Gr.GetData(known, current.P.Value)))
+                            : unKnown.IsObj.Value
+                                ? Gr.GetDirect(known, current.P.Value)
+                                : Gr.GetData(known, current.P.Value)))
                         {
                             any = true;
                             unKnown.Value = newOptV;
@@ -377,6 +392,7 @@ namespace CommonRDF
                 throw new NotImplementedException();
             }
         }
+
         public IEnumerable<string> GetSubjectsByProperty(string predicate, TValue o, string data)
         {
             if (predicate == ONames.p_name)
@@ -397,6 +413,8 @@ namespace CommonRDF
 
         }
 
+        #endregion
+        
         #region Output in file
 
         internal void OutputParamsAll(string outPath)

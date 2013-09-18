@@ -1,6 +1,2 @@
-<<<<<<< HEAD
 ﻿select ?person
-=======
-﻿select ?person
->>>>>>> 19103cd653feca7564fee91b093caffc527915ae
 where { ?person http://fogid.net/o/name 'Ершов Андрей Петрович'. ?person ?p ?o.}

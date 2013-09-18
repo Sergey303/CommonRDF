@@ -59,13 +59,13 @@ namespace CommonRDF
 
         public override IEnumerable<PredicateEntityPair> GetInverse(string id)
         {
-            return GetProperty(id, 1, t => t is OProp && ((OProp)t).o == id)
+            return GetProperty(id,2, t => t is OProp && ((OProp)t).o == id)
                .Select(t => new PredicateEntityPair(t.p, t.s));
         }
 
         public override IEnumerable<PredicateDataTriple> GetData(string id)
         {
-            return GetProperty(id, 1, t => t.s == id)
+            return GetProperty(id, 3, t => t.s == id)
                 .Cast<DProp>()
                 .Select(t => new PredicateDataTriple(t.p, t.d, t.d));
         }
@@ -130,12 +130,19 @@ namespace CommonRDF
 
         public override void GetItembyId(string id)
         {
-            throw new NotImplementedException();
+            foreach (var predicateDataTriple in GetData(id))
+            {
+                Console.WriteLine("{0} {1} {2}",predicateDataTriple.predicate, predicateDataTriple.data, predicateDataTriple.lang);
+            }
         }
 
         public override void Test()
         {
             Console.WriteLine(string.Join(" ", SearchByName("Ершов Андрей Петрович")));
+            string id = "w20070417_5_8436";
+            GetItembyId(id);
+            id = "piu_200809051791";
+            GetItembyId(id);
         }
         public override string[] SearchByName(string ss)
         {
