@@ -8,7 +8,7 @@ using sema2012m;
 
 namespace CommonRDF
 {
-    class Query
+    internal class Query
     {
         public QueryTriplet[] triplets;
         public List<string> SelectParameters;
@@ -16,8 +16,13 @@ namespace CommonRDF
         public string[] ParametersNames;
         public List<string> FiterList;
         public QueryTriplet[] Optionals;
-        public static Regex QuerySelectReg = new Regex(@"select\s+(?<selectGroups>((\?\w+\s+)+|\*))", RegexOptions.Compiled);
-        public static Regex QueryWhereReg = new Regex(@"where\s+\{(?<whereGroups>([^{}]*\{[^{}]*\}[^{}]*)*|[^{}]*)\}", RegexOptions.Compiled);
+
+        public static Regex QuerySelectReg = new Regex(@"select\s+(?<selectGroups>((\?\w+\s+)+|\*))",
+            RegexOptions.Compiled);
+
+        public static Regex QueryWhereReg = new Regex(@"where\s+\{(?<whereGroups>([^{}]*\{[^{}]*\}[^{}]*)*|[^{}]*)\}",
+            RegexOptions.Compiled);
+
         public static Regex TripletsReg = new Regex(
             @"((?<s>[^\s]+|'.*')\s+(?<p>[^\s]+|'.*')\s+(?<o>[^\s]+|'.*')\.(\s|$))|optional\s+{\s*(?<os>[^\s]+|'.*')\s+(?<op>[^\s]+|'.*')\s+(?<oo>[^\s]+|'.*')\s*}(\s|$)"
             , RegexOptions.Compiled);
@@ -42,7 +47,7 @@ namespace CommonRDF
                 {
                     string parameters = selectMatch.Groups["selectGroups"].Value.Trim();
                     if (parameters != "*")
-                        SelectParameters = parameters.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                        SelectParameters = parameters.Split(new[] {' '}, StringSplitOptions.RemoveEmptyEntries).ToList();
                 }
                 var whereMatch = QueryWhereReg.Match(qs);
                 if (whereMatch.Success)
@@ -71,7 +76,8 @@ namespace CommonRDF
                         ptriplet.S = TestParameter(s.Value.TrimStart('<').TrimEnd('>'), paramByName);
                         ptriplet.P = TestParameter(p.TrimStart('<').TrimEnd('>'), paramByName);
                         ptriplet.O = TestParameter((isData = o.StartsWith("'"))
-                            ? o.Trim('\'') : o.TrimStart('<').TrimEnd('>')
+                            ? o.Trim('\'')
+                            : o.TrimStart('<').TrimEnd('>')
                             , paramByName);
 
                         ptriplet.S.SetTargetType(true);
@@ -87,9 +93,9 @@ namespace CommonRDF
                         }
                         else
                         {
-                            if (ptriplet.P.IsObj!=null)
+                            if (ptriplet.P.IsObj != null)
                                 ptriplet.O.SetTargetType(ptriplet.P.IsObj.Value);
-                            else if (ptriplet.O.IsObj!=null)
+                            else if (ptriplet.O.IsObj != null)
                                 ptriplet.P.SetTargetType(ptriplet.O.IsObj.Value);
                             else //both unkown
                             {
@@ -135,13 +141,7 @@ namespace CommonRDF
         private void Match(int i)
         {
             if (i == triplets.Length)
-            {
-                foreach (var parameter in Parameters.Where(p => p.IsNewParameter))
-                    parameter.IsOpen = true;
                 MatchOptional(0);
-                foreach (var parameter in Parameters.Where(p => p.IsOpen))
-                    parameter.IsOpen = false;
-            }
             else
             {
                 var cqt = triplets[i];
@@ -163,8 +163,9 @@ namespace CommonRDF
                 if (hasValueS)
                 {
                     IEnumerable<string> enumerable = null;
-                    ///не уверен в правильности конкатенации
-                    if (o.IsObj==null) enumerable = gr.GetDirect(s.Value, p.Value).Concat(gr.GetData(s.Value, p.Value));
+                    //не уверен в правильности конкатенации
+                    if (o.IsObj == null)
+                        enumerable = gr.GetDirect(s.Value, p.Value).Concat(gr.GetData(s.Value, p.Value));
                     else if (o.IsObj.Value) enumerable = gr.GetDirect(s.Value, p.Value);
                     else if (!o.IsObj.Value) enumerable = gr.GetData(s.Value, p.Value);
 
@@ -175,10 +176,11 @@ namespace CommonRDF
                         return;
                     }
                     //else 
-                    ///Если o.IsObj не известен, то он не устанавливается, потому что, потом его не изменить 
-                    foreach (string values in enumerable)
+                    //Если o.IsObj не известен, то он не устанавливается, потому что, потом его не изменить 
+                    o.IsNewParameter = false;
+                    foreach (string value in enumerable)
                     {
-                        o.SetValue(values);
+                        o.Value =value;
                         Match(i + 1);
                     }
                     o.IsNewParameter = true;
@@ -186,26 +188,34 @@ namespace CommonRDF
                 }
                 if (hasValueO)
                 {
-
-                    var SValues = o.IsObj==null
+                    s.IsNewParameter = false;
+                    var SValues = o.IsObj == null
                         ? gr.GetInverse(o.Value, p.Value).Concat(GetSubjectsByProperty(p.Value, o, o.Value))
                         : o.IsObj.Value ? gr.GetInverse(o.Value, p.Value) : GetSubjectsByProperty(p.Value, o, o.Value);
 
-                    foreach (string values in SValues)
+                    foreach (string value in SValues)
                     {
-                        s.SetValue(values);
+                        s.Value = value;
                         Match(i + 1);
                     }
                     s.IsNewParameter = true;
                     return;
                 }
                 // s & o new params
-                foreach (KeyValuePair<string, Axe> iditm in GetSubjectsByProperty(p.Value, o))
+                Func<string, string, IEnumerable<string>> oVallues;
+                if (o.IsObj == null)
+                    oVallues = (id, pv) => gr.GetDirect(id, pv).Concat(gr.GetData(id, pv));
+                else if (o.IsObj.Value)
+                    oVallues = (id, pv) => gr.GetDirect(id, pv);
+                else oVallues = (id, pv) => gr.GetData(id, pv);
+                s.IsNewParameter = false;
+                o.IsNewParameter = false; 
+                foreach (string id in gr.GetEntities())
                 {
-                    s.SetValue(iditm.Key);
-                    foreach (var v in iditm.Value.variants)
+                    s.Value =id;
+                    foreach (var v in oVallues(id, p.Value))
                     {
-                        o.SetValue(v);
+                        o.Value=v;
                         Match(i + 1);
                     }
                 }
@@ -213,51 +223,72 @@ namespace CommonRDF
                 o.IsNewParameter = true;
                 return;
             }
-            // p & (s or o) new params
+            // p new param
+            p.IsNewParameter = false;
             bool isNotData = true; /// !p.State.HasFlag(TState.Data); - syncronized
-            bool isObj = false;
-            if (o.IsObj!=null)
+            bool isObj = false; //TODO Can be setted, but for what?
+            if (o.IsObj != null)
                 isNotData = isObj = o.IsObj.Value;
             if (hasValueS)
             {
                 if (hasValueO)
                 {
+                    if (isNotData)
+                        foreach (PredicateEntityPair pe in gr.GetDirect(s.Value)
+                            .Where(pe => pe.entity == o.Value))
+                        {
+                            p.Value = pe.predicate;
+                            Match(i+1);
+                        }
+                    if (!isObj)
+                        foreach (var pd in gr.GetData(s.Value)
+                            .Where(pe => pe.data == o.Value)) //TODO lang
+                        {
+                            p.Value = pd.predicate;
+                            Match(i + 1);
+                        }
+                    p.IsNewParameter = true;
                     return;
                 }
+                o.IsNewParameter = false;
                 if (isNotData)
                     foreach (PredicateEntityPair axe in gr.GetDirect(s.Value))
                     {
-                        p.SetValue(axe.predicate);
-                        o.SetValue(axe.entity);
+                        p.Value = axe.predicate;
+                        o.Value =  axe.entity;
                         Match(i + 1);
                     }
-                if (isObj) return;
-                foreach (var axe in GetData(s.Value))
+                if (!isObj)
+                foreach (var axe in gr.GetData(s.Value))
                 {
-                    p.SetValue(axe.predicate);
-                    o.SetValue(axe.data);
+                    p.Value = axe.predicate;
+                    o.Value = axe.data;
                     Match(i + 1);
                 }
-
+                p.IsNewParameter = true;
+                o.IsNewParameter = true;
                 return;
             }
+            s.IsNewParameter = false;
+
             if (hasValueO)
             {
                 if (isNotData)
                     foreach (PredicateEntityPair axe in gr.GetInverse(o.Value))
                     {
-                        p.SetValue(axe.predicate);
-                        s.SetValue(axe.entity);
+                        p.Value =axe.predicate;
+                        s.Value=axe.entity;
                         Match(i + 1);
                     }
                 if (isObj) return;
-                foreach (PredicateDataTriple axe in GetData(o.Value))
+                foreach (PredicateDataTriple axe in gr.GetData(o.Value))
                 {
-                    p.SetValue(axe.predicate);
-                    s.SetValue(axe.data);
+                    p.Value = axe.predicate;
+                    s.Value = axe.data;
                     Match(i + 1);
                 }
-
+                s.IsNewParameter = true;
+                p.IsNewParameter = true;
                 return;
             }
             throw new NotImplementedException();
@@ -271,150 +302,80 @@ namespace CommonRDF
             else
             {
                 var current = Optionals[i];
-                MatchptionalTriplet(current.S, current.P, current.O, i,
-                    !current.S.IsOpen,
-                    !current.P.IsOpen,
-                    !current.O.IsOpen);
+                bool hasFixedValueS = !current.S.IsNewParameter;
+                bool hasFixedValueO = !current.O.IsNewParameter;
+                if (!current.P.IsNewParameter)
+                {
+                    if (hasFixedValueS && hasFixedValueO)
+                    {
+                        MatchOptional(i + 1);
+                        return;
+                    }
+                    var known = hasFixedValueS ? current.S.Value : current.O.Value;
+                    var unKnown = hasFixedValueS ? current.O : current.S;
+                    if (unKnown.HasOptValue)
+                    {
+                        MatchOptional(i + 1);
+                        string oldValue = unKnown.Value;
+                        foreach (var newOptV in (
+                            hasFixedValueO ? gr.GetInverse(known, current.P.Value) :
+                                unKnown.IsObj == null
+                                    ? gr.GetData(known, current.P.Value).Concat(gr.GetDirect(known, current.P.Value))
+                                    : unKnown.IsObj.Value ? gr.GetDirect(known, current.P.Value) : gr.GetData(known, current.P.Value))
+                            .Where(newOptV => newOptV != oldValue))
+                        {
+                            unKnown.Value = newOptV;
+                            MatchOptional(i + 1);
+                        }
+                        unKnown.Value = oldValue;
+                        return;
+                    }
+                    unKnown.HasOptValue = true;
+                    bool any = false;
+                    foreach (var newOptV in (hasFixedValueO ? gr.GetInverse(known, current.P.Value) :
+                        unKnown.IsObj == null
+                            ? gr.GetData(known, current.P.Value).Concat(gr.GetDirect(known, current.P.Value))
+                            : unKnown.IsObj.Value ? gr.GetDirect(known, current.P.Value) : gr.GetData(known, current.P.Value)))
+                    {
+                        any = true;
+                        unKnown.Value = newOptV;
+                        MatchOptional(i + 1);
+                    }
+                    if (!any)
+                    {
+                        unKnown.Value = string.Empty;
+                        MatchOptional(i + 1);
+                    }
+                    unKnown.HasOptValue = false;
+                    return;
+                }
+                throw new NotImplementedException();
             }
         }
 
         public GraphBase gr;
         //   private static readonly Dictionary<Triplet<string>, bool> Cache = new Dictionary<Triplet<string>, bool>();
-        public void MatchptionalTriplet(TValue s, TValue p, TValue o, int i,
-            bool hasFixedValueS, bool hasFixedValueP, bool hasFixedValueO)
-        {
-            if (hasFixedValueP)
-            {
-                IEnumerable<string> newValues;
-                if (hasFixedValueS)
-                {
-                    if (hasFixedValueO)
-                        MatchOptional(i + 1);
-                    else
-                    {
-
-                        string oldValue = o.IsNewParameter ? null : o.Value;
-                        if ((newValues = gr.GetData(s.Value, p.Value).Concat(gr.GetDirect(s.Value, p.Value)).ToList()).Any())
-                        {
-                            if (oldValue != null)
-                            {
-                                MatchOptional(i + 1);
-                                newValues = newValues.Where(v => !ReferenceEquals(v, oldValue));
-                            }
-                            foreach (var oNewValue in newValues)
-                            {
-                                o.SetValue(oNewValue);
-                                MatchOptional(i + 1);
-                            }
-                            if (oldValue != null) o.SetValue(oldValue);
-                            else o.IsNewParameter = true;
-
-                        }
-                        else
-                        {
-                            o.SetValue(string.Empty);
-                            MatchOptional(i + 1);
-                            o.IsNewParameter = true;
-                        }
-                    }
-                }
-                else if (hasFixedValueO)
-                {
-                    string oldValue = s.IsNewParameter ? null : s.Value;
-                    if ((newValues = gr.GetInverse(o.Value, p.Value).ToList()).Any())
-                    {
-                        if (oldValue != null)
-                        {
-                            MatchOptional(i + 1);
-                            newValues = newValues.Where(v => !ReferenceEquals(v, oldValue));
-                        }
-                        foreach (var oNewValue in newValues)
-                        {
-                            s.SetValue(oNewValue);
-                            MatchOptional(i + 1);
-                        }
-                        if (oldValue != null) s.SetValue(oldValue);
-                        else s.IsNewParameter = true;
-                    }
-                    else
-                    {
-                        s.SetValue(string.Empty);
-                        MatchOptional(i + 1);
-                        o.IsNewParameter = true;
-                    }
-                }
-            }
-        }
 
         public IEnumerable<string> GetSubjectsByProperty(string predicate, TValue o, string data)
         {
             if (predicate == ONames.p_name)
                 return gr.SearchByN4(data).Where(id => gr.GetData(id, ONames.p_name).Contains(data));
             Axe pre;
-            return gr.Dics.Where(id_item =>
-                (pre =
-                    (o.IsObj!=null
-                        ? id_item.Value.direct.Concat(id_item.Value.data)
-                        : (o.IsObj.Value
-                            ? id_item.Value.direct
-                            : id_item.Value.data))
-                        .FirstOrDefault(axe => axe.predicate == predicate)) != null
-                && pre.variants.Contains(data))
-                .Select(id_item => id_item.Key);
+            throw new NotImplementedException();
+            return null;
+            //gr.Dics.Where(id_item =>
+            //(pre =
+            //    (o.IsObj!=null
+            //        ? id_item.Value.direct.Concat(id_item.Value.data)
+            //        : (o.IsObj.Value
+            //            ? id_item.Value.direct
+            //            : id_item.Value.data))
+            //        .FirstOrDefault(axe => axe.predicate == predicate)) != null
+            //&& pre.variants.Contains(data))
+            //.Select(id_item => id_item.Key);
 
         }
-
-        public IEnumerable<KeyValuePair<string, Axe>> GetSubjectsByProperty(string predicate, TValue o)
-        {
-            Axe axe = null;
-            if (!o.IsObj!=null)
-                return
-                gr.Dics.Where(
-                    id_item => DirectPredicates(id_item.Value, predicate, o, ref axe))
-                    .Select(id_item => new KeyValuePair<string, Axe>(id_item.Key, axe));
-            return
-                gr.Dics.Where(
-                    id_item => (axe = o.IsObj.Value
-                        ? id_item.Value.direct.FirstOrDefault(d => d.predicate == predicate)
-                        : id_item.Value.data.FirstOrDefault(d => d.predicate == predicate)) != null)
-                    .Select(id_item => new KeyValuePair<string, Axe>(id_item.Key, axe));
-        }
-
-        private static bool DirectPredicates(RecordEx item, string predicate, TValue o, ref Axe pre)
-        {
-            pre = item.direct.FirstOrDefault(d => d.predicate == predicate);
-            if (pre != null)
-            {
-                o.IsObj = false; // (preDir == null) - must be true
-                return true;
-            }
-            pre = item.direct.FirstOrDefault(d => d.predicate == predicate);
-            if (pre != null)
-            {
-                o.IsObj = true;
-                return true;
-            }
-            return false;
-        }
-
-        IEnumerable<PredicateDataTriple> GetData(string id)
-        {
-            RecordEx rec;
-            if (gr.Dics.TryGetValue(id, out rec))
-            {
-                var qu = rec.data.SelectMany(axe =>
-                {
-                    string predicate = axe.predicate;
-                    return axe.variants.Select(v =>
-                    {
-                        var substr = v.Split(new[] { '@' });
-                        return new PredicateDataTriple(predicate, substr[0], substr.Length == 1 ? "" : substr.Last());
-                    });
-                });
-                return qu;
-            }
-            return Enumerable.Empty<PredicateDataTriple>();
-        }
+      
         internal void OutputParamsAll(string outPath)
         {
             using (StreamWriter io = new StreamWriter(outPath, true))

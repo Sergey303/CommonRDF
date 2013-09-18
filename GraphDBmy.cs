@@ -32,7 +32,7 @@ namespace CommonRDF
             InitTypes();
             cell = new PxCell(tp_graph, path + "graph.pxc", false);
         }
-        public void Test()
+        public override void Test()
         {
             string id = "w20070417_5_8436";
             //string id = "piu_200809051791";

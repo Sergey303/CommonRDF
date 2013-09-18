@@ -12,7 +12,7 @@ namespace CommonRDF
             DateTime tt0 = DateTime.Now;
             GraphDB gr = new GraphDB(@"..\..\");
             Console.WriteLine("Graph ok duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
-            //gr.Load(@"..\..\");//0001.xml
+           // gr.Load(@"..\..\");//0001.xml
             Console.WriteLine("Graph ok duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
             //Console.WriteLine("Test ok duration========================" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
 
