@@ -30,7 +30,7 @@ namespace CommonRDF
     {
         public string d; public string lang;
         public DProp(string s, string p, string d) { this.s = s; this.p = p; this.d = d; }
-        public DProp(string s, string p, string d, string l) { this.s = s; this.p = p; this.d = d; lang = l; }
+        public DProp(string s, string p, string d, string l) { this.s = s; this.p = p; this.d = d; this.lang = l; }
     }
 
     // Четверка, получаемая из тройки (триплета). Поле vid {0|1|2} обозначает вид квада (direct, inverse, data)
