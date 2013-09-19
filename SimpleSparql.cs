@@ -18,33 +18,38 @@ namespace CommonRDF
         {
             testquery = new Sample[] 
             {
-                new Sample() { vid = TripletVid.op, firstunknown = 0, 
-                    subject= new TVariable() { isVariable=true, value="?s", index=0 },
-                    predicate = new TVariable() { isVariable=false, value=ONames.p_participant },
-                    obj = new TVariable() { isVariable = false, value=id}},
-                new Sample() { vid = TripletVid.op, firstunknown = 1, 
-                    subject= new TVariable() { isVariable=true, value="?s", index=0 },
-                    predicate = new TVariable() { isVariable=false, value=ONames.p_inorg },
-                    obj = new TVariable() { isVariable = true, value="?inorg", index=1 }},
-                new Sample() { vid = TripletVid.op, firstunknown = 2, 
-                    subject= new TVariable() { isVariable=true, value=id, index=0 },
-                    predicate = new TVariable() { isVariable=false, value=ONames.rdftypestring },
-                    obj = new TVariable() { isVariable = false, value="http://fogid.net/o/participation"}},
-                new Sample() { vid = TripletVid.dp, firstunknown = 2, 
-                    subject= new TVariable() { isVariable=true, value="?inorg", index=1 },
-                    predicate = new TVariable() { isVariable=false, value=ONames.p_name },
-                    obj = new TVariable() { isVariable = true, value="?orgname", index=2 }},
-                new Sample() { vid = TripletVid.dp, firstunknown = 3, 
-                    subject= new TVariable() { isVariable=true, value="?s", index=0 },
-                    predicate = new TVariable() { isVariable=false, value=ONames.p_fromdate },
-                    obj = new TVariable() { isVariable = true, value="?fd", index=3 }, option = true },
+                new Sample
+                { vid = TripletVid.op, firstunknown = 0, 
+                    subject= new TVariable { isVariable=true, value="?s", index=0 },
+                    predicate = new TVariable { isVariable=false, value=ONames.p_participant },
+                    obj = new TVariable { isVariable = false, value=id}},
+                new Sample
+                { vid = TripletVid.op, firstunknown = 1, 
+                    subject= new TVariable { isVariable=true, value="?s", index=0 },
+                    predicate = new TVariable { isVariable=false, value=ONames.p_inorg },
+                    obj = new TVariable { isVariable = true, value="?inorg", index=1 }},
+                new Sample
+                { vid = TripletVid.op, firstunknown = 2, 
+                    subject= new TVariable { isVariable=true, value=id, index=0 },
+                    predicate = new TVariable { isVariable=false, value=ONames.rdftypestring },
+                    obj = new TVariable { isVariable = false, value="http://fogid.net/o/participation"}},
+                new Sample
+                { vid = TripletVid.dp, firstunknown = 2, 
+                    subject= new TVariable { isVariable=true, value="?inorg", index=1 },
+                    predicate = new TVariable { isVariable=false, value=ONames.p_name },
+                    obj = new TVariable { isVariable = true, value="?orgname", index=2 }},
+                new Sample
+                { vid = TripletVid.dp, firstunknown = 3, 
+                    subject= new TVariable { isVariable=true, value="?s", index=0 },
+                    predicate = new TVariable { isVariable=false, value=ONames.p_fromdate },
+                    obj = new TVariable { isVariable = true, value="?fd", index=3 }, option = true },
             };
             testvars = new DescrVar[] 
             {
-                new DescrVar() { isEntity = true, varName="?s" },
-                new DescrVar() { isEntity = true, varName="?inorg" },
-                new DescrVar() { isEntity = false, varName="?orgname" },
-                new DescrVar() { isEntity = false, varName="?fd" },
+                new DescrVar { isEntity = true, varName="?s" },
+                new DescrVar { isEntity = true, varName="?inorg" },
+                new DescrVar { isEntity = false, varName="?orgname" },
+                new DescrVar { isEntity = false, varName="?fd" },
             };
         }
         public bool Match(GraphBase gr, IReceiver receive) { return Match(gr, 0, receive); } 
@@ -88,7 +93,8 @@ namespace CommonRDF
                     foreach (var data in gr.GetData(idd, sam.predicate.value))
                     {
                         testvars[sam.obj.index].varValue = data;
-                        Match(gr, nextsample + 1, receive);
+                        atleastonce=Match(gr, nextsample + 1, receive);
+
                     }
                 }
                 else
@@ -96,10 +102,10 @@ namespace CommonRDF
                     foreach (var directid in gr.GetDirect(idd, sam.predicate.value))
                     {
                         testvars[sam.obj.index].varValue = directid;
-                        Match(gr, nextsample + 1, receive);
+                        atleastonce=Match(gr, nextsample + 1, receive);
                     }
                 }
-                if (!atleastonce) return sam.option ? Match(gr, nextsample + 1, receive) : false;
+                return atleastonce || sam.option && Match(gr, nextsample + 1, receive);
             }
             else if (variant == 2) // obj - known, subj - unknown
             {
@@ -115,8 +121,18 @@ namespace CommonRDF
                     //TODO: Нужен ли вариант с опцией?
                 }
                 else
-                { //TODO: Здесь нужен вариант, когда данное известно
-                    throw new Exception("datatype properties are not implemented to inverse direction");
+                { //Здесь вариант, когда данное известно
+                    if (sam.predicate.value==ONames.p_name)
+                        foreach (var id in gr.SearchByName(ido))
+                        {
+                            testvars[sam.obj.index].varValue = id;
+                            Match(gr, nextsample + 1, receive);
+                        }
+                    foreach (var id in gr.GetEntities().Where(id => gr.GetData(id, sam.predicate.value).Contains(ido)))
+                    {
+                        testvars[sam.obj.index].varValue = id;
+                        Match(gr, nextsample + 1, receive);
+                    }
                 }
             }
             else if (variant == 3)

@@ -137,7 +137,6 @@ namespace CommonRDF
                                 IsNewO = isNewO
                             });
                     }
-
                 }
             }
             parameters = paramByName.Values.ToArray();
@@ -204,31 +203,34 @@ namespace CommonRDF
             bool hasValueS = !cqt.IsNewS;
             bool hasValueO = !cqt.IsNewO;
             bool isNotData = true; // !p.State.HasFlag(TState.Data); - syncronized
-            bool isObj = false; //TODO Can be setted, but for what?
+            bool isObj = false; 
             if (o.IsObj != null)
                 isNotData = isObj = o.IsObj.Value;
+            string sValue = s.Value;
+            string data = o.Value;
             if (!cqt.IsNewP)
             {
+                string predicate = p.Value;
                 if (hasValueS)
                 {
                     if (hasValueO)
                     {
-                        if (isNotData && Gr.GetDirect(s.Value, p.Value).Contains(o.Value) ||
-                            !isObj && Gr.GetData(s.Value, p.Value).Contains(o.Value))
+                        if (isNotData && Gr.GetDirect(sValue, predicate).Contains(data) ||
+                            !isObj && Gr.GetData(sValue, predicate).Contains(data))
                             Match(i + 1);
                         return;
                     }
                     //else 
                     //Если o.IsObj не известен, то он не устанавливается, потому что, потом его не изменить 
                     if (isNotData)
-                        foreach (string value in Gr.GetDirect(s.Value, p.Value))
+                        foreach (string value in Gr.GetDirect(sValue, predicate))
                         {
                             isObj = true;
                             o.Value = value;
                             Match(i + 1);
                         }
                     if (isObj) return;
-                    foreach (string value in Gr.GetData(s.Value, p.Value))
+                    foreach (string value in Gr.GetData(sValue, predicate))
                     {
                         o.Value = value;
                         Match(i + 1);
@@ -238,14 +240,14 @@ namespace CommonRDF
                 if (hasValueO)
                 {
                     if (isNotData)
-                        foreach (string value in Gr.GetInverse(o.Value, p.Value))
+                        foreach (string value in Gr.GetInverse(data, predicate))
                         {
                             isObj = true;
                             s.Value = value;
                             Match(i + 1);
                         }
                     if (isObj) return;
-                    foreach (string value in GetSubjectsByProperty(p.Value, o, o.Value))
+                    foreach (string value in GetSubjectsByProperty(predicate, o, data))
                     {
                         s.Value = value;
                         Match(i + 1);
@@ -257,14 +259,14 @@ namespace CommonRDF
                 {
                     s.Value = id;
                     if (isNotData)
-                        foreach (var v in Gr.GetDirect(id, p.Value))
+                        foreach (var v in Gr.GetDirect(id, predicate))
                         {
                             isObj = true;
                             o.Value = v;
                             Match(i + 1);
                         }
                     if (isObj) continue;
-                    foreach (var v in Gr.GetData(id, p.Value))
+                    foreach (var v in Gr.GetData(id, predicate))
                     {
                         o.Value = v;
                         Match(i + 1);
@@ -278,15 +280,15 @@ namespace CommonRDF
                 if (hasValueO)
                 {
                     if (isNotData)
-                        foreach (PredicateEntityPair pe in Gr.GetDirect(s.Value)
-                            .Where(pe => pe.entity == o.Value))
+                        foreach (PredicateEntityPair pe in Gr.GetDirect(sValue)
+                            .Where(pe => pe.entity == data))
                         {
                             p.Value = pe.predicate;
                             Match(i + 1);
                         }
                     if (isObj) return;
-                    foreach (var pd in Gr.GetData(s.Value)
-                        .Where(pe => pe.data == o.Value)) //TODO lang
+                    foreach (var pd in Gr.GetData(sValue)
+                        .Where(pe => pe.data == data)) //TODO lang
                     {
                         p.Value = pd.predicate;
                         Match(i + 1);
@@ -294,14 +296,14 @@ namespace CommonRDF
                     return;
                 }
                 if (isNotData)
-                    foreach (PredicateEntityPair axe in Gr.GetDirect(s.Value))
+                    foreach (PredicateEntityPair axe in Gr.GetDirect(sValue))
                     {
                         p.Value = axe.predicate;
                         o.Value = axe.entity;
                         Match(i + 1);
                     }
                 if (isObj) return;
-                foreach (var axe in Gr.GetData(s.Value))
+                foreach (var axe in Gr.GetData(sValue))
                 {
                     p.Value = axe.predicate;
                     o.Value = axe.data;
@@ -312,14 +314,14 @@ namespace CommonRDF
             if (hasValueO)
             {
                 if (isNotData)
-                    foreach (PredicateEntityPair axe in Gr.GetInverse(o.Value))
+                    foreach (PredicateEntityPair axe in Gr.GetInverse(data))
                     {
                         p.Value = axe.predicate;
                         s.Value = axe.entity;
                         Match(i + 1);
                     }
                 if (isObj) return;
-                foreach (PredicateDataTriple axe in Gr.GetData(o.Value))
+                foreach (PredicateDataTriple axe in Gr.GetData(data))
                 {
                     p.Value = axe.predicate;
                     s.Value = axe.data;
@@ -327,7 +329,25 @@ namespace CommonRDF
                 }
                 return;
             }
-            throw new NotImplementedException();
+             foreach (var id in Gr.GetEntities())
+             {
+                 s.Value = id;
+                 
+                 if (isNotData)
+                 foreach (var dataTriple in Gr.GetDirect(id))
+                 {
+                     p.Value = dataTriple.predicate;
+                     o.Value = dataTriple.entity;
+                     Match(i + 1);
+                 }
+                 if(isObj) continue;
+                 foreach (var dataTriple in Gr.GetData(id))
+                 {
+                     p.Value = dataTriple.predicate;
+                     o.Value = dataTriple.data;
+                     Match(i+1);
+                 }
+             }
         }
 
         private void MatchOptional(int i)
@@ -381,36 +401,20 @@ namespace CommonRDF
                             unKnown.Value = newOptV;
                             MatchOptional(i + 1);
                         }
-                        if (!any)
-                        {
-                            unKnown.Value = string.Empty;
-                            MatchOptional(i + 1);
-                        }
+                        if (any) return;
+                        unKnown.Value = string.Empty;
+                        MatchOptional(i + 1);
                         return;
                     }
                 }
-                throw new NotImplementedException();
             }
         }
 
         public IEnumerable<string> GetSubjectsByProperty(string predicate, TValue o, string data)
         {
-            if (predicate == ONames.p_name)
-                return Gr.SearchByName(data).Where(id => Gr.GetData(id, ONames.p_name).Contains(data));
-            Axe pre;
-            throw new NotImplementedException();
-            return null;
-            //gr.Dics.Where(id_item =>
-            //(pre =
-            //    (o.IsObj!=null
-            //        ? id_item.Value.direct.Concat(id_item.Value.data)
-            //        : (o.IsObj.Value
-            //            ? id_item.Value.direct
-            //            : id_item.Value.data))
-            //        .FirstOrDefault(axe => axe.predicate == predicate)) != null
-            //&& pre.variants.Contains(data))
-            //.Select(id_item => id_item.Key);
-
+            return predicate == ONames.p_name 
+                ? Gr.SearchByName(data).Where(id => Gr.GetData(id, ONames.p_name).Contains(data)) 
+                : Gr.GetEntities().Where(id => Gr.GetData(id, predicate).Contains(data));
         }
 
         #endregion

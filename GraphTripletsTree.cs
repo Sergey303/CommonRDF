@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Xml;
 using PolarDB;
 using sema2012m;
@@ -330,19 +331,20 @@ namespace CommonRDF
             string filePathTriplets = path + "triplets.pac";
             string filePathGraph = path + "graph_x.pxc";
             string filePathN4 = path + "n4_x.pxc";
-            if (!File.Exists(filePathTriplets)
-                || !File.Exists(filePathGraph) || !File.Exists(filePathN4)) return;
-            triplets = new PaCell(tp_triplets, filePathTriplets);
-            any_triplet = triplets.Root.Element(0);
+            if (!File.Exists(filePathGraph) || !File.Exists(filePathN4)) return;
+          
             graph_x = new PxCell(tp_graph, filePathGraph);
             n4_x=new PxCell(tp_n4, filePathN4);
+            if (!File.Exists(filePathTriplets)) return;
+            triplets = new PaCell(tp_triplets, filePathTriplets);
+            any_triplet = triplets.Root.Element(0);
         }
         private static void TripletSerialInput(ISerialFlow sflow, IEnumerable<string> rdf_filenames)
         {
             sflow.StartSerialFlow();
             sflow.S();
             foreach (string db_falename in rdf_filenames)
-                ReadXML2Quad(db_falename, (id, property, value, isObj, lang) =>
+                ReadFile(db_falename, (id, property, value, isObj, lang) =>
                     sflow.V(isObj
                         ? new object[] { 1, new object[] { id, property, value } }
                         : new object[] { 2, new object[] { id, property, value, lang ?? "" } }));
@@ -351,11 +353,68 @@ namespace CommonRDF
         }
         private delegate void QuadAction(string id, string property,
              string value, bool isObj = true, string lang = null);
+        
+        private static void ReadFile(string filePath, QuadAction quadAction)
+        {
+            var extension = Path.GetExtension(filePath);
+            if (extension == null || !File.Exists(filePath)) return;
+             extension = extension.ToLower();
+            if (extension == ".xml")
+                ReadXML2Quad(filePath, quadAction);
+            else if(extension==".nt2")
+                ReadTSV(filePath,quadAction);
+        }
+
+        static Regex nsRegex = new Regex(@"^@prefix\s+(\w+):\s+<(.+)>\.$", RegexOptions.Compiled);
+        static Regex tripletsRegex = new Regex("^(\\S+)\\s+(\\S+)\\s+(\"(.+)\"(@(\\S*))?|(.+))\\.$", RegexOptions.Compiled);
+
+        static void ReadTSV(string filePath, QuadAction quadAction)
+        {
+            using (StreamReader reader=new StreamReader(filePath))
+            {
+                Match lineMatch;
+                while ((lineMatch = nsRegex.Match(reader.ReadLine())).Success)
+                {
+                   // nsReg.Groups[1]
+                    //nsReg.Groups[2]
+                }
+                var lines = new string[100000000];//100 000 000
+                while (!reader.EndOfStream)
+                {
+                    int i;
+                    for (i = 0; i < lines.Length && ( lines[i] = reader.ReadLine()) != null; i++)
+                    {}
+                    for (int j = 0; j < i; j++)
+                        if (!GetValue(quadAction, lines[j]) && lines.Length > j + 1)
+                            if (GetValue(quadAction, lines[j] + lines[j + 1]))
+                                j++;
+                            else
+                                Console.WriteLine("unrecognized triplet {0}", lines[j]);
+                }
+            }
+        }
+
+        private static bool GetValue(QuadAction quadAction, string readLine)
+        { 
+            if (string.IsNullOrWhiteSpace(readLine))
+                    return true;
+            Match lineMatch;
+            if (!(lineMatch = tripletsRegex.Match(readLine)).Success) return false;
+            var dMatch = lineMatch.Groups[4];
+            if (dMatch.Success)
+                quadAction(lineMatch.Groups[1].Value, lineMatch.Groups[2].Value, dMatch.Value, false,
+                    lineMatch.Groups[6].Value);
+            else
+                quadAction(lineMatch.Groups[1].Value, lineMatch.Groups[2].Value, lineMatch.Groups[7].Value);
+            return true;
+        }
+
+        #region Read XML
 
         private static string langAttributeName = "xml:lang",
             rdfAbout = "rdf:about",
-               rdfResource = "rdf:resource",
-               NS = "http://fogid.net/o/";
+            rdfResource = "rdf:resource",
+            NS = "http://fogid.net/o/";
 
 
         private static void ReadXML2Quad(string url, QuadAction quadAction)
@@ -374,6 +433,9 @@ namespace CommonRDF
                                 lang: isObj ? null : xml[langAttributeName],
                                 value: isObj ? resource : xml.ReadString());
         }
+
+        #endregion
+
         private void LoadQuadsAndSort(PaCell n4, PaCell quads)
         {
             n4.StartSerialFlow();
@@ -433,6 +495,9 @@ namespace CommonRDF
                 return String.Compare(s1, s2, StringComparison.Ordinal);
             });
         }
+
+
+
         private void InitTypes()
         {
             tp_triplets =
@@ -479,4 +544,5 @@ namespace CommonRDF
                 new NamedType("s4", new PTypeFString(4))));
         }
     }
+   
 }

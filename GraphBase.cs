@@ -51,7 +51,7 @@ namespace CommonRDF
         {
             var m = LangRegex.Match(dataLang);
             return m.Success
-                ? new DataLangPair(m.Groups[0].Value, m.Groups[1].Value) 
+                ? new DataLangPair(m.Groups[0].Value, m.Groups[1].Value) //TODO Test
                 :new DataLangPair(dataLang, null);
         }
     }
