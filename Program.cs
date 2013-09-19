@@ -10,7 +10,7 @@ namespace CommonRDF
         {
             Console.WriteLine("Start");
             DateTime tt0 = DateTime.Now;
-            GraphBase gr = new GraphTripletsTree(@"..\..\");
+            GraphBase gr = new GraphTripletsTree(@"..\..\DataFreebase\");
             Console.WriteLine("Graph ok duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
            gr.Load(@"F:\freebase-rdf-2013-02-10-00-00.nt2");//"@"..\..\0001.xml"
             Console.WriteLine("Graph ok duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;

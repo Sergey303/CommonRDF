@@ -182,8 +182,11 @@ namespace CommonRDF
             if (graph_x != null) { graph_x.Close(); graph_x = null; }
             if (n4_x != null) { n4_x.Close(); n4_x = null; }
             // Создадим ячейки
+            //triplets = new PaCell(tp_triplets, path + "triplets.pac", false);
+            //triplets.Clear();
             triplets = new PaCell(tp_triplets, path + "triplets.pac", false);
-            triplets.Clear();
+            Console.WriteLine(triplets.Root.Count());
+
             var quads = new PaCell(tp_quads, path + "quads.pac", false);
             var graph_a = new PaCell(tp_graph, path + "graph_a.pac", false);
             graph_x = new PxCell(tp_graph, path + "graph_x.pxc", false); graph_x.Clear();
@@ -192,8 +195,8 @@ namespace CommonRDF
             n4.Clear();
             Console.WriteLine("cells initiated duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
 
-            TripletSerialInput(triplets, rdf_files);
-            Console.WriteLine("After TripletSerialInput. duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
+            //TripletSerialInput(triplets, rdf_files);
+            //Console.WriteLine("After TripletSerialInput. duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
 
 
             LoadQuadsAndSort(n4, quads);
@@ -337,6 +340,7 @@ namespace CommonRDF
             n4_x=new PxCell(tp_n4, filePathN4);
             if (!File.Exists(filePathTriplets)) return;
             triplets = new PaCell(tp_triplets, filePathTriplets);
+            //Console.WriteLine(triplets.Root.Count());
             any_triplet = triplets.Root.Element(0);
         }
         private static void TripletSerialInput(ISerialFlow sflow, IEnumerable<string> rdf_filenames)
