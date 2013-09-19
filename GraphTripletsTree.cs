@@ -378,18 +378,19 @@ namespace CommonRDF
                    // nsReg.Groups[1]
                     //nsReg.Groups[2]
                 }
-                var lines = new string[100000000];//100 000 000
-                while (!reader.EndOfStream)
+              //  var lines = new string[100000000];//100 000 000
+              //  while (!reader.EndOfStream)
+                int count=3000000; //000 000
                 {
                     int i;
-                    for (i = 0; i < lines.Length && ( lines[i] = reader.ReadLine()) != null; i++)
-                    {}
-                    for (int j = 0; j < i; j++)
-                        if (!GetValue(quadAction, lines[j]) && lines.Length > j + 1)
-                            if (GetValue(quadAction, lines[j] + lines[j + 1]))
-                                j++;
-                            else
-                                Console.WriteLine("unrecognized triplet {0}", lines[j]);
+                    string readLine;
+                    for (i = 0; i < count && (readLine = reader.ReadLine()) != null; i++)
+                        GetValue(quadAction, readLine);
+                    //if (!GetValue(quadAction, lines[j]) && lines.Length > j + 1)
+                    //    if (GetValue(quadAction, lines[j] + lines[j + 1]))
+                    //        j++;
+                    //    else
+                    //        Console.WriteLine("unrecognized triplet {0}", lines[j]);
                 }
             }
         }
