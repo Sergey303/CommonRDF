@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Xml;
 using PolarDB;
 using sema2012m;
@@ -11,7 +14,7 @@ namespace CommonRDF
 {
     class GraphTripletsTree : GraphBase
     {
-         private string path;
+         private readonly string path;
         private PType tp_triplets;
         private PType tp_quads;
         private PType tp_n4;
@@ -30,195 +33,75 @@ namespace CommonRDF
             InitTypes();
             InitCells();
         }
-
-        public override IEnumerable<string> GetEntities()
-        {
-            foreach (PxEntry pxe in graph_x.Root.Elements())
-            {
-                var first = pxe.Field(1).Elements().FirstOrDefault();
-                if (first.Typ == null || !first.Field(1).Elements().Any())
-                {
-                     first = pxe.Field(2).Elements().FirstOrDefault();
-                     if (first.Typ == null || !first.Field(1).Elements().Any())
-                    {
-                         first = pxe.Field(3).Elements().FirstOrDefault();
-                        if (first.Typ == null || !first.Field(1).Elements().Any())
-                            continue;
-                        yield return ((OProp)Triplet.Create(GetTriplet((long)first.Field(1).Elements().First().Get().Value))).o;
-                    }
-                }
-               yield return Triplet.Create(GetTriplet((long)first.Field(1).Elements().First().Get().Value)).s;
-            }
-        }
-
-        public override IEnumerable<PredicateEntityPair> GetDirect(string id)
-        {
-            return GetProperty(id, 1, t => t.s == id)
-                .Cast<OProp>()
-                .Select(t => new PredicateEntityPair(t.p,t.o));
-        }
-
-        public override IEnumerable<PredicateEntityPair> GetInverse(string id)
-        {
-            return GetProperty(id,2, t => t is OProp && ((OProp)t).o == id)
-               .Select(t => new PredicateEntityPair(t.p, t.s));
-        }
-
-        public override IEnumerable<PredicateDataTriple> GetData(string id)
-        {
-            return GetProperty(id, 3, t => t.s == id)
-                .Cast<DProp>()
-                .Select(t => new PredicateDataTriple(t.p, t.d, t.d));
-        }
-
-        private IEnumerable<Triplet> GetProperty(string id, int direction,
-            Predicate<Triplet> predicateValuesTest, int? predicateSC = null)
-        {
-            PxEntry found = GetEntryById(id);
-            if (found.IsEmpty) return null;
-            Triplet first4Test;
-            IEnumerable<PxEntry> pxEntries = found.Field(direction).Elements();
-            if (predicateSC != null)
-                pxEntries = pxEntries
-                    .Where(pRec => (int) pRec.Field(0).Get().Value == predicateSC.Value);
-            return pxEntries
-                .Select(pRec =>
-                    pRec.Field(1)
-                        .Elements()
-                        .Select(offEn => offEn.Get().Value)
-                        .Cast<long>()
-                        .Select(GetTriplet)
-                        .Select(Triplet.Create))
-                .Where(predicateResults =>
-                    (first4Test = predicateResults.FirstOrDefault()) != null
-                    && predicateValuesTest(first4Test))
-                .SelectMany(resultsGroup => resultsGroup);
-            // Еще отбраковкаtri => tri is OProp && tri.s == id &&
-        }
-
-        private object GetTriplet(long offTtripl)
-        {
-            any_triplet.offset = offTtripl;
-            return any_triplet.Get().Value;
-        }
-
-        public override IEnumerable<string> GetDirect(string id, string predicate)
-        {
-            return GetProperty(id, 1, t => t.s == id && t.p == predicate, predicate.GetHashCode())
-                .Cast<OProp>()
-                .Select(t => t.o);
-        }
-
-        public override IEnumerable<string> GetInverse(string id, string predicate)
-        {
-            return GetProperty(id, 2, 
-                t => t.p == predicate && (t is OProp) && ((OProp) t).o == id,
-                predicate.GetHashCode())
-                    .Select(t => t.s);
-        }
-
-        public override IEnumerable<string> GetData(string id, string predicate)
-        {
-            return GetProperty(id, 3, t => t.s == id && t.p == predicate, predicate.GetHashCode())
-                .Cast<DProp>()
-                .Select(t => t.d);
-        }
-
-        public override IEnumerable<DataLangPair> GetDataLangPairs(string id, string predicate)
-        {
-            return GetData(id, predicate).Select(SplitLang);
-        }
-
-        public override void GetItembyId(string id)
-        {
-            foreach (var predicateDataTriple in GetData(id))
-            {
-                Console.WriteLine("{0} {1} {2}",predicateDataTriple.predicate, predicateDataTriple.data, predicateDataTriple.lang);
-            }
-        }
-
-        public override void Test()
-        {
-            Console.WriteLine(string.Join(" ", SearchByName("Ершов Андрей Петрович")));
-            string id = "w20070417_5_8436";
-            GetItembyId(id);
-            id = "piu_200809051791";
-            GetItembyId(id);
-        }
-        public override string[] SearchByName(string ss)
-        {
-            if (string.IsNullOrWhiteSpace(ss)) return new string[0];
-            //ss = ss;
-            var name4 = (ss.Length > 4 ? ss.Substring(0, 4) : ss).ToLower();
-            return n4_x.Root.BinarySearchAll(
-                e => String.Compare((string) e.Field(1).Get().Value, name4, StringComparison.Ordinal))
-                .Select(e => e.Field(0).Get().Value)
-                .Cast<long>()
-                .Select(GetTriplet)
-                .Select(Triplet.Create)
-                .Where(t => t is DProp) // && predicate is name
-                .Cast<DProp>()
-                .Where(t => t.d == ss)
-                .Select(t=>t.s)
-                .ToArray();
-        }
-
-        // =============== Методы доступа к данным ==================
-        internal PxEntry GetEntryById(string id)
-        {
-            int e_hs = id.GetHashCode();
-            PxEntry found = graph_x.Root.BinarySearchFirst(element =>
-            {
-                int v = (int)element.Field(0).Get().Value;
-                return v < e_hs ? -1 : (v == e_hs ? 0 : 1);
-            });
-            return found;
-        }
+      
         public override void Load(params string[] rdf_files)
         {
             DateTime tt0 = DateTime.Now;
             // Закроем использование
             if (triplets != null) { triplets.Close(); triplets = null; }
-            if (graph_x != null) { graph_x.Close(); graph_x = null; }
-            if (n4_x != null) { n4_x.Close(); n4_x = null; }
+            
             // Создадим ячейки
             triplets = new PaCell(tp_triplets, path + "triplets.pac", false);
             triplets.Clear();
-            var quads = new PaCell(tp_quads, path + "quads.pac", false);
-            var graph_a = new PaCell(tp_graph, path + "graph_a.pac", false);
-            graph_x = new PxCell(tp_graph, path + "graph_x.pxc", false); graph_x.Clear();
-            n4_x = new PxCell(tp_n4, path + "n4_x.pxc", false); n4_x.Clear();
-            var n4 = new PaCell(tp_n4, path + "n4.pac", false);
-            n4.Clear();
-            Console.WriteLine("cells initiated duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
-
+          
             TripletSerialInput(triplets, rdf_files);
             Console.WriteLine("After TripletSerialInput. duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
 
+        }
 
-            LoadQuadsAndSort(n4, quads);
-            Console.WriteLine("After LoadQuadsAndSort(). duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
+        public override void CreateGraph()
+        {
+            if (graph_x != null)
+            {
+                graph_x.Close();
+                graph_x = null;
+            }
+            if (n4_x != null)
+            {
+                n4_x.Close();
+                n4_x = null;
+            }
+            PaCell quads = null;
+            PaCell graph_a = null;
+            PaCell n4 = null;
+            ComputeTime("cells initiated duration=", new Action(() =>
+            {
+                quads = new PaCell(tp_quads, path + "quads.pac", false);
+                graph_a = new PaCell(tp_graph, path + "graph_a.pac", false);                
+                graph_x = new PxCell(tp_graph, path + "graph_x.pxc", false);
+                graph_x.Clear();
+                n4_x = new PxCell(tp_n4, path + "n4_x.pxc", false);
+                n4_x.Clear();
+                n4 = new PaCell(tp_n4, path + "n4.pac", false);
+                n4.Clear();
+            }));
 
+            
+            ComputeTime("After LoadQuadsAndSort(). duration=", () => LoadQuads(n4, quads));
+            Sort(n4, quads);
+            Console.WriteLine("After Sort(). duration=" );
             FormingSerialGraph(new SerialBuffer(graph_a, 3), quads);
-            Console.WriteLine("Forming serial graph ok. duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
+            Console.WriteLine("Forming serial graph ok. duration=");
 
             // произвести объектное представление
             graph_x.Fill2(graph_a.Root.Get().Value);
             n4_x.Fill2(n4.Root.Get().Value);
-            Console.WriteLine("Forming fixed graph ok. duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
+            Console.WriteLine("Forming fixed graph ok. duration=" );
 
             // ========= Завершение загрузки =========
             // Закроем файлы и уничтожим ненужные
             triplets.Close();
-            quads.Close(); File.Delete(path + "quads.pac");
-            graph_a.Close(); File.Delete(path + "graph_a.pac");
-            n4.Close(); File.Delete(path + "n4.pac");
+            quads.Close();
+            File.Delete(path + "quads.pac");
+            graph_a.Close();
+            File.Delete(path + "graph_a.pac");
+            n4.Close();
+            File.Delete(path + "n4.pac");
             n4_x.Close();
             graph_x.Close();
             // Откроем для использования
             InitCells();
         }
-     
         // ============ Технические методы ============
         private void FormingSerialGraph(ISerialFlow serial, PaCell quads)
         {
@@ -317,8 +200,10 @@ namespace CommonRDF
         }
         private struct FourFields
         {
-            public int e_hs, vid, p_hs;
-            public long off;
+            public readonly int e_hs;
+            public readonly int vid;
+            public readonly int p_hs;
+            public readonly long off;
             public FourFields(int a, int b, int c, long d)
             {
                 e_hs = a; vid = b; p_hs = c; off = d;
@@ -365,8 +250,8 @@ namespace CommonRDF
                 ReadTSV(filePath,quadAction);
         }
 
-        static Regex nsRegex = new Regex(@"^@prefix\s+(\w+):\s+<(.+)>\.$", RegexOptions.Compiled);
-        static Regex tripletsRegex = new Regex("^(\\S+)\\s+(\\S+)\\s+(\"(.+)\"(@(\\S*))?|(.+))\\.$", RegexOptions.Compiled);
+       private static readonly Regex nsRegex = new Regex(@"^@prefix\s+(\w+):\s+<(.+)>\.$", RegexOptions.Compiled);
+       private static readonly Regex tripletsRegex = new Regex("^(\\S+)\\s+(\\S+)\\s+(\"(.+)\"(@(\\S*))?|(.+))\\.$", RegexOptions.Compiled);
 
         static void ReadTSV(string filePath, QuadAction quadAction)
         {
@@ -385,7 +270,7 @@ namespace CommonRDF
                     int i;
                     string readLine;
                     for (i = 0; i < count && (readLine = reader.ReadLine()) != null; i++)
-                        GetValue(quadAction, readLine);
+                        String2Quard(quadAction, readLine);
                     //if (!GetValue(quadAction, lines[j]) && lines.Length > j + 1)
                     //    if (GetValue(quadAction, lines[j] + lines[j + 1]))
                     //        j++;
@@ -395,19 +280,19 @@ namespace CommonRDF
             }
         }
 
-        private static bool GetValue(QuadAction quadAction, string readLine)
+        private static void String2Quard(QuadAction quadAction, string readLine)
         { 
             if (string.IsNullOrWhiteSpace(readLine))
-                    return true;
+                return;
             Match lineMatch;
-            if (!(lineMatch = tripletsRegex.Match(readLine)).Success) return false;
+            if (!(lineMatch = tripletsRegex.Match(readLine)).Success) return;
             var dMatch = lineMatch.Groups[4];
             if (dMatch.Success)
                 quadAction(lineMatch.Groups[1].Value, lineMatch.Groups[2].Value, dMatch.Value, false,
                     lineMatch.Groups[6].Value);
             else
                 quadAction(lineMatch.Groups[1].Value, lineMatch.Groups[2].Value, lineMatch.Groups[7].Value);
-            return true;
+            return;
         }
 
         #region Read XML
@@ -437,7 +322,7 @@ namespace CommonRDF
 
         #endregion
 
-        private void LoadQuadsAndSort(PaCell n4, PaCell quads)
+        private void LoadQuads(PaCell n4, PaCell quads)
         {
             n4.StartSerialFlow();
             n4.S();
@@ -470,34 +355,206 @@ namespace CommonRDF
             quads.EndSerialFlow();
             n4.Se();
             n4.EndSerialFlow();
+            Sort(n4, quads);
+        }
 
-            // Сортировка квадриков
+        private static void Sort(PaCell n4, PaCell quads)
+        {
+// Сортировка квадриков
             quads.Root.Sort((o1, o2) =>
             {
-                object[] v1 = (object[])o1;
-                object[] v2 = (object[])o2;
-                int e1 = (int)v1[0];
-                int e2 = (int)v2[0];
-                int q1 = (int)v1[1];
-                int q2 = (int)v2[1];
-                int p1 = (int)v1[2];
-                int p2 = (int)v2[2];
-                return e1 < e2 ? -3 : (e1 > e2 ? 3 :
-                    (q1 < q2 ? -2 : (q1 > q2 ? 2 :
-                    (p1 < p2 ? -1 : (p1 > p2 ? 1 : 0)))));
+                object[] v1 = (object[]) o1;
+                object[] v2 = (object[]) o2;
+                int e1 = (int) v1[0];
+                int e2 = (int) v2[0];
+                int q1 = (int) v1[1];
+                int q2 = (int) v2[1];
+                int p1 = (int) v1[2];
+                int p2 = (int) v2[2];
+                return e1 < e2
+                    ? -3
+                    : (e1 > e2
+                        ? 3
+                        : (q1 < q2
+                            ? -2
+                            : (q1 > q2
+                                ? 2
+                                : (p1 < p2 ? -1 : (p1 > p2 ? 1 : 0)))));
             });
             // Сортировка таблицы имен
             n4.Root.Sort((o1, o2) =>
             {
-                object[] v1 = (object[])o1;
-                object[] v2 = (object[])o2;
-                string s1 = (string)v1[1];
-                string s2 = (string)v2[1];
+                object[] v1 = (object[]) o1;
+                object[] v2 = (object[]) o2;
+                string s1 = (string) v1[1];
+                string s2 = (string) v2[1];
                 return String.Compare(s1, s2, StringComparison.Ordinal);
             });
         }
 
+        #region Методы доступа к данным
 
+        // =============== Методы доступа к данным ==================
+        internal PxEntry GetEntryById(string id)
+        {
+            int e_hs = id.GetHashCode();
+            PxEntry found = graph_x.Root.BinarySearchFirst(element =>
+            {
+                int v = (int)element.Field(0).Get().Value;
+                return v < e_hs ? -1 : (v == e_hs ? 0 : 1);
+            });
+            return found;
+        }
+        public override IEnumerable<string> GetEntities()
+        {
+            foreach (PxEntry pxe in graph_x.Root.Elements())
+            {
+                var first = pxe.Field(1).Elements().FirstOrDefault();
+                if (first.Typ == null || !first.Field(1).Elements().Any())
+                {
+                    first = pxe.Field(2).Elements().FirstOrDefault();
+                    if (first.Typ == null || !first.Field(1).Elements().Any())
+                    {
+                        first = pxe.Field(3).Elements().FirstOrDefault();
+                        if (first.Typ == null || !first.Field(1).Elements().Any())
+                            continue;
+                        yield return
+                            ((OProp)Triplet.Create(GetTriplet((long)first.Field(1).Elements().First().Get().Value))).o
+                            ;
+                    }
+                }
+                yield return Triplet.Create(GetTriplet((long)first.Field(1).Elements().First().Get().Value)).s;
+            }
+        }
+
+        public override IEnumerable<PredicateEntityPair> GetDirect(string id)
+        {
+            return GetProperty(id, 1, t => t.s == id)
+                .Cast<OProp>()
+                .Select(t => new PredicateEntityPair(t.p, t.o));
+        }
+
+        public override IEnumerable<PredicateEntityPair> GetInverse(string id)
+        {
+            return GetProperty(id, 2, t => t is OProp && ((OProp)t).o == id)
+                .Select(t => new PredicateEntityPair(t.p, t.s));
+        }
+
+        public override IEnumerable<PredicateDataTriple> GetData(string id)
+        {
+            return GetProperty(id, 3, t => t.s == id)
+                .Cast<DProp>()
+                .Select(t => new PredicateDataTriple(t.p, t.d, t.d));
+        }
+
+        private IEnumerable<Triplet> GetProperty(string id, int direction,
+            Predicate<Triplet> predicateValuesTest, int? predicateSC = null)
+        {
+            PxEntry found = GetEntryById(id);
+            if (found.IsEmpty) return null;
+            Triplet first4Test;
+            IEnumerable<PxEntry> pxEntries = found.Field(direction).Elements();
+            if (predicateSC != null)
+                pxEntries = pxEntries
+                    .Where(pRec => (int)pRec.Field(0).Get().Value == predicateSC.Value);
+            return pxEntries
+                .Select(pRec =>
+                    pRec.Field(1)
+                        .Elements()
+                        .Select(offEn => offEn.Get().Value)
+                        .Cast<long>()
+                        .Select(GetTriplet)
+                        .Select(Triplet.Create))
+                .Where(predicateResults =>
+                    (first4Test = predicateResults.FirstOrDefault()) != null
+                    && predicateValuesTest(first4Test))
+                .SelectMany(resultsGroup => resultsGroup);
+            // Еще отбраковкаtri => tri is OProp && tri.s == id &&
+        }
+
+        private object GetTriplet(long offTtripl)
+        {
+            any_triplet.offset = offTtripl;
+            return any_triplet.Get().Value;
+        }
+
+        public override IEnumerable<string> GetDirect(string id, string predicate)
+        {
+            return GetProperty(id, 1, t => t.s == id && t.p == predicate, predicate.GetHashCode())
+                .Cast<OProp>()
+                .Select(t => t.o);
+        }
+
+        public override IEnumerable<string> GetInverse(string id, string predicate)
+        {
+            return GetProperty(id, 2,
+                t => t.p == predicate && (t is OProp) && ((OProp)t).o == id,
+                predicate.GetHashCode())
+                .Select(t => t.s);
+        }
+
+        public override IEnumerable<string> GetData(string id, string predicate)
+        {
+            return GetProperty(id, 3, t => t.s == id && t.p == predicate, predicate.GetHashCode())
+                .Cast<DProp>()
+                .Select(t => t.d);
+        }
+
+        public override IEnumerable<DataLangPair> GetDataLangPairs(string id, string predicate)
+        {
+            return GetData(id, predicate).Select(SplitLang);
+        }
+
+        public override void GetItembyId(string id)
+        {
+            foreach (var predicateDataTriple in GetData(id))
+            {
+                Console.WriteLine("{0} {1} {2}", predicateDataTriple.predicate, predicateDataTriple.data,
+                    predicateDataTriple.lang);
+            }
+        }
+
+        public override void Test()
+        {
+            Console.WriteLine(string.Join(" ", SearchByName("Ершов Андрей Петрович")));
+            string id = "w20070417_5_8436";
+            GetItembyId(id);
+            id = "piu_200809051791";
+            GetItembyId(id);
+        }
+
+        public override string[] SearchByName(string ss)
+        {
+            if (string.IsNullOrWhiteSpace(ss)) return new string[0];
+            //ss = ss;
+            var name4 = (ss.Length > 4 ? ss.Substring(0, 4) : ss).ToLower();
+            return n4_x.Root.BinarySearchAll(
+                e => String.Compare((string)e.Field(1).Get().Value, name4, StringComparison.Ordinal))
+                .Select(e => e.Field(0).Get().Value)
+                .Cast<long>()
+                .Select(GetTriplet)
+                .Select(Triplet.Create)
+                .Where(t => t is DProp) // && predicate is name
+                .Cast<DProp>()
+                .Where(t => t.d == ss)
+                .Select(t => t.s)
+                .ToArray();
+        }
+        #endregion
+
+        /// <summary>
+        /// Выводит в консоль время исполнения
+        /// </summary>
+        /// <param name="mesage"></param>
+        /// <param name="action">тестируемый метод</param>
+        void ComputeTime(string mesage,Action action)
+        {
+            timer.Restart();
+            action.Invoke();
+            timer.Stop();
+            Console.WriteLine("{0} {1}", mesage, timer.Elapsed.Ticks / 10000L);
+        }
+        Stopwatch timer = new Stopwatch();
 
         private void InitTypes()
         {

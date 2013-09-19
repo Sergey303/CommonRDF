@@ -135,6 +135,11 @@ namespace CommonRDF
             }
         }
 
+        public override void CreateGraph()
+        {
+            throw new NotImplementedException();
+        }
+
         private static object[]  Axe2Objects(Axe axe)
         {
             return new[]{(object)axe.predicate, axe.variants.Cast<object>().ToArray()};

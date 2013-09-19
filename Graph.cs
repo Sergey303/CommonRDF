@@ -12,6 +12,11 @@ namespace CommonRDF
         protected Dictionary<string, RecordEx> dics;
         protected Dictionary<string, string[]> n4;
 
+        public override void CreateGraph()
+        {
+            throw new NotImplementedException();
+        }
+
         public override IEnumerable<string> GetEntities()
         {
             return dics.Select(pair => pair.Key);
