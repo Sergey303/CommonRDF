@@ -43,27 +43,33 @@ namespace CommonRDF
             // Создадим ячейки
             triplets = new PaCell(tp_triplets, path + "triplets.pac", false);
             triplets.Clear();
-          
-            TripletSerialInput(triplets, rdf_files);
-            Console.WriteLine("After TripletSerialInput. duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
 
+            ((ISerialFlow) triplets).StartSerialFlow();
+            ((ISerialFlow) triplets).S();
+            foreach (string db_falename in rdf_files)
+                ReadFile(db_falename, (id, property, value, isObj, lang) =>
+                    ((ISerialFlow) triplets).V(isObj
+                        ? new object[] { 1, new object[] { id, property, value } }
+                        : new object[] { 2, new object[] { id, property, value, lang ?? "" } }));
+            ((ISerialFlow) triplets).Se();
+            ((ISerialFlow) triplets).EndSerialFlow();
+            Console.WriteLine("After TripletSerialInput. duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
+            triplets.Close();
         }
 
         public override void CreateGraph()
         {
-            if (graph_x != null)
-            {
-                graph_x.Close();
-                graph_x = null;
-            }
-            if (n4_x != null)
-            {
-                n4_x.Close();
-                n4_x = null;
-            }
+            if (!File.Exists(path + "triplets.pac")) //TODO throw new FileNotFoundException(path + "triplets.pac");
+                return;
+            // Закроем использование
+            if (triplets != null) { triplets.Close(); triplets = null; }
+            if (graph_x != null) { graph_x.Close(); graph_x = null; }
+            if (n4_x != null) { n4_x.Close(); n4_x = null; }
             PaCell quads = null;
             PaCell graph_a = null;
             PaCell n4 = null;
+            triplets = new PaCell(tp_triplets, path + "triplets.pac");
+
             ComputeTime("cells initiated duration=", new Action(() =>
             {
                 quads = new PaCell(tp_quads, path + "quads.pac", false);
@@ -77,7 +83,8 @@ namespace CommonRDF
             }));
 
             
-            ComputeTime("After LoadQuadsAndSort(). duration=", () => LoadQuads(n4, quads));
+            ComputeTime("After LoadQuadsAndSort(). duration=", () =>
+                LoadQuads(n4, quads));
             Sort(n4, quads);
             Console.WriteLine("After Sort(). duration=" );
             FormingSerialGraph(new SerialBuffer(graph_a, 3), quads);
@@ -224,18 +231,7 @@ namespace CommonRDF
             triplets = new PaCell(tp_triplets, filePathTriplets);
             any_triplet = triplets.Root.Element(0);
         }
-        private static void TripletSerialInput(ISerialFlow sflow, IEnumerable<string> rdf_filenames)
-        {
-            sflow.StartSerialFlow();
-            sflow.S();
-            foreach (string db_falename in rdf_filenames)
-                ReadFile(db_falename, (id, property, value, isObj, lang) =>
-                    sflow.V(isObj
-                        ? new object[] { 1, new object[] { id, property, value } }
-                        : new object[] { 2, new object[] { id, property, value, lang ?? "" } }));
-            sflow.Se();
-            sflow.EndSerialFlow();
-        }
+
         private delegate void QuadAction(string id, string property,
              string value, bool isObj = true, string lang = null);
         
