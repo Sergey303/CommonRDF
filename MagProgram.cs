@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Xml.Linq;
 
 namespace CommonRDF
 {
@@ -16,6 +17,22 @@ namespace CommonRDF
         public void Receive(string[] row) { receive_list.Add(row); }
         public void Run()
         {
+            if (false) // прект freebase3m
+            {
+                int i = 0;
+                foreach (var entity in gr.GetEntities())
+                {
+                    Console.WriteLine("{0}", entity);
+                    i++;
+                    if (i >= 10) break;
+                }
+                string idd = "ns:m.05ypwqv"; //"ns:m.0hz6pwx";
+                //foreach (var qu in gr.GetData(idd)) Console.WriteLine("\t{0} {1}", qu.predicate, qu.data);
+                XElement portrait = ((GraphTripletsTree)gr).GetPortraitSimple(idd, true);
+                if (portrait != null) Console.WriteLine(portrait.ToString());
+
+                return;
+            }
             DateTime tt0 = DateTime.Now;
             //string id = "w20070417_5_8436"; // Марчук Александр Гурьевич
             string id = "piu_200809051791";  // Ершов Андрей Петрович

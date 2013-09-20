@@ -33,6 +33,8 @@ namespace CommonRDF
     }
     public abstract class GraphBase
     {
+        public abstract void Load(params string[] rdfFiles);
+        public abstract void CreateGraph();
         public abstract IEnumerable<string> GetEntities();
         public abstract IEnumerable<PredicateEntityPair> GetDirect(string id);
         public abstract IEnumerable<PredicateEntityPair> GetInverse(string id);
@@ -43,7 +45,6 @@ namespace CommonRDF
         public abstract IEnumerable<DataLangPair> GetDataLangPairs(string id, string predicate);
         public abstract void GetItembyId(string id);
         public abstract void Test();
-        public abstract void Load(params string[] rdfFiles);
         public abstract string[] SearchByName(string ss);
 
         public static Regex LangRegex = new Regex("^(.*)@([^@]{1,5})$", RegexOptions.Compiled);

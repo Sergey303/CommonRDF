@@ -35,9 +35,6 @@
     <StartupObject>CommonRDF.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="PolarDB">
-      <HintPath>dlls\PolarDB.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Web" />
@@ -70,6 +67,15 @@
     <Content Include="query.txt" />
     <Content Include="querySimpleЕршов.txt" />
     <Content Include="orgs with portraits.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="DataFreebase\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PolarDB\PolarDB.csproj">
+      <Project>{907bb4af-fbc9-4a1e-8f80-194af9337aa4}</Project>
+      <Name>PolarDB</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
