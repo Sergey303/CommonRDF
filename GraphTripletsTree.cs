@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Xml;
+using System.Xml.Linq;
 using PolarDB;
 using sema2012m;
 
@@ -14,7 +13,7 @@ namespace CommonRDF
 {
     class GraphTripletsTree : GraphBase
     {
-         private readonly string path;
+        private readonly string path;
         private PType tp_triplets;
         private PType tp_quads;
         private PType tp_n4;
@@ -32,7 +31,6 @@ namespace CommonRDF
             this.path = path;
             InitTypes();
             InitCells();
-            filePathTriplets = this.path + "triplets.pac";
         }
       
         public override void Load(params string[] rdf_files)
@@ -42,7 +40,9 @@ namespace CommonRDF
             if (triplets != null) { triplets.Close(); triplets = null; }
             
             // Создадим ячейки
-            triplets = new PaCell(tp_triplets, filePathTriplets, false);
+            //triplets = new PaCell(tp_triplets, path + "triplets.pac", false);
+            //triplets.Clear();
+            triplets = new PaCell(tp_triplets, path + "triplets.pac", false);
             triplets.Clear();
 
             ((ISerialFlow) triplets).StartSerialFlow();
@@ -61,18 +61,18 @@ namespace CommonRDF
 
         public override void CreateGraph()
         {
-            if (!File.Exists(filePathTriplets)) //TODO throw new FileNotFoundException(path + "triplets.pac");
+            if (!File.Exists(path + "triplets.pac")) //TODO throw new FileNotFoundException(path + "triplets.pac");
                 return;
             // Закроем использование
-            //if (triplets != null) { triplets.Close(); triplets = null; }
+            if (triplets != null) { triplets.Close(); triplets = null; }
             if (graph_x != null) { graph_x.Close(); graph_x = null; }
             if (n4_x != null) { n4_x.Close(); n4_x = null; }
             PaCell quads = null;
             PaCell graph_a = null;
             PaCell n4 = null;
-            triplets = new PaCell(tp_triplets, filePathTriplets);
+            triplets = new PaCell(tp_triplets, path + "triplets.pac");
 
-            ComputeTime("cells initiated duration=", new Action(() =>
+            Perfomance.ComputeTime(() =>
             {
                 quads = new PaCell(tp_quads, path + "quads.pac", false);
                 graph_a = new PaCell(tp_graph, path + "graph_a.pac", false);                
@@ -82,11 +82,10 @@ namespace CommonRDF
                 n4_x.Clear();
                 n4 = new PaCell(tp_n4, path + "n4.pac", false);
                 n4.Clear();
-            }));
+            }, "cells initiated duration=");
 
-            
-            ComputeTime("After LoadQuadsAndSort(). duration=", () =>
-                LoadQuads(n4, quads));
+
+            Perfomance.ComputeTime(() => LoadQuads(n4, quads), "After LoadQuads(). duration=");
             Sort(n4, quads);
             Console.WriteLine("After Sort(). duration=" );
             FormingSerialGraph(new SerialBuffer(graph_a, 3), quads);
@@ -126,7 +125,7 @@ namespace CommonRDF
             bool firstprop = true;
             foreach (object[] el in quads.Root.Elements().Select(e => e.Value))
             {
-                var record = new FourFields((int)el[0], (int)el[1], (int)el[2], (long)el[3]);
+                var record = new GraphTripletsTree.FourFields((int)el[0], (int)el[1], (int)el[2], (long)el[3]);
                 if (firsttime || record.e_hs != hs_e)
                 { // Начало новой записи
                     firstprop = true;
@@ -222,6 +221,7 @@ namespace CommonRDF
 
         private void InitCells()
         {
+            string filePathTriplets = path + "triplets.pac";
             string filePathGraph = path + "graph_x.pxc";
             string filePathN4 = path + "n4_x.pxc";
             if (!File.Exists(filePathGraph) || !File.Exists(filePathN4)) return;
@@ -230,6 +230,7 @@ namespace CommonRDF
             n4_x=new PxCell(tp_n4, filePathN4);
             if (!File.Exists(filePathTriplets)) return;
             triplets = new PaCell(tp_triplets, filePathTriplets);
+            //Console.WriteLine(triplets.Root.Count());
             any_triplet = triplets.Root.Element(0);
         }
 
@@ -294,7 +295,7 @@ namespace CommonRDF
 
         #region Read XML
 
-        private static string langAttributeName = "xml:lang",
+        public static string langAttributeName = "xml:lang",
             rdfAbout = "rdf:about",
             rdfResource = "rdf:resource",
             NS = "http://fogid.net/o/";
@@ -401,6 +402,56 @@ namespace CommonRDF
                 return v < e_hs ? -1 : (v == e_hs ? 0 : 1);
             });
             return found;
+        }
+        // Нетиповой метод
+        public XElement GetPortraitSimple(string id, bool showinverse)
+        {
+            var ent = GetEntryById(id);
+            if (ent.IsEmpty) return null;
+            object[] directset = (object[])ent.Field(1).Get().Value;
+            object[] inverseset = showinverse ? (object[])ent.Field(2).Get().Value : null;
+            object[] dataset = (object[])ent.Field(3).Get().Value;
+            XElement result = new XElement("record", new XAttribute("id", id));
+            foreach (object[] predseq in dataset)
+            {
+                object[] seq = (object[])predseq[1];
+                foreach (long off in seq)
+                {
+                    object[] tri = (object[])GetTriplet(off);
+                    object[] dp = (object[])tri[1];
+                    if ((string)dp[0] != id) continue;
+                    result.Add(new XElement("field", new XAttribute("prop", dp[1]),
+                        string.IsNullOrEmpty((string)dp[3]) ? null : new XAttribute("lang", (string)dp[3]),
+                        dp[2]));
+                }
+            }
+            foreach (object[] predseq in directset)
+            {
+                object[] seq = (object[])predseq[1];
+                foreach (long off in seq)
+                {
+                    object[] tri = (object[])GetTriplet(off);
+                    object[] op = (object[])tri[1];
+                    if ((string)op[0] != id) continue;
+                    result.Add(new XElement("direct", new XAttribute("prop", op[1]),
+                        new XElement("record", new XAttribute("id", op[2]))));
+                }
+            }
+            if (showinverse)
+            foreach (object[] predseq in inverseset)
+            {
+                object[] seq = (object[])predseq[1];
+                foreach (long off in seq)
+                {
+                    object[] tri = (object[])GetTriplet(off);
+                    object[] op = (object[])tri[1];
+                    if ((string)op[2] != id) continue;
+                    result.Add(new XElement("inverse", new XAttribute("prop", op[1]),
+                        new XElement("record", new XAttribute("id", op[0]))));
+                }
+            }
+            if (result.HasElements) return result;
+            return null;
         }
         public override IEnumerable<string> GetEntities()
         {
@@ -538,21 +589,7 @@ namespace CommonRDF
                 .ToArray();
         }
         #endregion
-
-        /// <summary>
-        /// Выводит в консоль время исполнения
-        /// </summary>
-        /// <param name="mesage"></param>
-        /// <param name="action">тестируемый метод</param>
-        void ComputeTime(string mesage,Action action)
-        {
-            timer.Restart();
-            action.Invoke();
-            timer.Stop();
-            Console.WriteLine("{0} {1}", mesage, timer.Elapsed.Ticks / 10000L);
-        }
-        Stopwatch timer = new Stopwatch();
-        private readonly string filePathTriplets;
+       
 
         private void InitTypes()
         {
