@@ -35,8 +35,9 @@
     <StartupObject>CommonRDF.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="PolarDB">
-      <HintPath>dlls\PolarDB.dll</HintPath>
+    <Reference Include="PolarDB, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Users\Sergey\Source\Repos\PolarDB\bin\Debug\PolarDB.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
