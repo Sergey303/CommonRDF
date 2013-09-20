@@ -103,10 +103,10 @@ namespace CommonRDF
                         }
                         else
                         {
-                            if (p.IsObj != null)
-                                o.SetTargetType(p.IsObj.Value);
-                            else if (o.IsObj != null)
-                                p.SetTargetType(o.IsObj.Value);
+                            if (p.IsObj != Role.Unknown)
+                                o.SetTargetType(p.IsObj==Role.Object);
+                            else if (o.IsObj != Role.Unknown)
+                                p.SetTargetType(o.IsObj==Role.Object);
                             else //both unkown
                             {
                                 p.SubscribeIsObjSetted(o);
@@ -119,9 +119,6 @@ namespace CommonRDF
                                 S = s,
                                 P = p,
                                 O = o,
-                                IsNewS = isNewS,
-                                IsNewP = isNewP,
-                                IsNewO = isNewO,
                                 HasSOptValue = HasOpt(isNewS, optParamHasValues, sValue),
                                 HasPOptValue = HasOpt(isNewP, optParamHasValues, pValue),
                                 HasOOptValue = HasOpt(isNewO, optParamHasValues, oValue)
@@ -131,10 +128,7 @@ namespace CommonRDF
                             {
                                 S = s,
                                 P = p,
-                                O = o,
-                                IsNewS = isNewS,
-                                IsNewP = isNewP,
-                                IsNewO = isNewO
+                                O = o
                             });
                     }
                 }
@@ -215,9 +209,7 @@ namespace CommonRDF
                 {
                     if (hasValueO)
                     {
-                        if (isNotData && Gr.GetDirect(sValue, predicate).Contains(data) ||
-                            !isObj && Gr.GetData(sValue, predicate).Contains(data))
-                            Match(i + 1);
+                        TestTriplet(i, s, p, o);
                         return;
                     }
                     //else 
@@ -348,6 +340,13 @@ namespace CommonRDF
                      Match(i+1);
                  }
              }
+        }
+
+        public void TestTriplet(int i, TValue s, TValue p, TValue o)
+        {
+            if (o.IsObj!=Role.Data && Gr.GetDirect(s.Value, p.Value).Contains(p.Value) ||
+                o.IsObj != Role.Object && Gr.GetData(s.Value, p.Value).Contains(p.Value))
+                Match(i + 1);
         }
 
         private void MatchOptional(int i)

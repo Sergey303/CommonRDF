@@ -32,6 +32,7 @@ namespace CommonRDF
             this.path = path;
             InitTypes();
             InitCells();
+            filePathTriplets = this.path + "triplets.pac";
         }
       
         public override void Load(params string[] rdf_files)
@@ -41,7 +42,7 @@ namespace CommonRDF
             if (triplets != null) { triplets.Close(); triplets = null; }
             
             // Создадим ячейки
-            triplets = new PaCell(tp_triplets, path + "triplets.pac", false);
+            triplets = new PaCell(tp_triplets, filePathTriplets, false);
             triplets.Clear();
 
             ((ISerialFlow) triplets).StartSerialFlow();
@@ -55,20 +56,21 @@ namespace CommonRDF
             ((ISerialFlow) triplets).EndSerialFlow();
             Console.WriteLine("After TripletSerialInput. duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
             triplets.Close();
+            triplets = null;
         }
 
         public override void CreateGraph()
         {
-            if (!File.Exists(path + "triplets.pac")) //TODO throw new FileNotFoundException(path + "triplets.pac");
+            if (!File.Exists(filePathTriplets)) //TODO throw new FileNotFoundException(path + "triplets.pac");
                 return;
             // Закроем использование
-            if (triplets != null) { triplets.Close(); triplets = null; }
+            //if (triplets != null) { triplets.Close(); triplets = null; }
             if (graph_x != null) { graph_x.Close(); graph_x = null; }
             if (n4_x != null) { n4_x.Close(); n4_x = null; }
             PaCell quads = null;
             PaCell graph_a = null;
             PaCell n4 = null;
-            triplets = new PaCell(tp_triplets, path + "triplets.pac");
+            triplets = new PaCell(tp_triplets, filePathTriplets);
 
             ComputeTime("cells initiated duration=", new Action(() =>
             {
@@ -220,7 +222,6 @@ namespace CommonRDF
 
         private void InitCells()
         {
-            string filePathTriplets = path + "triplets.pac";
             string filePathGraph = path + "graph_x.pxc";
             string filePathN4 = path + "n4_x.pxc";
             if (!File.Exists(filePathGraph) || !File.Exists(filePathN4)) return;
@@ -447,7 +448,7 @@ namespace CommonRDF
             Predicate<Triplet> predicateValuesTest, int? predicateSC = null)
         {
             PxEntry found = GetEntryById(id);
-            if (found.IsEmpty) return null;
+            if (found.IsEmpty) return Enumerable.Empty<Triplet>();
             Triplet first4Test;
             IEnumerable<PxEntry> pxEntries = found.Field(direction).Elements();
             if (predicateSC != null)
@@ -551,6 +552,7 @@ namespace CommonRDF
             Console.WriteLine("{0} {1}", mesage, timer.Elapsed.Ticks / 10000L);
         }
         Stopwatch timer = new Stopwatch();
+        private readonly string filePathTriplets;
 
         private void InitTypes()
         {

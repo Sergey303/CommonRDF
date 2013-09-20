@@ -10,7 +10,7 @@ namespace CommonRDF
     {
         //public static readonly Hashtable Cach = new Hashtable();(RecordEx)(Cach[id] ?? (Cach[id] = 
         public string Value;
-        public bool? IsObj;
+        public Role IsObj;
         private event Action<bool> whenObjSetted;
         public event Action<bool> WhenObjSetted
         {
@@ -27,10 +27,10 @@ namespace CommonRDF
 
         public void SetTargetType(bool value)
         {
-            if (IsObj != null)
-                if (IsObj.Value != value)
+            if (IsObj == Role.Data && value
+                || IsObj == Role.Object && !value)
                     throw new Exception("to object sets data");
-            IsObj = value;
+            IsObj = value ? Role.Object : Role.Data;
             if(whenObjSetted!=null)
                 whenObjSetted(value);
         }
@@ -46,16 +46,18 @@ namespace CommonRDF
             connect.WhenObjSetted += connectOnWhenObjSetted;
         }
     }
-
+    public enum Role{ Unknown, Data, Object}
     public struct QueryTriplet
     {
         public TValue S, P, O;
-        public bool IsNewS, IsNewP, IsNewO;
+        public TripletAction Action;
     }
+
+    public delegate bool TripletAction(TValue s, TValue p, TValue o, int i);
     public struct QueryTripletOptional
     {
         public TValue S, P, O;
-        public bool IsNewS, IsNewP, IsNewO;
+        public TripletAction Action;
         public bool HasSOptValue, HasPOptValue, HasOOptValue;
     }
 }
