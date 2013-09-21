@@ -58,6 +58,7 @@ namespace CommonRDF
             ((ISerialFlow) triplets).EndSerialFlow();
             Console.WriteLine("After TripletSerialInput. duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
             triplets.Close();
+            triplets = null;
         }
 
         public override void CreateGraph()
@@ -501,7 +502,7 @@ namespace CommonRDF
             Predicate<Triplet> predicateValuesTest, int? predicateSC = null)
         {
             PxEntry found = GetEntryById(id);
-            if (found.IsEmpty) return null;
+            if (found.IsEmpty) return Enumerable.Empty<Triplet>();
             Triplet first4Test;
             IEnumerable<PxEntry> pxEntries = found.Field(direction).Elements();
             if (predicateSC != null)

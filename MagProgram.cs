@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Linq;
 
 namespace CommonRDF
@@ -19,12 +20,9 @@ namespace CommonRDF
         {
             if (false) // прект freebase3m
             {
-                int i = 0;
-                foreach (var entity in gr.GetEntities())
+                foreach (var entity in gr.GetEntities().Take(10))
                 {
                     Console.WriteLine("{0}", entity);
-                    i++;
-                    if (i >= 10) break;
                 }
                 string idd = "ns:m.05ypwqv"; //"ns:m.0hz6pwx";
                 //foreach (var qu in gr.GetData(idd)) Console.WriteLine("\t{0} {1}", qu.predicate, qu.data);
