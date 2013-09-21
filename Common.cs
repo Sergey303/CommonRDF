@@ -76,6 +76,7 @@ namespace CommonRDF
         public bool isEntity = true;
         public string varName;
         public string varValue;
+        public object NodeInfo;
     }
     public enum TripletVid { op, dp }
     // Все значения, появляющиеся в строчках запросов или пременные или константы. Индекс - позиция в массиве DescrVar[] 

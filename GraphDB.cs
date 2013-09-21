@@ -177,18 +177,18 @@ namespace CommonRDF
             throw new NotImplementedException();
         }
 
-        public override IEnumerable<PredicateEntityPair> GetDirect(string id)
+        public override IEnumerable<PredicateEntityPair> GetDirect(string id, object nodeInfo = null)
         {
             return GetProperties<PredicateEntityPair>(id, 2, predicate => value => new PredicateEntityPair(predicate, value));
         }
 
-        public override IEnumerable<PredicateEntityPair> GetInverse(string id)
+        public override IEnumerable<PredicateEntityPair> GetInverse(string id, object nodeInfo = null)
         {
             return GetProperties<PredicateEntityPair>(id, 3, predicate=> value => new PredicateEntityPair(predicate, value));
         }
 
        // public static Regex LangRegex=new Regex("");
-        public override IEnumerable<PredicateDataTriple> GetData(string id)
+        public override IEnumerable<PredicateDataTriple> GetData(string id, object nodeInfo = null)
         {
             return GetProperties<PredicateDataTriple>(id, 4, predicate => value =>
             {
@@ -205,12 +205,12 @@ namespace CommonRDF
                 .Cast<object[]>()
                 .SelectMany(axe => ((object[]) axe[1]).Cast<string>().Select(selector((string) axe[0])));
         }
-        public override IEnumerable<string> GetDirect(string id, string predicate)
+        public override IEnumerable<string> GetDirect(string id, string predicate, object nodeInfo = null)
         {
             return GetProperties(id, predicate, 2);
         }
 
-        public override IEnumerable<string> GetInverse(string id, string predicate)
+        public override IEnumerable<string> GetInverse(string id, string predicate, object nodeInfo = null)
         {
             return GetProperties(id, predicate, 3);
         }
@@ -225,12 +225,12 @@ namespace CommonRDF
             return axe == null ? Enumerable.Empty<string>() : ((object[])axe[1]).Cast<string>();
         }
 
-        public override IEnumerable<string> GetData(string id, string predicate)
+        public override IEnumerable<string> GetData(string id, string predicate, object nodeInfo = null)
         {
             return GetProperties(id, predicate, 4);
         }
 
-        public override IEnumerable<DataLangPair> GetDataLangPairs(string id, string predicate)
+        public override IEnumerable<DataLangPair> GetDataLangPairs(string id, string predicate, object nodeInfo = null)
         {
             return GetData(id, predicate)
                 .Select(SplitLang);
@@ -249,6 +249,11 @@ namespace CommonRDF
       
 
         public override string[] SearchByName(string ss)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override object GetNode(string id)
         {
             throw new NotImplementedException();
         }

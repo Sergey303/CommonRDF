@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
 using PolarDB;
@@ -74,7 +72,7 @@ namespace CommonRDF
             PaCell n4 = null;
             triplets = new PaCell(tp_triplets, path + "triplets.pac");
 
-            ComputeTime("cells initiated duration=", new Action(() =>
+            Perfomance.ComputeTime(() =>
             {
                 quads = new PaCell(tp_quads, path + "quads.pac", false);
                 graph_a = new PaCell(tp_graph, path + "graph_a.pac", false);                
@@ -84,11 +82,10 @@ namespace CommonRDF
                 n4_x.Clear();
                 n4 = new PaCell(tp_n4, path + "n4.pac", false);
                 n4.Clear();
-            }));
+            }, "cells initiated duration=");
 
-            
-            ComputeTime("After LoadQuadsAndSort(). duration=", () =>
-                LoadQuads(n4, quads));
+
+            Perfomance.ComputeTime(() => LoadQuads(n4, quads), "After LoadQuads(). duration=");
             Sort(n4, quads);
             Console.WriteLine("After Sort(). duration=" );
             FormingSerialGraph(new SerialBuffer(graph_a, 3), quads);
@@ -128,7 +125,7 @@ namespace CommonRDF
             bool firstprop = true;
             foreach (object[] el in quads.Root.Elements().Select(e => e.Value))
             {
-                var record = new FourFields((int)el[0], (int)el[1], (int)el[2], (long)el[3]);
+                var record = new GraphTripletsTree.FourFields((int)el[0], (int)el[1], (int)el[2], (long)el[3]);
                 if (firsttime || record.e_hs != hs_e)
                 { // Начало новой записи
                     firstprop = true;
@@ -298,7 +295,7 @@ namespace CommonRDF
 
         #region Read XML
 
-        private static string langAttributeName = "xml:lang",
+        public static string langAttributeName = "xml:lang",
             rdfAbout = "rdf:about",
             rdfResource = "rdf:resource",
             NS = "http://fogid.net/o/";
@@ -406,6 +403,11 @@ namespace CommonRDF
             });
             return found;
         }
+
+        internal PxEntry GetEntryByOffset(long offset)
+        {
+            return new PxEntry(tp_graph, offset, graph_x);
+        }
         // Нетиповой метод
         public XElement GetPortraitSimple(string id, bool showinverse)
         {
@@ -478,30 +480,31 @@ namespace CommonRDF
             }
         }
 
-        public override IEnumerable<PredicateEntityPair> GetDirect(string id)
+        public override IEnumerable<PredicateEntityPair> GetDirect(string id, object nodeInfo = null)
         {
-            return GetProperty(id, 1, t => t.s == id)
+            return GetProperty(id, 1, t => t.s == id, nodeInfo)
                 .Cast<OProp>()
                 .Select(t => new PredicateEntityPair(t.p, t.o));
         }
 
-        public override IEnumerable<PredicateEntityPair> GetInverse(string id)
+        public override IEnumerable<PredicateEntityPair> GetInverse(string id, object nodeInfo = null)
         {
-            return GetProperty(id, 2, t => t is OProp && ((OProp)t).o == id)
+            return GetProperty(id, 2, t => t is OProp && ((OProp)t).o == id, nodeInfo)
                 .Select(t => new PredicateEntityPair(t.p, t.s));
         }
 
-        public override IEnumerable<PredicateDataTriple> GetData(string id)
+        public override IEnumerable<PredicateDataTriple> GetData(string id, object nodeInfo = null)
         {
-            return GetProperty(id, 3, t => t.s == id)
+            return GetProperty(id, 3, t => t.s == id, nodeInfo)
                 .Cast<DProp>()
                 .Select(t => new PredicateDataTriple(t.p, t.d, t.d));
         }
 
-        private IEnumerable<Triplet> GetProperty(string id, int direction,
-            Predicate<Triplet> predicateValuesTest, int? predicateSC = null)
+        private IEnumerable<Triplet> GetProperty(string id, int direction, Predicate<Triplet> predicateValuesTest, object node = null, int? predicateSC = null)
         {
-            PxEntry found = GetEntryById(id);
+           //PxEntry found = GetEntryById(id);
+            PxEntry found = (node is long?)
+                ?  GetEntryByOffset(((long?)node).Value) : GetEntryById(id);
             if (found.IsEmpty) return Enumerable.Empty<Triplet>();
             Triplet first4Test;
             IEnumerable<PxEntry> pxEntries = found.Field(direction).Elements();
@@ -529,31 +532,29 @@ namespace CommonRDF
             return any_triplet.Get().Value;
         }
 
-        public override IEnumerable<string> GetDirect(string id, string predicate)
+        public override IEnumerable<string> GetDirect(string id, string predicate, object nodeInfo = null)
         {
-            return GetProperty(id, 1, t => t.s == id && t.p == predicate, predicate.GetHashCode())
+            return GetProperty(id, 1, t => t.s == id && t.p == predicate, nodeInfo, predicate.GetHashCode())
                 .Cast<OProp>()
                 .Select(t => t.o);
         }
 
-        public override IEnumerable<string> GetInverse(string id, string predicate)
+        public override IEnumerable<string> GetInverse(string id, string predicate, object nodeInfo = null)
         {
-            return GetProperty(id, 2,
-                t => t.p == predicate && (t is OProp) && ((OProp)t).o == id,
-                predicate.GetHashCode())
+            return GetProperty(id, 2, t => t.p == predicate && (t is OProp) && ((OProp)t).o == id, nodeInfo, predicate.GetHashCode())
                 .Select(t => t.s);
         }
 
-        public override IEnumerable<string> GetData(string id, string predicate)
+        public override IEnumerable<string> GetData(string id, string predicate, object nodeInfo = null)
         {
-            return GetProperty(id, 3, t => t.s == id && t.p == predicate, predicate.GetHashCode())
+            return GetProperty(id, 3, t => t.s == id && t.p == predicate, nodeInfo, predicate.GetHashCode())
                 .Cast<DProp>()
                 .Select(t => t.d);
         }
 
-        public override IEnumerable<DataLangPair> GetDataLangPairs(string id, string predicate)
+        public override IEnumerable<DataLangPair> GetDataLangPairs(string id, string predicate, object nodeInfo = null)
         {
-            return GetData(id, predicate).Select(SplitLang);
+            return GetData(id, predicate, nodeInfo).Select(SplitLang);
         }
 
         public override void GetItembyId(string id)
@@ -591,21 +592,19 @@ namespace CommonRDF
                 .Select(t => t.s)
                 .ToArray();
         }
+
+        #region Node
+
+        public override object GetNode(string id)
+        {
+         return GetEntryById(id).offset;
+        }
+
         #endregion
 
-        /// <summary>
-        /// Выводит в консоль время исполнения
-        /// </summary>
-        /// <param name="mesage"></param>
-        /// <param name="action">тестируемый метод</param>
-        void ComputeTime(string mesage,Action action)
-        {
-            timer.Restart();
-            action.Invoke();
-            timer.Stop();
-            Console.WriteLine("{0} {1}", mesage, timer.Elapsed.Ticks / 10000L);
-        }
-        Stopwatch timer = new Stopwatch();
+
+        #endregion
+       
 
         private void InitTypes()
         {

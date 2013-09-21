@@ -21,7 +21,7 @@ namespace CommonRDF
         {
             return dics.Select(pair => pair.Key);
         }
-        public override IEnumerable<PredicateEntityPair> GetDirect(string id)
+        public override IEnumerable<PredicateEntityPair> GetDirect(string id, object nodeInfo = null)
         {
             RecordEx rec;
             if (dics.TryGetValue(id, out rec))
@@ -35,7 +35,7 @@ namespace CommonRDF
             }
             return Enumerable.Empty<PredicateEntityPair>();
         }
-        public override IEnumerable<PredicateEntityPair> GetInverse(string id)
+        public override IEnumerable<PredicateEntityPair> GetInverse(string id, object nodeInfo = null)
         {
             RecordEx rec;
             if (dics.TryGetValue(id, out rec))
@@ -49,7 +49,7 @@ namespace CommonRDF
             }
             return Enumerable.Empty<PredicateEntityPair>();
         }
-        public override IEnumerable<PredicateDataTriple> GetData(string id)
+        public override IEnumerable<PredicateDataTriple> GetData(string id, object nodeInfo = null)
         {
             RecordEx rec;
             if (dics.TryGetValue(id, out rec))
@@ -66,7 +66,7 @@ namespace CommonRDF
             }
             return Enumerable.Empty<PredicateDataTriple>();
         }
-        public override IEnumerable<string> GetDirect(string id, string predicate)
+        public override IEnumerable<string> GetDirect(string id, string predicate, object nodeInfo = null)
         {
             RecordEx rec;
             if (dics.TryGetValue(id, out rec))
@@ -77,7 +77,7 @@ namespace CommonRDF
             }
             return Enumerable.Empty<string>();
         }
-        public override IEnumerable<string> GetInverse(string id, string predicate)
+        public override IEnumerable<string> GetInverse(string id, string predicate, object nodeInfo = null)
         {
             RecordEx rec;
             if (dics.TryGetValue(id, out rec))
@@ -88,7 +88,7 @@ namespace CommonRDF
             }
             return Enumerable.Empty<string>();
         }
-        public override IEnumerable<string> GetData(string id, string predicate)
+        public override IEnumerable<string> GetData(string id, string predicate, object nodeInfo = null)
         {
             RecordEx rec;
             if (dics.TryGetValue(id, out rec))
@@ -99,7 +99,7 @@ namespace CommonRDF
             }
             return Enumerable.Empty<string>();
         }
-        public override IEnumerable<DataLangPair> GetDataLangPairs(string id, string predicate)
+        public override IEnumerable<DataLangPair> GetDataLangPairs(string id, string predicate, object nodeInfo = null)
         {
             RecordEx rec;
             if (dics.TryGetValue(id, out rec))
@@ -281,6 +281,11 @@ namespace CommonRDF
                  Console.WriteLine();
              }
              return ids;
+        }
+
+        public override object GetNode(string id)
+        {
+            throw new NotImplementedException();
         }
     }
 }

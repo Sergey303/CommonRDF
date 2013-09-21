@@ -13,28 +13,14 @@ namespace CommonRDF
         }
         public void Run()
         {
-            Stopwatch timer = new Stopwatch();
-            timer.Restart();
          var query = new Query(@"..\..\query.txt", gr);
-            timer.Stop();
-            using (var f = new StreamWriter(@"..\..\Output.txt", false))
-                f.WriteLine("read query time {0}ms {1}ticks, memory {2}"
-       , timer.ElapsedMilliseconds, timer.Elapsed.Ticks / 10000L,
-       GC.GetTotalMemory(true) / (1024L * 1024L));
 
-            timer = new Stopwatch();
-            timer.Start();
-            query.Run();
-            timer.Stop();
-            using (var f = new StreamWriter(@"..\..\Output.txt", true))
-                f.WriteLine("run query time {0}ms {1}ticks, memory {2}"
-      , timer.ElapsedMilliseconds, timer.Elapsed.Ticks / 10000L,
-      GC.GetTotalMemory(true) / (1024L * 1024L));
+         //   query.Run();
 
-            if (query.SelectParameters.Count == 0)
-                query.OutputParamsAll(@"..\..\Output.txt");
-            else
-                query.OutputParamsBySelect(@"..\..\Output.txt");
+            //if (query.SelectParameters.Count == 0)
+            //    query.OutputParamsAll(@"..\..\Output.txt");
+            //else
+            //    query.OutputParamsBySelect(@"..\..\Output.txt");
 
         }
     }
