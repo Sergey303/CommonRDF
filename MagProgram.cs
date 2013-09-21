@@ -13,7 +13,8 @@ namespace CommonRDF
             this.gr = gr;
             Restart();
         }
-        public void Restart() { receive_list = new List<string[]>(); }
+        public void Restart() { receive_list = new List<string[]>();
+        }
         public void Receive(string[] row) { receive_list.Add(row); }
 
         public void Run()
@@ -38,12 +39,12 @@ namespace CommonRDF
             foreach (var person in new[]
             {
                 "piu_200809051791",
-                "svet_100616111408_10844",
-                "pavl_100531115859_2020",
-                "pavl_100531115859_6952",
-                "svet_100616111408_10864",
-                "w20090506_svetlana_5727",
-                "piu_200809051742"
+                //"svet_100616111408_10844",
+                //"pavl_100531115859_2020",
+                //"pavl_100531115859_6952",
+                //"svet_100616111408_10864",
+                //"w20090506_svetlana_5727",
+                //"piu_200809051742"
             })
             {
                 SimpleSparql sims = new SimpleSparql(person);

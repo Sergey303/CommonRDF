@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using sema2012m;
 
@@ -21,27 +22,27 @@ namespace CommonRDF
                 new Sample
                 { vid = TripletVid.op, firstunknown = 0, 
                     subject= new TVariable { isVariable=true, value="?s", index=0 },
-                    predicate = new TVariable { isVariable=false, value=ONames.p_participant },
-                    obj = new TVariable { isVariable = false, value=id}},
+                    predicate = new TVariable { isVariable=false, value=ONames.p_participant},
+                    obj = new TVariable { isVariable = false, value=id, index = 4}},
                 new Sample
                 { vid = TripletVid.op, firstunknown = 1, 
                     subject= new TVariable { isVariable=true, value="?s", index=0 },
-                    predicate = new TVariable { isVariable=false, value=ONames.p_inorg },
+                    predicate = new TVariable { isVariable=false, value=ONames.p_inorg},
                     obj = new TVariable { isVariable = true, value="?inorg", index=1 }},
                 new Sample
                 { vid = TripletVid.op, firstunknown = 2, 
                     subject= new TVariable { isVariable=true, value=id, index=0 },
-                    predicate = new TVariable { isVariable=false, value=ONames.rdftypestring },
-                    obj = new TVariable { isVariable = false, value="http://fogid.net/o/participation"}},
+                    predicate = new TVariable { isVariable=false, value=ONames.rdftypestring},
+                    obj = new TVariable { isVariable = false, value="http://fogid.net/o/participation", index = 5}},
                 new Sample
                 { vid = TripletVid.dp, firstunknown = 2, 
                     subject= new TVariable { isVariable=true, value="?inorg", index=1 },
-                    predicate = new TVariable { isVariable=false, value=ONames.p_name },
+                    predicate = new TVariable { isVariable=false, value=ONames.p_name},
                     obj = new TVariable { isVariable = true, value="?orgname", index=2 }},
                 new Sample
                 { vid = TripletVid.dp, firstunknown = 3, 
                     subject= new TVariable { isVariable=true, value="?s", index=0 },
-                    predicate = new TVariable { isVariable=false, value=ONames.p_fromdate },
+                    predicate = new TVariable { isVariable=false, value=ONames.p_fromdate},
                     obj = new TVariable { isVariable = true, value="?fd", index=3 }, option = true },
             };
             testvars = new DescrVar[] 
@@ -50,6 +51,9 @@ namespace CommonRDF
                 new DescrVar { isEntity = true, varName="?inorg" },
                 new DescrVar { isEntity = false, varName="?orgname" },
                 new DescrVar { isEntity = false, varName="?fd" },
+                //consts objects
+                new DescrVar { isEntity = true, varValue =id },
+                new DescrVar { isEntity = true, varValue ="http://fogid.net/o/participation" },
             };
         }
         public bool Match(GraphBase gr, IReceiver receive) { return Match(gr, 0, receive); } 
@@ -65,12 +69,12 @@ namespace CommonRDF
                     row[i] = testvars[i].varValue;
                 }
                 receive.Receive(row);
-                //Console.Write("R:"); // Здесь будет вывод значения переменных
-                //foreach (var va in testvars)
-                //{
-                //    Console.Write(va.varName + "=" + va.varValue + " ");
-                //}
-                //Console.WriteLine();
+                Console.Write("R:"); // Здесь будет вывод значения переменных
+                foreach (var va in testvars)
+                {
+                    Console.Write(va.varName + "=" + va.varValue + " ");
+                }
+                Console.WriteLine();
                 return true;
             }
             // Match
@@ -115,7 +119,7 @@ namespace CommonRDF
                 {
                     foreach (var inverseid in gr.GetInverse(ido, sam.predicate.value))
                     {
-                        testvars[sam.obj.index].varValue = inverseid;
+                        testvars[sam.subject.index].varValue = inverseid;
                         Match(gr, nextsample + 1, receive);
                     }
                     //TODO: Нужен ли вариант с опцией?
@@ -125,12 +129,12 @@ namespace CommonRDF
                     if (sam.predicate.value==ONames.p_name)
                         foreach (var id in gr.SearchByName(ido))
                         {
-                            testvars[sam.obj.index].varValue = id;
+                            testvars[sam.subject.index].varValue = id;
                             Match(gr, nextsample + 1, receive);
                         }
                     foreach (var id in gr.GetEntities().Where(id => gr.GetData(id, sam.predicate.value).Contains(ido)))
                     {
-                        testvars[sam.obj.index].varValue = id;
+                        testvars[sam.subject.index].varValue = id;
                         Match(gr, nextsample + 1, receive);
                     }
                 }
@@ -138,13 +142,15 @@ namespace CommonRDF
             else if (variant == 3)
             {
                 string idd = sam.subject.isVariable ? testvars[sam.subject.index].varValue : sam.subject.value;
-                string obj = sam.obj.isVariable ? testvars[sam.obj.index].varValue : sam.obj.value;
+                //string obj = sam.obj.isVariable ? testvars[sam.obj.index].varValue : sam.obj.value;
+                bool br = false;
                 foreach (var directid in gr.GetDirect(idd, sam.predicate.value))
                 {
                     string objvalue = sam.obj.isVariable ? testvars[sam.obj.index].varValue : sam.obj.value;
                     if (objvalue != directid) continue;
-                    bool br = Match(gr, nextsample + 1, receive);
+                    br = Match(gr, nextsample + 1, receive);
                 }
+                return br;
                 //TODO: Нужен ли вариант, связанный с опциями?
             }
             else
