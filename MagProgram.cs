@@ -49,10 +49,7 @@ namespace CommonRDF
             {
                 SimpleSparql sims = new SimpleSparql(person);
                 Restart();
-                Perfomance.ComputeTime(() =>
-                {
-                    sims.Match(gr, this);
-                }, " mag test " + person + " ");
+                Perfomance.ComputeTime(() => sims.Match(gr, this), " mag test " + person + " ");
             }
 
 
