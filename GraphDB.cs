@@ -253,7 +253,7 @@ namespace CommonRDF
             throw new NotImplementedException();
         }
 
-        public override object GetNode(string id)
+        public override object GetNodeInfo(string id)
         {
             throw new NotImplementedException();
         }

@@ -75,7 +75,7 @@
     <Folder Include="DataFreebase\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PolarDB\PolarDB.csproj">
+    <ProjectReference Include="C:\Users\Sergey\Source\Repos\PolarDB\PolarDB.csproj">
       <Project>{907bb4af-fbc9-4a1e-8f80-194af9337aa4}</Project>
       <Name>PolarDB</Name>
     </ProjectReference>

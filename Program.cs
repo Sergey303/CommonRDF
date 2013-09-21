@@ -38,7 +38,8 @@ namespace CommonRDF
 
             MagProgram mprog = new MagProgram(gr);  
             LeshProgram l = new LeshProgram(gr);
-           Perfomance.ComputeTime(mprog.Run, "");
+         //  Perfomance.ComputeTime(
+            mprog.Run();//, "");
           
             gr.Test();
         }

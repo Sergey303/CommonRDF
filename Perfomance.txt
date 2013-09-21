@@ -104,3 +104,4 @@ cells initiated duration= 3ms 3ticks
 After LoadQuads(). duration= 14457ms 14457ticks
  mag test piu_200809051791  72ms 72ticks
  72ms 72ticks
+cells initiated duration= 2ms 2ticks

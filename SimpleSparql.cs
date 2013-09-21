@@ -17,33 +17,49 @@ namespace CommonRDF
         private DescrVar[] testvars = new DescrVar[0];
         public SimpleSparql(string id)
         {
-            testquery = new Sample[] 
+            testquery = new Sample[]
             {
                 new Sample
-                { vid = TripletVid.op, firstunknown = 0, 
-                    subject= new TVariable { isVariable=true, value="?s", index=0 },
-                    predicate = new TVariable { isVariable=false, value=ONames.p_participant},
-                    obj = new TVariable { isVariable = false, value=id, index = 4}},
+                {
+                    vid = TripletVid.op,
+                    firstunknown = 0,
+                    subject = new TVariable {isVariable = true, value = "?s", index = 0},
+                    predicate = new TVariable {isVariable = false, value = ONames.p_participant},
+                    obj = new TVariable {isVariable = false, value = id, index = 4}
+                },
                 new Sample
-                { vid = TripletVid.op, firstunknown = 1, 
-                    subject= new TVariable { isVariable=true, value="?s", index=0 },
-                    predicate = new TVariable { isVariable=false, value=ONames.p_inorg},
-                    obj = new TVariable { isVariable = true, value="?inorg", index=1 }},
+                {
+                    vid = TripletVid.op,
+                    firstunknown = 1,
+                    subject = new TVariable {isVariable = true, value = "?s", index = 0},
+                    predicate = new TVariable {isVariable = false, value = ONames.p_inorg},
+                    obj = new TVariable {isVariable = true, value = "?inorg", index = 1}
+                },
                 new Sample
-                { vid = TripletVid.op, firstunknown = 2, 
-                    subject= new TVariable { isVariable=true, value=id, index=0 },
-                    predicate = new TVariable { isVariable=false, value=ONames.rdftypestring},
-                    obj = new TVariable { isVariable = false, value="http://fogid.net/o/participation", index = 5}},
+                {
+                    vid = TripletVid.op,
+                    firstunknown = 2,
+                    subject = new TVariable {isVariable = true, value = id, index = 0},
+                    predicate = new TVariable {isVariable = false, value = ONames.rdftypestring},
+                    obj = new TVariable {isVariable = false, value = "http://fogid.net/o/participation", index = 5}
+                },
                 new Sample
-                { vid = TripletVid.dp, firstunknown = 2, 
-                    subject= new TVariable { isVariable=true, value="?inorg", index=1 },
-                    predicate = new TVariable { isVariable=false, value=ONames.p_name},
-                    obj = new TVariable { isVariable = true, value="?orgname", index=2 }},
+                {
+                    vid = TripletVid.dp,
+                    firstunknown = 2,
+                    subject = new TVariable {isVariable = true, value = "?inorg", index = 1},
+                    predicate = new TVariable {isVariable = false, value = ONames.p_name},
+                    obj = new TVariable {isVariable = true, value = "?orgname", index = 2}
+                },
                 new Sample
-                { vid = TripletVid.dp, firstunknown = 3, 
-                    subject= new TVariable { isVariable=true, value="?s", index=0 },
-                    predicate = new TVariable { isVariable=false, value=ONames.p_fromdate},
-                    obj = new TVariable { isVariable = true, value="?fd", index=3 }, option = true },
+                {
+                    vid = TripletVid.dp,
+                    firstunknown = 3,
+                    subject = new TVariable {isVariable = true, value = "?s", index = 0},
+                    predicate = new TVariable {isVariable = false, value = ONames.p_fromdate},
+                    obj = new TVariable {isVariable = true, value = "?fd", index = 3},
+                    option = true
+                },
             };
             testvars = new DescrVar[] 
             {
@@ -90,22 +106,25 @@ namespace CommonRDF
             if (variant == 1)
             {
                 string idd = sam.subject.isVariable ? testvars[sam.subject.index].varValue : sam.subject.value;
+                object nodeInfo = testvars[sam.subject.index].NodeInfo ??
+                                  (testvars[sam.subject.index].NodeInfo = gr.GetNodeInfo(idd));
                 bool atleastonce = false; 
                 // В зависимости от вида, будут использоваться данные разных осей
                 if (sam.vid == TripletVid.dp)
                 { // Dataproperty
-                    foreach (var data in gr.GetData(idd, sam.predicate.value))
+                    foreach (var data in gr.GetData(idd, sam.predicate.value, nodeInfo))
                     {
                         testvars[sam.obj.index].varValue = data;
                         atleastonce=Match(gr, nextsample + 1, receive);
-
                     }
                 }
                 else
-                { // Objectproperty
-                    foreach (var directid in gr.GetDirect(idd, sam.predicate.value))
+                {
+                    // Objectproperty
+                    foreach (var directid in gr.GetDirect(idd, sam.predicate.value, nodeInfo))
                     {
                         testvars[sam.obj.index].varValue = directid;
+                        testvars[sam.obj.index].NodeInfo = null;
                         atleastonce=Match(gr, nextsample + 1, receive);
                     }
                 }
@@ -117,9 +136,12 @@ namespace CommonRDF
                 // Пока будем обрабатывать только объектные ссылки
                 if (sam.vid == TripletVid.op)
                 {
-                    foreach (var inverseid in gr.GetInverse(ido, sam.predicate.value))
+                    object nodeInfo = testvars[sam.obj.index].NodeInfo ??
+                                  (testvars[sam.obj.index].NodeInfo = gr.GetNodeInfo(ido));
+                    foreach (var inverseid in gr.GetInverse(ido, sam.predicate.value, nodeInfo))
                     {
                         testvars[sam.subject.index].varValue = inverseid;
+                        testvars[sam.subject.index].NodeInfo = null;
                         Match(gr, nextsample + 1, receive);
                     }
                     //TODO: Нужен ли вариант с опцией?
@@ -130,11 +152,14 @@ namespace CommonRDF
                         foreach (var id in gr.SearchByName(ido))
                         {
                             testvars[sam.subject.index].varValue = id;
+                            testvars[sam.subject.index].NodeInfo = null;
                             Match(gr, nextsample + 1, receive);
                         }
+                    else
                     foreach (var id in gr.GetEntities().Where(id => gr.GetData(id, sam.predicate.value).Contains(ido)))
                     {
                         testvars[sam.subject.index].varValue = id;
+                        testvars[sam.subject.index].NodeInfo = null;
                         Match(gr, nextsample + 1, receive);
                     }
                 }
@@ -142,9 +167,11 @@ namespace CommonRDF
             else if (variant == 3)
             {
                 string idd = sam.subject.isVariable ? testvars[sam.subject.index].varValue : sam.subject.value;
+                object nodeInfo = testvars[sam.subject.index].NodeInfo ??
+                                 (testvars[sam.subject.index].NodeInfo = gr.GetNodeInfo(idd));
                 //string obj = sam.obj.isVariable ? testvars[sam.obj.index].varValue : sam.obj.value;
                 bool br = false;
-                foreach (var directid in gr.GetDirect(idd, sam.predicate.value))
+                foreach (var directid in gr.GetDirect(idd, sam.predicate.value, nodeInfo))
                 {
                     string objvalue = sam.obj.isVariable ? testvars[sam.obj.index].varValue : sam.obj.value;
                     if (objvalue != directid) continue;

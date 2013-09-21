@@ -58,7 +58,7 @@ namespace CommonRDF
 
         #region Object Node InputMethods
 
-        public abstract object GetNode(string id);
+        public abstract object GetNodeInfo(string id);
 
         #endregion
 
