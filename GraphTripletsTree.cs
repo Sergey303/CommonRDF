@@ -109,6 +109,7 @@ namespace CommonRDF
             graph_x.Close();
             // Откроем для использования
             InitCells();
+            searchInTree = graph_x.Root.Element(0);
         }
         // ============ Технические методы ============
         private void FormingSerialGraph(ISerialFlow serial, PaCell quads)
@@ -404,9 +405,11 @@ namespace CommonRDF
             return found;
         }
 
+        private PxEntry searchInTree;
         internal PxEntry GetEntryByOffset(long offset)
         {
-            return new PxEntry(tp_graph, offset, graph_x);
+            searchInTree.offset = offset;
+            return searchInTree;
         }
         // Нетиповой метод
         public XElement GetPortraitSimple(string id, bool showinverse)
@@ -502,6 +505,7 @@ namespace CommonRDF
 
         private IEnumerable<Triplet> GetProperty(string id, int direction, Predicate<Triplet> predicateValuesTest, object node = null, int? predicateSC = null)
         {
+           //PxEntry found = GetEntryById(id);
             PxEntry found = (node is long?)
                 ?  GetEntryByOffset(((long?)node).Value) : GetEntryById(id);
             if (found.IsEmpty) return Enumerable.Empty<Triplet>();
@@ -594,7 +598,7 @@ namespace CommonRDF
 
         #region Node
 
-        public override object GetNode(string id)
+        public override object GetNodeInfo(string id)
         {
          return GetEntryById(id).offset;
         }

@@ -229,6 +229,16 @@ pip-log.txt
 /query2.txt
 /graph.pxc
 /data.pxc
-/DataFreebase
+/twomillions/tm_0.xml
+/twomillions/tm.xml
+/twomillions/graph_x.pxc
+/twomillions/n4_x.pxc
+/twomillions/tm.xml
+/twomillions/tm_0.xml
+/twomillions/triplets.pac
+/DataFreebase/graph_x.pxc
+/DataFreebase/n4_x.pxc
+/DataFreebase/triplets.pac
 /twomillions
+/DataFreebase
 /PA

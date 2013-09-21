@@ -18,11 +18,11 @@ namespace CommonRDF
             timer.Restart();
             action.Invoke();
             timer.Stop();
-            using (StreamWriter file = new StreamWriter(@"F:\projects\CommonRDF\Perfomance.txt", true))
-            {
-//  Console.WriteLine("{0} {1}", 
-                file.WriteLine("{0} {1}ms {2}ticks", mesage, timer.ElapsedMilliseconds, timer.Elapsed.Ticks / 10000L);
-            }
+//            using (StreamWriter file = new StreamWriter(@"F:\projects\CommonRDF\Perfomance.txt", true))
+//            {
+////  Console.WriteLine("{0} {1}", 
+                            Console.WriteLine("{0} {1}ticks", mesage, timer.Elapsed.Ticks/10000L );
+//            }
         }
     }
 }

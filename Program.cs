@@ -21,8 +21,8 @@ namespace CommonRDF
         // Проект twomillions
            GraphBase gr = new GraphTripletsTree(@"..\..\twomillions\");
            Console.WriteLine("Graph ok duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
-          // gr.Load(@"..\..\twomillions\tm_0.xml");
-            //return;
+           //gr.Load(@"..\..\twomillions\tm_0.xml");
+           //return;
             
         // Проект Freebase3M
            // GraphBase gr = new GraphTripletsTree(@"..\..\DataFreebase\");
@@ -38,7 +38,8 @@ namespace CommonRDF
 
             MagProgram mprog = new MagProgram(gr);  
             LeshProgram l = new LeshProgram(gr);
-           Perfomance.ComputeTime(mprog.Run, "");
+         //  Perfomance.ComputeTime(
+            mprog.Run();//, "");
           
             gr.Test();
         }

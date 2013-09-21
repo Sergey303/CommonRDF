@@ -106,22 +106,25 @@ namespace CommonRDF
             if (variant == 1)
             {
                 string idd = sam.subject.isVariable ? testvars[sam.subject.index].varValue : sam.subject.value;
+                object nodeInfo = testvars[sam.subject.index].NodeInfo ??
+                                  (testvars[sam.subject.index].NodeInfo = gr.GetNodeInfo(idd));
                 bool atleastonce = false; 
                 // В зависимости от вида, будут использоваться данные разных осей
                 if (sam.vid == TripletVid.dp)
                 { // Dataproperty
-                    foreach (var data in gr.GetData(idd, sam.predicate.value))
+                    foreach (var data in gr.GetData(idd, sam.predicate.value, nodeInfo))
                     {
                         testvars[sam.obj.index].varValue = data;
                         atleastonce=Match(gr, nextsample + 1, receive);
-
                     }
                 }
                 else
-                { // Objectproperty
-                    foreach (var directid in gr.GetDirect(idd, sam.predicate.value))
+                {
+                    // Objectproperty
+                    foreach (var directid in gr.GetDirect(idd, sam.predicate.value, nodeInfo))
                     {
                         testvars[sam.obj.index].varValue = directid;
+                        testvars[sam.obj.index].NodeInfo = null;
                         atleastonce=Match(gr, nextsample + 1, receive);
                     }
                 }
@@ -133,9 +136,12 @@ namespace CommonRDF
                 // Пока будем обрабатывать только объектные ссылки
                 if (sam.vid == TripletVid.op)
                 {
-                    foreach (var inverseid in gr.GetInverse(ido, sam.predicate.value))
+                    object nodeInfo = testvars[sam.obj.index].NodeInfo ??
+                                  (testvars[sam.obj.index].NodeInfo = gr.GetNodeInfo(ido));
+                    foreach (var inverseid in gr.GetInverse(ido, sam.predicate.value, nodeInfo))
                     {
                         testvars[sam.subject.index].varValue = inverseid;
+                        testvars[sam.subject.index].NodeInfo = null;
                         Match(gr, nextsample + 1, receive);
                     }
                     //TODO: Нужен ли вариант с опцией?
@@ -146,11 +152,14 @@ namespace CommonRDF
                         foreach (var id in gr.SearchByName(ido))
                         {
                             testvars[sam.subject.index].varValue = id;
+                            testvars[sam.subject.index].NodeInfo = null;
                             Match(gr, nextsample + 1, receive);
                         }
+                    else
                     foreach (var id in gr.GetEntities().Where(id => gr.GetData(id, sam.predicate.value).Contains(ido)))
                     {
                         testvars[sam.subject.index].varValue = id;
+                        testvars[sam.subject.index].NodeInfo = null;
                         Match(gr, nextsample + 1, receive);
                     }
                 }
@@ -158,9 +167,11 @@ namespace CommonRDF
             else if (variant == 3)
             {
                 string idd = sam.subject.isVariable ? testvars[sam.subject.index].varValue : sam.subject.value;
+                object nodeInfo = testvars[sam.subject.index].NodeInfo ??
+                                 (testvars[sam.subject.index].NodeInfo = gr.GetNodeInfo(idd));
                 //string obj = sam.obj.isVariable ? testvars[sam.obj.index].varValue : sam.obj.value;
                 bool br = false;
-                foreach (var directid in gr.GetDirect(idd, sam.predicate.value))
+                foreach (var directid in gr.GetDirect(idd, sam.predicate.value, nodeInfo))
                 {
                     string objvalue = sam.obj.isVariable ? testvars[sam.obj.index].varValue : sam.obj.value;
                     if (objvalue != directid) continue;

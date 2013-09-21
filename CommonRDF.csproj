@@ -35,10 +35,6 @@
     <StartupObject>CommonRDF.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="PolarDB, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Users\Sergey\Source\Repos\PolarDB\bin\Debug\PolarDB.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Web" />
@@ -77,6 +73,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="DataFreebase\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="C:\Users\Sergey\Source\Repos\PolarDB\PolarDB.csproj">
+      <Project>{907bb4af-fbc9-4a1e-8f80-194af9337aa4}</Project>
+      <Name>PolarDB</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
