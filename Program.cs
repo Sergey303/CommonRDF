@@ -32,8 +32,8 @@ namespace CommonRDF
             //GraphBase gr = new GraphTripletsTree(@"..\..\???\");
             //gr.Load(@"???");
 
-            gr.CreateGraph();
-            Console.WriteLine("Graph ok duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
+            //gr.CreateGraph();
+            //Console.WriteLine("Graph ok duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
             //Console.WriteLine("Test ok duration========================" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
 
             MagProgram mprog = new MagProgram(gr);  
