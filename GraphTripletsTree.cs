@@ -85,16 +85,21 @@ namespace CommonRDF
             }, "cells initiated duration=");
 
 
-            Perfomance.ComputeTime(() => LoadQuads(n4, quads), "After LoadQuads(). duration=");
-            Sort(n4, quads);
-            Console.WriteLine("After Sort(). duration=" );
-            FormingSerialGraph(new SerialBuffer(graph_a, 3), quads);
-            Console.WriteLine("Forming serial graph ok. duration=");
+            Perfomance.ComputeTime(() => LoadQuads(n4, quads), "LoadQuads(). duration=");
+            Perfomance.ComputeTime(quads.Root.Sort<EntVidPredOff>, "Sort quads(). duration=", true);
+           
+           Perfomance.ComputeTime(() => FormingSerialGraph(new SerialBuffer(graph_a, 3), quads),
+               "Forming serial graph ok. duration=");
 
             // произвести объектное представление
             graph_x.Fill2(graph_a.Root.Get().Value);
+            //graph_x.Root.Sort(entry=>entry.Field(0).Get().Value.ToString());
+            Perfomance.ComputeTime(n4.Root.Sort<N4rec>, "Sort n4(). duration=");
             n4_x.Fill2(n4.Root.Get().Value);
-            Console.WriteLine("Forming fixed graph ok. duration=" );
+            //Perfomance.ComputeTime(()=> n4_x.Root.Sort(entry => (((object[])entry.Get().Value)[0]).ToString()), "Sort n4_x(). duration=");
+
+           
+           // Console.WriteLine("Forming fixed graph ok. duration=" );
 
             // ========= Завершение загрузки =========
             // Закроем файлы и уничтожим ненужные
@@ -126,7 +131,7 @@ namespace CommonRDF
             bool firstprop = true;
             foreach (object[] el in quads.Root.Elements().Select(e => e.Value))
             {
-                var record = new GraphTripletsTree.FourFields((int)el[0], (int)el[1], (int)el[2], (long)el[3]);
+                var record = new FourFields((int)el[0], (int)el[1], (int)el[2], (long)el[3]);
                 if (firsttime || record.e_hs != hs_e)
                 { // Начало новой записи
                     firstprop = true;
@@ -264,7 +269,7 @@ namespace CommonRDF
                 }
               //  var lines = new string[100000000];//100 000 000
               //  while (!reader.EndOfStream)
-                int count=3000000; //000 000
+                const int count = 100000000; //00 000 000
                 {
                     int i;
                     string readLine;
@@ -354,41 +359,66 @@ namespace CommonRDF
             quads.EndSerialFlow();
             n4.Se();
             n4.EndSerialFlow();
-            Sort(n4, quads);
         }
-
-        private static void Sort(PaCell n4, PaCell quads)
+        internal struct N4rec : IBRW, IComparable
         {
-// Сортировка квадриков
-            quads.Root.Sort((o1, o2) =>
+            internal int hs_e;
+            internal int hs_s4;
+            internal N4rec(int hs_e, int hs_s4)
             {
-                object[] v1 = (object[]) o1;
-                object[] v2 = (object[]) o2;
-                int e1 = (int) v1[0];
-                int e2 = (int) v2[0];
-                int q1 = (int) v1[1];
-                int q2 = (int) v2[1];
-                int p1 = (int) v1[2];
-                int p2 = (int) v2[2];
-                return e1 < e2
-                    ? -3
-                    : (e1 > e2
-                        ? 3
-                        : (q1 < q2
-                            ? -2
-                            : (q1 > q2
-                                ? 2
-                                : (p1 < p2 ? -1 : (p1 > p2 ? 1 : 0)))));
-            });
-            // Сортировка таблицы имен
-            n4.Root.Sort((o1, o2) =>
+                this.hs_e = hs_e;
+                this.hs_s4 = hs_s4;
+            }
+            public IBRW BRead(BinaryReader br)
             {
-                object[] v1 = (object[]) o1;
-                object[] v2 = (object[]) o2;
-                string s1 = (string) v1[1];
-                string s2 = (string) v2[1];
-                return String.Compare(s1, s2, StringComparison.Ordinal);
-            });
+                hs_e = br.ReadInt32();
+                hs_s4 = br.ReadInt32();
+                return new N4rec(hs_e, hs_s4);
+            }
+            public void BWrite(BinaryWriter bw)
+            {
+                bw.Write(hs_e);
+                bw.Write(hs_s4);
+            }
+            public int CompareTo(object v2)
+            {
+                N4rec y = (N4rec)v2;
+                return this.hs_s4.CompareTo(y.hs_s4);
+            }
+        }
+        internal struct EntVidPredOff : IBRW, IComparable
+        {
+            internal int ientity, vid, ipredicate;
+            internal long offset;
+            internal EntVidPredOff(int ient, int vid, int ipred, long off)
+            {
+                this.ientity = ient;
+                this.vid = vid;
+                this.ipredicate = ipred;
+                this.offset = off;
+            }
+            public IBRW BRead(BinaryReader br)
+            {
+                ientity = br.ReadInt32();
+                vid = br.ReadInt32();
+                ipredicate = br.ReadInt32();
+                offset = br.ReadInt64();
+                return new EntVidPredOff(ientity, vid, ipredicate, offset);
+            }
+            public void BWrite(BinaryWriter bw)
+            {
+                bw.Write(ientity);
+                bw.Write(vid);
+                bw.Write(ipredicate);
+                bw.Write(offset);
+            }
+            public int CompareTo(object v2)
+            {
+                EntVidPredOff y = (EntVidPredOff)v2;
+                int c = this.ientity.CompareTo(y.ientity); if (c != 0) return c;
+                int d = this.vid.CompareTo(y.vid); if (d != 0) return d;
+                return this.ipredicate.CompareTo(y.ipredicate);
+            }
         }
 
         #region Методы доступа к данным

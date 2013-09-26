@@ -11,16 +11,20 @@ namespace CommonRDF
         {
             this.gr = gr;
         }
+
         public void Run()
         {
-         var query = new Query(@"..\..\query.txt", gr);
+            Query query = null;
+            Perfomance.ComputeTime(() =>
+                query = new Query(@"..\..\query.txt", gr), "read query");
 
-         //   query.Run();
 
-            //if (query.SelectParameters.Count == 0)
-            //    query.OutputParamsAll(@"..\..\Output.txt");
-            //else
-            //    query.OutputParamsBySelect(@"..\..\Output.txt");
+            Perfomance.ComputeTime(()=>query.Run(), "run query");
+
+            if (query.SelectParameters.Count == 0)
+                query.OutputParamsAll(@"..\..\Output.txt");
+            else
+                query.OutputParamsBySelect(@"..\..\Output.txt");
 
         }
     }

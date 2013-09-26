@@ -79,18 +79,18 @@ namespace CommonRDF
             // Вывести если дошли до конца
             if (nextsample >= testquery.Length)
             {
-                string[] row = new string[testvars.Length];
-                for ( int i = 0; i < testvars.Length; i++)
-                {
-                    row[i] = testvars[i].varValue;
-                }
-                receive.Receive(row);
-                Console.Write("R:"); // Здесь будет вывод значения переменных
-                foreach (var va in testvars)
-                {
-                    Console.Write(va.varName + "=" + va.varValue + " ");
-                }
-                Console.WriteLine();
+                //string[] row = new string[testvars.Length];
+                //for ( int i = 0; i < testvars.Length; i++)
+                //{
+                //    row[i] = testvars[i].varValue;
+                //}
+                //receive.Receive(row);
+                //Console.Write("R:"); // Здесь будет вывод значения переменных
+                //foreach (var va in testvars)
+                //{
+                //    Console.Write(va.varName + "=" + va.varValue + " ");
+                //}
+                //Console.WriteLine();
                 return true;
             }
             // Match
@@ -106,26 +106,26 @@ namespace CommonRDF
             if (variant == 1)
             {
                 string idd = sam.subject.isVariable ? testvars[sam.subject.index].varValue : sam.subject.value;
-                object nodeInfo = testvars[sam.subject.index].NodeInfo ??
-                                  (testvars[sam.subject.index].NodeInfo = gr.GetNodeInfo(idd));
+               //if(testvars[sam.subject.index].NodeInfo==null)
+               //    testvars[sam.subject.index].NodeInfo = gr.GetNodeInfo(idd);
                 bool atleastonce = false; 
                 // В зависимости от вида, будут использоваться данные разных осей
                 if (sam.vid == TripletVid.dp)
                 { // Dataproperty
-                    foreach (var data in gr.GetData(idd, sam.predicate.value, nodeInfo))
+                    foreach (var data in gr.GetData(idd, sam.predicate.value, testvars[sam.subject.index].NodeInfo))
                     {
                         testvars[sam.obj.index].varValue = data;
-                        atleastonce=Match(gr, nextsample + 1, receive);
+                        atleastonce=Match(gr, nextsample + 1, receive)||atleastonce;
                     }
                 }
                 else
                 {
                     // Objectproperty
-                    foreach (var directid in gr.GetDirect(idd, sam.predicate.value, nodeInfo))
+                    foreach (var directid in gr.GetDirect(idd, sam.predicate.value, testvars[sam.subject.index].NodeInfo))
                     {
                         testvars[sam.obj.index].varValue = directid;
                         testvars[sam.obj.index].NodeInfo = null;
-                        atleastonce=Match(gr, nextsample + 1, receive);
+                        atleastonce=Match(gr, nextsample + 1, receive)||atleastonce;
                     }
                 }
                 return atleastonce || sam.option && Match(gr, nextsample + 1, receive);
@@ -136,9 +136,9 @@ namespace CommonRDF
                 // Пока будем обрабатывать только объектные ссылки
                 if (sam.vid == TripletVid.op)
                 {
-                    object nodeInfo = testvars[sam.obj.index].NodeInfo ??
-                                  (testvars[sam.obj.index].NodeInfo = gr.GetNodeInfo(ido));
-                    foreach (var inverseid in gr.GetInverse(ido, sam.predicate.value, nodeInfo))
+                    //if (testvars[sam.obj.index].NodeInfo == null)
+                    //    testvars[sam.obj.index].NodeInfo = gr.GetNodeInfo(ido);
+                    foreach (var inverseid in gr.GetInverse(ido, sam.predicate.value, testvars[sam.obj.index].NodeInfo))
                     {
                         testvars[sam.subject.index].varValue = inverseid;
                         testvars[sam.subject.index].NodeInfo = null;
@@ -167,17 +167,17 @@ namespace CommonRDF
             else if (variant == 3)
             {
                 string idd = sam.subject.isVariable ? testvars[sam.subject.index].varValue : sam.subject.value;
-                object nodeInfo = testvars[sam.subject.index].NodeInfo ??
-                                 (testvars[sam.subject.index].NodeInfo = gr.GetNodeInfo(idd));
+                    //if(testvars[sam.subject.index].NodeInfo ==null)
+                    //testvars[sam.subject.index].NodeInfo = gr.GetNodeInfo(idd);
                 //string obj = sam.obj.isVariable ? testvars[sam.obj.index].varValue : sam.obj.value;
-                bool br = false;
-                foreach (var directid in gr.GetDirect(idd, sam.predicate.value, nodeInfo))
+                bool any = false;
+                foreach (var directid in gr.GetDirect(idd, sam.predicate.value, testvars[sam.subject.index].NodeInfo))
                 {
                     string objvalue = sam.obj.isVariable ? testvars[sam.obj.index].varValue : sam.obj.value;
                     if (objvalue != directid) continue;
-                    br = Match(gr, nextsample + 1, receive);
+                    any = Match(gr, nextsample + 1, receive) || any;
                 }
-                return br;
+                return any;
                 //TODO: Нужен ли вариант, связанный с опциями?
             }
             else

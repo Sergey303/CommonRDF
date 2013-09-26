@@ -37,6 +37,11 @@ namespace CommonRDF
             foreach (var person in new[]
             {
                 "piu_200809051791",
+                "piu_200809051791",
+                "piu_200809051791",
+                "piu_200809051791",
+                "piu_200809051791",
+                "piu_200809051791",
                 //"svet_100616111408_10844",
                 //"pavl_100531115859_2020",
                 //"pavl_100531115859_6952",
@@ -47,7 +52,7 @@ namespace CommonRDF
             {
                 SimpleSparql sims = new SimpleSparql(person);
                 Restart();
-                Perfomance.ComputeTime(() => sims.Match(gr, this), " mag test " + person + " ");
+                Perfomance.ComputeTime(() => sims.Match(gr, this), " mag test " + person + " = ", true);
             }
 
 
