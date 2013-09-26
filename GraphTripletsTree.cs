@@ -357,38 +357,103 @@ namespace CommonRDF
             Sort(n4, quads);
         }
 
+        // Это нужно для сортировки квадриков, см. далее
+        internal struct EntVidPredOff : IBRW, IComparable
+        {
+            internal int ientity, vid, ipredicate;
+            internal long offset;
+            internal EntVidPredOff(int ient, int vid, int ipred, long off)
+            {
+                this.ientity = ient;
+                this.vid = vid;
+                this.ipredicate = ipred;
+                this.offset = off;
+            }
+            public IBRW BRead(BinaryReader br)
+            {
+                ientity = br.ReadInt32();
+                vid = br.ReadInt32();
+                ipredicate = br.ReadInt32();
+                offset = br.ReadInt64();
+                return new EntVidPredOff(ientity, vid, ipredicate, offset);
+            }
+            public void BWrite(BinaryWriter bw)
+            {
+                bw.Write(ientity);
+                bw.Write(vid);
+                bw.Write(ipredicate);
+                bw.Write(offset);
+            }
+            public int CompareTo(object v2)
+            {
+                EntVidPredOff y = (EntVidPredOff)v2;
+                int c = this.ientity.CompareTo(y.ientity); if (c != 0) return c;
+                int d = this.vid.CompareTo(y.vid); if (d != 0) return d;
+                return this.ipredicate.CompareTo(y.ipredicate);
+            }
+        }
+        // Это нужно для сортировки N4, см. далее
+        internal struct N4rec : IBRW, IComparable
+        {
+            internal int hs_e;
+            internal int hs_s4;
+            internal N4rec(int hs_e, int hs_s4)
+            {
+                this.hs_e = hs_e;
+                this.hs_s4 = hs_s4;
+            }
+            public IBRW BRead(BinaryReader br)
+            {
+                hs_e = br.ReadInt32();
+                hs_s4 = br.ReadInt32();
+                return new N4rec(hs_e, hs_s4);
+            }
+            public void BWrite(BinaryWriter bw)
+            {
+                bw.Write(hs_e);
+                bw.Write(hs_s4);
+            }
+            public int CompareTo(object v2)
+            {
+                N4rec y = (N4rec)v2;
+                return this.hs_s4.CompareTo(y.hs_s4);
+            }
+        }
+
         private static void Sort(PaCell n4, PaCell quads)
         {
 // Сортировка квадриков
-            quads.Root.Sort((o1, o2) =>
-            {
-                object[] v1 = (object[]) o1;
-                object[] v2 = (object[]) o2;
-                int e1 = (int) v1[0];
-                int e2 = (int) v2[0];
-                int q1 = (int) v1[1];
-                int q2 = (int) v2[1];
-                int p1 = (int) v1[2];
-                int p2 = (int) v2[2];
-                return e1 < e2
-                    ? -3
-                    : (e1 > e2
-                        ? 3
-                        : (q1 < q2
-                            ? -2
-                            : (q1 > q2
-                                ? 2
-                                : (p1 < p2 ? -1 : (p1 > p2 ? 1 : 0)))));
-            });
+            quads.Root.Sort<EntVidPredOff>();
+            //quads.Root.Sort((o1, o2) =>
+            //{
+            //    object[] v1 = (object[]) o1;
+            //    object[] v2 = (object[]) o2;
+            //    int e1 = (int) v1[0];
+            //    int e2 = (int) v2[0];
+            //    int q1 = (int) v1[1];
+            //    int q2 = (int) v2[1];
+            //    int p1 = (int) v1[2];
+            //    int p2 = (int) v2[2];
+            //    return e1 < e2
+            //        ? -3
+            //        : (e1 > e2
+            //            ? 3
+            //            : (q1 < q2
+            //                ? -2
+            //                : (q1 > q2
+            //                    ? 2
+            //                    : (p1 < p2 ? -1 : (p1 > p2 ? 1 : 0)))));
+            //});
             // Сортировка таблицы имен
-            n4.Root.Sort((o1, o2) =>
-            {
-                object[] v1 = (object[]) o1;
-                object[] v2 = (object[]) o2;
-                string s1 = (string) v1[1];
-                string s2 = (string) v2[1];
-                return String.Compare(s1, s2, StringComparison.Ordinal);
-            });
+            n4.Root.Sort<N4rec>();
+            //n4.Root.Sort((o1, o2) =>
+            //{
+            //    object[] v1 = (object[]) o1;
+            //    object[] v2 = (object[]) o2;
+            //    string s1 = (string) v1[1];
+            //    string s2 = (string) v2[1];
+            //    return String.Compare(s1, s2, StringComparison.Ordinal);
+            //});
         }
 
         #region Методы доступа к данным
@@ -408,8 +473,11 @@ namespace CommonRDF
         private PxEntry searchInTree;
         internal PxEntry GetEntryByOffset(long offset)
         {
-            searchInTree.offset = offset;
-            return searchInTree;
+            //searchInTree.offset = offset;
+            //return searchInTree;
+            PxEntry any = graph_x.Root.Element(0);
+            any.offset = offset;
+            return any;
         }
         // Нетиповой метод
         public XElement GetPortraitSimple(string id, bool showinverse)
@@ -505,7 +573,7 @@ namespace CommonRDF
 
         private IEnumerable<Triplet> GetProperty(string id, int direction, Predicate<Triplet> predicateValuesTest, object node = null, int? predicateSC = null)
         {
-           //PxEntry found = GetEntryById(id);
+            //PxEntry found = GetEntryById(id);
             PxEntry found = (node is long?)
                 ?  GetEntryByOffset(((long?)node).Value) : GetEntryById(id);
             if (found.IsEmpty) return Enumerable.Empty<Triplet>();
@@ -651,8 +719,11 @@ namespace CommonRDF
                             new NamedType("hs_p", new PType(PTypeEnumeration.integer)),
                             new NamedType("off", new PTypeSequence(new PType(PTypeEnumeration.longinteger))))))));
             tp_n4 = new PTypeSequence(new PTypeRecord(
-                new NamedType("hs_triplets", new PType(PTypeEnumeration.longinteger)),
-                new NamedType("s4", new PTypeFString(4))));
+                new NamedType("hs_e", new PType(PTypeEnumeration.integer)),
+                new NamedType("s4", new PType(PTypeEnumeration.integer))));
+            //tp_n4 = new PTypeSequence(new PTypeRecord(
+            //    new NamedType("hs_triplets", new PType(PTypeEnumeration.longinteger)),
+            //    new NamedType("s4", new PTypeFString(4))));
         }
     }
    

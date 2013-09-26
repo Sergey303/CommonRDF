@@ -85,12 +85,12 @@ namespace CommonRDF
                     row[i] = testvars[i].varValue;
                 }
                 receive.Receive(row);
-                Console.Write("R:"); // Здесь будет вывод значения переменных
-                foreach (var va in testvars)
-                {
-                    Console.Write(va.varName + "=" + va.varValue + " ");
-                }
-                Console.WriteLine();
+                //Console.Write("R:"); // Здесь будет вывод значения переменных
+                //foreach (var va in testvars)
+                //{
+                //    Console.Write(va.varName + "=" + va.varValue + " ");
+                //}
+                //Console.WriteLine();
                 return true;
             }
             // Match

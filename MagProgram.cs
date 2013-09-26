@@ -34,20 +34,32 @@ namespace CommonRDF
                 return;
             }
 
+            //string id2 = "piu_200809051791";
+            //SimpleSparql ss = new SimpleSparql(id2);
+            //Restart();
+            //ss.Match(gr, this);
+            //return;
+
             foreach (var person in new[]
             {
+                "svet_100616111408_10844",
+                "pavl_100531115859_2020",
                 "piu_200809051791",
-                //"svet_100616111408_10844",
-                //"pavl_100531115859_2020",
-                //"pavl_100531115859_6952",
-                //"svet_100616111408_10864",
-                //"w20090506_svetlana_5727",
-                //"piu_200809051742"
+                "pavl_100531115859_6952",
+                "svet_100616111408_10864",
+                "w20090506_svetlana_5727",
+                "piu_200809051742"
             })
             {
                 SimpleSparql sims = new SimpleSparql(person);
                 Restart();
+                //sims.Match(gr, this);
                 Perfomance.ComputeTime(() => sims.Match(gr, this), " mag test " + person + " ");
+                //foreach (var row in receive_list)
+                //{
+                //    foreach (var e in row) Console.WriteLine("{0} ", e);
+                //    Console.WriteLine();
+                //}
             }
 
 

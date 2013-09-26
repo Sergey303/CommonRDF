@@ -21,7 +21,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -63,7 +63,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Comments.txt" />
-    <Content Include="Output.txt" />
     <Content Include="Perfomance.txt" />
     <Content Include="query Organizations and events in which participated Andrey Ershov.txt" />
     <Content Include="query.txt" />
@@ -75,7 +74,7 @@
     <Folder Include="DataFreebase\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="C:\Users\Sergey\Source\Repos\PolarDB\PolarDB.csproj">
+    <ProjectReference Include="..\PolarDB\PolarDB.csproj">
       <Project>{907bb4af-fbc9-4a1e-8f80-194af9337aa4}</Project>
       <Name>PolarDB</Name>
     </ProjectReference>
