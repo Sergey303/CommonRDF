@@ -347,7 +347,7 @@ namespace CommonRDF
                     // Поместим информацию в таблицу имен n4
                     string name = (string)rec[2];
                     string name4 = name.Length <= 4 ? name : name.Substring(0, 4);
-                    n4.V(new object[] { tri.Offset, name4.ToLower() });
+                    n4.V(new object[] { hs_s, name4.ToLower().GetHashCode() });
                 }
             }
             quads.Se();
