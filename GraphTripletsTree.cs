@@ -116,7 +116,6 @@ namespace CommonRDF
             graph_x.Close();
             // Откроем для использования
             InitCells();
-            graph_x.Root.Element(0);
         }
         // ============ Технические методы ============
         private void FormingSerialGraph(ISerialFlow serial, PaCell quads)
