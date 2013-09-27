@@ -492,8 +492,7 @@ namespace CommonRDF
                         new XElement("record", new XAttribute("id", op[0]))));
                 }
             }
-            if (result.HasElements) return result;
-            return null;
+            return result.HasElements ? result : null;
         }
         public override IEnumerable<string> GetEntities()
         {

@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using sema2012m;
-using SimpleRDF;
 
 namespace CommonRDF
 {
@@ -76,7 +75,7 @@ namespace CommonRDF
                         var filterType = tripletMatch.Groups[11].Value.ToLower();
                         if (filterType == "regex")
                         {
-                            var newFilter=new FilterRegex(filter);
+                            var newFilter = new SparqlFilterRegex(filter);
                             if (!valuesByName.TryGetValue(newFilter.ParameterName, out newFilter.Parameter))
                             {
                                 valuesByName.Add(newFilter.ParameterName, newFilter.Parameter = new TValue());

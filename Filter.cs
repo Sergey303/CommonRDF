@@ -1,18 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using CommonRDF;
 
-namespace SimpleRDF
+namespace CommonRDF
     {
-        class FilterRegex : SparqlBase
+        class SparqlFilterRegex : SparqlBase
         {
             private static readonly Regex RegFilteRregex = new Regex(@"^(\?\w+), "+"\"(.*?)\""+@"(,\s*"+"\"(?<flags>[ismx]*)?\")*$", RegexOptions.Compiled);
             public TValue Parameter;
             public readonly string ParameterName;
             private readonly Regex regularExpression;
 
-            public FilterRegex(string parameterExpressionFlags)
+            public SparqlFilterRegex(string parameterExpressionFlags)
             {
                 var regMatch = RegFilteRregex.Match(parameterExpressionFlags);
                ParameterName = regMatch.Groups[1].Value;

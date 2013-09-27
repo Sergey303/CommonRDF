@@ -37,13 +37,13 @@ namespace CommonRDF
             //Console.WriteLine("Test ok duration========================" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
             
             MagProgram mprog = new MagProgram(gr);
-            //mprog.Run();
+            mprog.Run();
             //Console.WriteLine("Run ok duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
            
             
             LeshProgram l = new LeshProgram(gr);
          //  Perfomance.ComputeTime(
-            l.Run();//, "");
+         //   l.Run();//, "");
           
             gr.Test();
         }
