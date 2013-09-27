@@ -72,26 +72,34 @@ namespace CommonRDF
                 new DescrVar { isEntity = true, varValue ="http://fogid.net/o/participation" },
             };
         }
-        public bool Match(GraphBase gr, IReceiver receive) { return Match(gr, 0, receive); } 
+
+        public bool Match(GraphBase gr, IReceiver receive)
+        {
+            Match(gr, 0, receive);
+            return Success;
+        }
+
+        public bool Success;
         // Возвращает истину если сопоставление состоялось хотя бы один раз
-        private bool Match(GraphBase gr, int nextsample, IReceiver receive)
+        private void Match(GraphBase gr, int nextsample, IReceiver receive)
         {
             // Вывести если дошли до конца
             if (nextsample >= testquery.Length)
             {
-                //string[] row = new string[testvars.Length];
-                //for ( int i = 0; i < testvars.Length; i++)
-                //{
-                //    row[i] = testvars[i].varValue;
-                //}
-                //receive.Receive(row);
+                string[] row = new string[testvars.Length];
+                for ( int i = 0; i < testvars.Length; i++)
+                {
+                    row[i] = testvars[i].varValue;
+                }
+                receive.Receive(row);
+                Success = true;
                 //Console.Write("R:"); // Здесь будет вывод значения переменных
                 //foreach (var va in testvars)
                 //{
                 //    Console.Write(va.varName + "=" + va.varValue + " ");
                 //}
                 //Console.WriteLine();
-                return true;
+                return;
             }
             // Match
             var sam = testquery[nextsample];
@@ -106,29 +114,32 @@ namespace CommonRDF
             if (variant == 1)
             {
                 string idd = sam.subject.isVariable ? testvars[sam.subject.index].varValue : sam.subject.value;
-               //if(testvars[sam.subject.index].NodeInfo==null)
-               //    testvars[sam.subject.index].NodeInfo = gr.GetNodeInfo(idd);
+                object nodeInfo = testvars[sam.subject.index].NodeInfo ??
+                                  (testvars[sam.subject.index].NodeInfo = gr.GetNodeInfo(idd));
                 bool atleastonce = false; 
                 // В зависимости от вида, будут использоваться данные разных осей
                 if (sam.vid == TripletVid.dp)
                 { // Dataproperty
-                    foreach (var data in gr.GetData(idd, sam.predicate.value, testvars[sam.subject.index].NodeInfo))
+                    foreach (var data in gr.GetData(idd, sam.predicate.value, nodeInfo))
                     {
                         testvars[sam.obj.index].varValue = data;
-                        atleastonce=Match(gr, nextsample + 1, receive)||atleastonce;
+                        atleastonce = true;
+                        Match(gr, nextsample + 1, receive);
                     }
                 }
                 else
                 {
                     // Objectproperty
-                    foreach (var directid in gr.GetDirect(idd, sam.predicate.value, testvars[sam.subject.index].NodeInfo))
+                    foreach (var directid in gr.GetDirect(idd, sam.predicate.value, nodeInfo))
                     {
+                        atleastonce = true;
                         testvars[sam.obj.index].varValue = directid;
                         testvars[sam.obj.index].NodeInfo = null;
-                        atleastonce=Match(gr, nextsample + 1, receive)||atleastonce;
+                        Match(gr, nextsample + 1, receive);
                     }
                 }
-                return atleastonce || sam.option && Match(gr, nextsample + 1, receive);
+                if(atleastonce || !sam.option) return;
+                  Match(gr, nextsample + 1, receive);
             }
             else if (variant == 2) // obj - known, subj - unknown
             {
@@ -136,9 +147,9 @@ namespace CommonRDF
                 // Пока будем обрабатывать только объектные ссылки
                 if (sam.vid == TripletVid.op)
                 {
-                    //if (testvars[sam.obj.index].NodeInfo == null)
-                    //    testvars[sam.obj.index].NodeInfo = gr.GetNodeInfo(ido);
-                    foreach (var inverseid in gr.GetInverse(ido, sam.predicate.value, testvars[sam.obj.index].NodeInfo))
+                    object nodeInfo = testvars[sam.obj.index].NodeInfo ??
+                                  (testvars[sam.obj.index].NodeInfo = gr.GetNodeInfo(ido));
+                    foreach (var inverseid in gr.GetInverse(ido, sam.predicate.value, nodeInfo))
                     {
                         testvars[sam.subject.index].varValue = inverseid;
                         testvars[sam.subject.index].NodeInfo = null;
@@ -166,25 +177,22 @@ namespace CommonRDF
             }
             else if (variant == 3)
             {
+                if (sam.option) { Match(gr, nextsample + 1, receive); return;} //TODO: Нужен ли вариант, связанный с опциями?
                 string idd = sam.subject.isVariable ? testvars[sam.subject.index].varValue : sam.subject.value;
-                    //if(testvars[sam.subject.index].NodeInfo ==null)
-                    //testvars[sam.subject.index].NodeInfo = gr.GetNodeInfo(idd);
-                //string obj = sam.obj.isVariable ? testvars[sam.obj.index].varValue : sam.obj.value;
-                bool any = false;
-                foreach (var directid in gr.GetDirect(idd, sam.predicate.value, testvars[sam.subject.index].NodeInfo))
+                foreach (var directid in 
+                    gr.GetDirect(idd, sam.predicate.value, 
+                        testvars[sam.subject.index].NodeInfo ?? 
+                    (testvars[sam.subject.index].NodeInfo = gr.GetNodeInfo(idd))))
                 {
                     string objvalue = sam.obj.isVariable ? testvars[sam.obj.index].varValue : sam.obj.value;
                     if (objvalue != directid) continue;
-                    any = Match(gr, nextsample + 1, receive) || any;
+                    Match(gr, nextsample + 1, receive);
                 }
-                return any;
-                //TODO: Нужен ли вариант, связанный с опциями?
             }
             else
             {
                 throw new Exception("Unimplemented");
             }
-            return true;
         }
     }
 }

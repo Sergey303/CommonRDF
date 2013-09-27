@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -85,21 +84,24 @@ namespace CommonRDF
             }, "cells initiated duration=");
 
 
-            Perfomance.ComputeTime(() => LoadQuads(n4, quads), "LoadQuads(). duration=");
-            Perfomance.ComputeTime(quads.Root.Sort<EntVidPredOff>, "Sort quads(). duration=", true);
+            Perfomance.ComputeTime(() => LoadQuads(n4, quads), "After LoadQuads(). duration=");
+
+            // Сортировка квадриков
+           Perfomance.ComputeTime( quads.Root.Sort<EntVidPredOff>," sort quards duration=");
+
+            // Сортировка таблицы имен
+            n4.Root.Sort<N4rec>();
            
-           Perfomance.ComputeTime(() => FormingSerialGraph(new SerialBuffer(graph_a, 3), quads),
-               "Forming serial graph ok. duration=");
+            
+           Perfomance.ComputeTime(()=> FormingSerialGraph(new SerialBuffer(graph_a, 3), quads),
+            "Forming serial graph ok. duration=");
 
             // произвести объектное представление
-            graph_x.Fill2(graph_a.Root.Get().Value);
-            //graph_x.Root.Sort(entry=>entry.Field(0).Get().Value.ToString());
-            Perfomance.ComputeTime(n4.Root.Sort<N4rec>, "Sort n4(). duration=");
+            Perfomance.ComputeTime(()=>
+            {
+                graph_x.Fill2(graph_a.Root.Get().Value);
             n4_x.Fill2(n4.Root.Get().Value);
-            //Perfomance.ComputeTime(()=> n4_x.Root.Sort(entry => (((object[])entry.Get().Value)[0]).ToString()), "Sort n4_x(). duration=");
-
-           
-           // Console.WriteLine("Forming fixed graph ok. duration=" );
+            }, "Forming fixed graph ok. duration=" );
 
             // ========= Завершение загрузки =========
             // Закроем файлы и уничтожим ненужные
@@ -114,7 +116,7 @@ namespace CommonRDF
             graph_x.Close();
             // Откроем для использования
             InitCells();
-            searchInTree = graph_x.Root.Element(0);
+            graph_x.Root.Element(0);
         }
         // ============ Технические методы ============
         private void FormingSerialGraph(ISerialFlow serial, PaCell quads)
@@ -131,7 +133,7 @@ namespace CommonRDF
             bool firstprop = true;
             foreach (object[] el in quads.Root.Elements().Select(e => e.Value))
             {
-                var record = new FourFields((int)el[0], (int)el[1], (int)el[2], (long)el[3]);
+                var record = new GraphTripletsTree.FourFields((int)el[0], (int)el[1], (int)el[2], (long)el[3]);
                 if (firsttime || record.e_hs != hs_e)
                 { // Начало новой записи
                     firstprop = true;
@@ -269,7 +271,7 @@ namespace CommonRDF
                 }
               //  var lines = new string[100000000];//100 000 000
               //  while (!reader.EndOfStream)
-                const int count = 100000000; //00 000 000
+                int count=3000000; //000 000
                 {
                     int i;
                     string readLine;
@@ -352,7 +354,7 @@ namespace CommonRDF
                     // Поместим информацию в таблицу имен n4
                     string name = (string)rec[2];
                     string name4 = name.Length <= 4 ? name : name.Substring(0, 4);
-                    n4.V(new object[] { tri.Offset, name4.ToLower() });
+                    n4.V(new object[] { hs_s, name4.ToLower().GetHashCode() });
                 }
             }
             quads.Se();
@@ -360,32 +362,8 @@ namespace CommonRDF
             n4.Se();
             n4.EndSerialFlow();
         }
-        internal struct N4rec : IBRW, IComparable
-        {
-            internal int hs_e;
-            internal int hs_s4;
-            internal N4rec(int hs_e, int hs_s4)
-            {
-                this.hs_e = hs_e;
-                this.hs_s4 = hs_s4;
-            }
-            public IBRW BRead(BinaryReader br)
-            {
-                hs_e = br.ReadInt32();
-                hs_s4 = br.ReadInt32();
-                return new N4rec(hs_e, hs_s4);
-            }
-            public void BWrite(BinaryWriter bw)
-            {
-                bw.Write(hs_e);
-                bw.Write(hs_s4);
-            }
-            public int CompareTo(object v2)
-            {
-                N4rec y = (N4rec)v2;
-                return this.hs_s4.CompareTo(y.hs_s4);
-            }
-        }
+
+        // Это нужно для сортировки квадриков, см. далее
         internal struct EntVidPredOff : IBRW, IComparable
         {
             internal int ientity, vid, ipredicate;
@@ -420,6 +398,33 @@ namespace CommonRDF
                 return this.ipredicate.CompareTo(y.ipredicate);
             }
         }
+        // Это нужно для сортировки N4, см. далее
+        internal struct N4rec : IBRW, IComparable
+        {
+            internal int hs_e;
+            internal int hs_s4;
+            internal N4rec(int hs_e, int hs_s4)
+            {
+                this.hs_e = hs_e;
+                this.hs_s4 = hs_s4;
+            }
+            public IBRW BRead(BinaryReader br)
+            {
+                hs_e = br.ReadInt32();
+                hs_s4 = br.ReadInt32();
+                return new N4rec(hs_e, hs_s4);
+            }
+            public void BWrite(BinaryWriter bw)
+            {
+                bw.Write(hs_e);
+                bw.Write(hs_s4);
+            }
+            public int CompareTo(object v2)
+            {
+                N4rec y = (N4rec)v2;
+                return this.hs_s4.CompareTo(y.hs_s4);
+            }
+        }
 
         #region Методы доступа к данным
 
@@ -435,11 +440,11 @@ namespace CommonRDF
             return found;
         }
 
-        private PxEntry searchInTree;
         internal PxEntry GetEntryByOffset(long offset)
         {
-            searchInTree.offset = offset;
-            return searchInTree;
+            PxEntry any = graph_x.Root.Element(0);
+            any.offset = offset;
+            return any;
         }
         // Нетиповой метод
         public XElement GetPortraitSimple(string id, bool showinverse)
@@ -535,7 +540,7 @@ namespace CommonRDF
 
         private IEnumerable<Triplet> GetProperty(string id, int direction, Predicate<Triplet> predicateValuesTest, object node = null, int? predicateSC = null)
         {
-           //PxEntry found = GetEntryById(id);
+            //PxEntry found = GetEntryById(id);
             PxEntry found = (node is long?)
                 ?  GetEntryByOffset(((long?)node).Value) : GetEntryById(id);
             if (found.IsEmpty) return Enumerable.Empty<Triplet>();
@@ -610,20 +615,25 @@ namespace CommonRDF
 
         public override string[] SearchByName(string ss)
         {
-            if (string.IsNullOrWhiteSpace(ss)) return new string[0];
-            //ss = ss;
-            var name4 = (ss.Length > 4 ? ss.Substring(0, 4) : ss).ToLower();
-            return n4_x.Root.BinarySearchAll(
-                e => String.Compare((string)e.Field(1).Get().Value, name4, StringComparison.Ordinal))
-                .Select(e => e.Field(0).Get().Value)
-                .Cast<long>()
-                .Select(GetTriplet)
-                .Select(Triplet.Create)
-                .Where(t => t is DProp) // && predicate is name
-                .Cast<DProp>()
-                .Where(t => t.d == ss)
-                .Select(t => t.s)
-                .ToArray();
+            return new string[0];
+            //if (string.IsNullOrWhiteSpace(ss)) return new string[0];
+            ////ss = ss;
+            //var name4 = (ss.Length > 4 ? ss.Substring(0, 4) : ss).ToLower().GetHashCode();
+            //return n4_x.Root.BinarySearchAll(
+            //    e =>
+            //    {
+            //        int i = (int)(e.Field(1).Get().Value);
+            //        return i == name4 ?0 : i < name4 ? -1 : 1;
+            //    })
+            //    .Select(e => e.Field(0).Get().Value)
+            //    .Cast<int>()
+            //    .Select(GetTriplet)
+            //    .Select(Triplet.Create)
+            //    .Where(t => t is DProp) // && predicate is name
+            //    .Cast<DProp>()
+            //    .Where(t => t.d == ss)
+            //    .Select(t => t.s)
+            //    .ToArray();
         }
 
         #region Node
@@ -681,8 +691,11 @@ namespace CommonRDF
                             new NamedType("hs_p", new PType(PTypeEnumeration.integer)),
                             new NamedType("off", new PTypeSequence(new PType(PTypeEnumeration.longinteger))))))));
             tp_n4 = new PTypeSequence(new PTypeRecord(
-                new NamedType("hs_triplets", new PType(PTypeEnumeration.longinteger)),
-                new NamedType("s4", new PTypeFString(4))));
+                new NamedType("hs_e", new PType(PTypeEnumeration.integer)),
+                new NamedType("s4", new PType(PTypeEnumeration.integer))));
+            //tp_n4 = new PTypeSequence(new PTypeRecord(
+            //    new NamedType("hs_triplets", new PType(PTypeEnumeration.longinteger)),
+            //    new NamedType("s4", new PTypeFString(4))));
         }
     }
    
