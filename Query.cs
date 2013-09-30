@@ -52,6 +52,7 @@ namespace CommonRDF
                 string tripletsGroup = whereMatch.Groups[1].Value;
                 SparqlBase newTriplet = null, lastTriplet = null;
                 SparqlTriplet.Gr = Gr = graph;
+                Action<Func<bool>> setNextMatchToLast=null;
                 foreach (Match tripletMatch in TripletsReg.Matches(tripletsGroup))
                 {
                     var sMatch = tripletMatch.Groups[2];
@@ -61,13 +62,13 @@ namespace CommonRDF
                     {
                         pValue = tripletMatch.Groups[3].Value;
                         oValue = tripletMatch.Groups[4].Value;
-                        if (CreateTriplet(sMatch, valuesByName, pValue, oValue, false, ref newTriplet)) continue;
+                        lastTriplet = CreateTriplet(sMatch, valuesByName, pValue, oValue, false, lastTriplet);
                     }
                     else if ((sMatch = tripletMatch.Groups[7]).Success)
                     {
                         pValue = tripletMatch.Groups[8].Value;
                         oValue = tripletMatch.Groups[9].Value;
-                        if (CreateTriplet(sMatch, valuesByName, pValue, oValue, true, ref newTriplet)) continue;
+                        lastTriplet = CreateTriplet(sMatch, valuesByName, pValue, oValue, true, lastTriplet);
                     }
                     else if ((sMatch = tripletMatch.Groups[12]).Success)
                     {
@@ -75,23 +76,25 @@ namespace CommonRDF
                         var filterType = tripletMatch.Groups[11].Value.ToLower();
                         if (filterType == "regex")
                         {
-                            var newFilter = new SparqlFilterRegex(filter);
+                            var newFilter = new SparqlFilterRegex(filter, lastTriplet);
                             if (!valuesByName.TryGetValue(newFilter.ParameterName, out newFilter.Parameter))
                             {
                                 valuesByName.Add(newFilter.ParameterName, newFilter.Parameter = new TValue());
                                 throw new NotImplementedException("new parameter in fiter regex");
                             }
-                            newTriplet = newFilter;
+                            lastTriplet = newFilter;
+                        }
+                        else// common filter
+                        {
+                            
                         }
                     }
                     else throw new Exception("strange query triplet: " + tripletMatch.Value);
 
 
 
-                    if (lastTriplet != null)
-                        lastTriplet.NextMatch = newTriplet.Match;
-                    else start = newTriplet;
-                    lastTriplet = newTriplet;
+                    
+                    if(start==null) start = lastTriplet;
                 }
                 if (lastTriplet != null)
                     lastTriplet.NextMatch = Match;
@@ -105,8 +108,7 @@ namespace CommonRDF
             ParametersNames = valuesByName.Where(v => v.Value.Value == null).Select(kv => kv.Key).ToArray();
         }
 
-        private static bool CreateTriplet(Group sMatch, Dictionary<string, TValue> valuesByName, string pValue, string oValue, bool isOptional,
-            ref SparqlBase newTriplet)
+        private static SparqlBase CreateTriplet(Group sMatch, Dictionary<string, TValue> valuesByName, string pValue, string oValue, bool isOptional, SparqlBase lastTriplet)
         {
             bool isData;
             TValue s, p, o;
@@ -137,90 +139,44 @@ namespace CommonRDF
                 {
                     if (!isNewO)
                     {
-                        if (isOptional) return true;
-                        newTriplet = new SampleTriplet
-                        {
-                            S = s,
-                            P = p,
-                            O = o,
-                            HasNodeInfoS = s.SetNodeInfo
-                        };
+                        if (isOptional) return lastTriplet;
+                        return new SampleTriplet(s, p, o, lastTriplet);
                     }
                     else
-                        newTriplet = isOptional
-                            ? (SparqlTriplet) new SelectObjectOprtional()
-                            {
-                                S = s,
-                                P = p,
-                                O = o,
-                                HasNodeInfoS = s.SetNodeInfo
-                            }
-                            : new SelectObject
-                            {
-                                S = s,
-                                P = p,
-                                O = o,
-                                HasNodeInfoS = s.SetNodeInfo
-                            };
+                        return isOptional
+                            ? (SparqlTriplet)new SelectObjectOprtional(s, p, o, lastTriplet)
+                            : new SelectObject(s, p, o, lastTriplet);
+                           
 
                     s.SetNodeInfo = true;
                 }
                 else if (!isNewO)
                 {
-                    newTriplet = isOptional
-                        ? new SelectSubjectOpional
-                        {
-                            S = s,
-                            P = p,
-                            O = o,
-                            HasNodeInfoO = o.SetNodeInfo
-                        }
-                        : new SelectSubject
-                        {
-                            S = s,
-                            P = p,
-                            O = o,
-                            HasNodeInfoO = o.SetNodeInfo
-                        };
-                    o.SetNodeInfo = true;
+                    return isOptional
+                        ? new SelectSubjectOpional(s, p, o, lastTriplet)
+                        : new SelectSubject(s, p, o, lastTriplet);
                 }
                 else
                 {
-                    newTriplet = isOptional
-                        ? (SparqlTriplet) new SelectAllSubjectsOptional
-                        {
-                            S = s,
-                            P = p,
-                            O = o,
-                            NextMatch = () => new SelectObjectOprtional
-                            {
-                                S = s,
-                                P = p,
-                                O = o,
-                                HasNodeInfoS = s.SetNodeInfo
-                            }.Match()
-                        }
-                        : new SelectAllSubjects
-                        {
-                            S = s,
-                            P = p,
-                            O = o,
-                            NextMatch = () => new SelectObject
-                            {
-                                S = s,
-                                P = p,
-                                O = o,
-                                HasNodeInfoS = s.SetNodeInfo
-                            }.Match()
-                        };
-                    s.SetNodeInfo = true;
+                    if (isOptional)
+                    {
+                        return
+                            new SelectAllSubjectsOptional(s, lastTriplet).Next(new SelectObjectOprtional(s, p, o, null));
+                    }
+                    else
+                    {
+                        return lastTriplet.Next(new SelectAllSubjects(s, null).Next(new SelectObject(s, p, o, null)));
+
+                    }
                 }
             else if (!isNewS)
-                if (!isNewO) newTriplet = new SelectPredicate();
+            {
+                if (!isNewO) return new SelectPredicate(s, p, o, lastTriplet);
                 else
                 {
                     //Action = SelectPredicateObject;
                 }
+            }
             else if (!isNewO)
             {
                 //Action = SelectPredicateSubject;
@@ -229,7 +185,7 @@ namespace CommonRDF
             {
                 //Action = SelectAll;
             }
-            return false;
+            return null;
         }
 
         private static bool TestParameter(string spoValue, out TValue spo, Dictionary<string, TValue> paramByName)
@@ -261,9 +217,10 @@ namespace CommonRDF
         }
 
 
-        private void Match()
+        private bool Match()
         {
             ParametrsValuesList.Add(parameters.Select(par => par.Value).ToArray());
+            return true;
         }
 
         #endregion

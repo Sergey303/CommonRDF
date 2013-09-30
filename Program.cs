@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Xml.Linq;
 
 namespace CommonRDF
@@ -36,16 +37,29 @@ namespace CommonRDF
             Console.WriteLine("Graph ok duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
             //Console.WriteLine("Test ok duration========================" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
             
-            MagProgram mprog = new MagProgram(gr);
-            mprog.Run();
+//            MagProgram mprog = new MagProgram(gr);
+          //  mprog.Run();
             //Console.WriteLine("Run ok duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
-           
+            //Expression<Func<string, string, bool>> p = (r, l) => (r = l) == l;
             
             LeshProgram l = new LeshProgram(gr);
          //  Perfomance.ComputeTime(
-         //   l.Run();//, "");
+            l.Run();//, "");
           
             gr.Test();
+        }
+
+        private static void MethodExpressionsExperiments()
+        {
+            var s1 = Expression.Parameter(typeof (string), "s1");
+            LambdaExpression fExpres =
+                Expression.Lambda(
+                    Expression.Equal(s1, Expression.Constant(1)),
+                    new[] {s1});
+            Console.WriteLine(fExpres.ToString());
+            string p = "1";
+            Console.WriteLine(((Func<string, bool>) fExpres.Compile())(p));
+            Console.WriteLine(p);
         }
     }
 }

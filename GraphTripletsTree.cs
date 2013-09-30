@@ -17,6 +17,7 @@ namespace CommonRDF
         private PType tp_quads;
         private PType tp_n4;
         private PType tp_graph;
+        private PType tp_predicateRole;
 
         private PaCell triplets;
         private PaEntry any_triplet;

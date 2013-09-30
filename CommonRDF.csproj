@@ -46,7 +46,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common.cs" />
-    <Compile Include="Filter.cs" />
+    <Compile Include="Filters.cs" />
+    <Compile Include="FilterFunctions.cs" />
     <Compile Include="Graph.cs" />
     <Compile Include="GraphBase.cs" />
     <Compile Include="GraphDB.cs" />

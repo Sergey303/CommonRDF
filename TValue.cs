@@ -11,6 +11,7 @@ namespace CommonRDF
         public object nodeInfo;
         public bool SetNodeInfo;
         public bool? IsObject;
+        public event Action<TValue> WhenReplace;
         private event Action<bool> whenObjSetted;
         public event Action<bool> WhenObjSetted
         {
@@ -56,8 +57,14 @@ namespace CommonRDF
 
     public abstract class SparqlBase
     {
-        public abstract void Match();
-        public Action NextMatch;
+        public abstract bool Match();
+        public Func<bool> NextMatch;
+
+        protected SparqlBase(SparqlBase last)
+        {
+            if(last!=null)
+            last.NextMatch = Match;
+        }
     }
 
     /// <summary>
@@ -89,6 +96,15 @@ namespace CommonRDF
                 P.IsObject = O.IsObject = value;
             }
         }
+      
+        protected SparqlTriplet(TValue s, TValue p, TValue o, SparqlBase last) : base(last)
+        {
+              S = s;
+            P = p;
+            O = o;
+            HasNodeInfoS = s.SetNodeInfo;
+        }
+
     }
     /// <summary>
     ///  все три значения(будь то константы или параметры) не пусты
@@ -99,33 +115,36 @@ namespace CommonRDF
     /// </summary>
     public class SampleTriplet: SparqlTriplet
     {
+        public SampleTriplet(TValue s, TValue p, TValue o, SparqlBase last) : base(s, p, o, last)
+        {
+            s.SetNodeInfo = true;
+        }
+
         /// <summary>
         /// метод выполняет проверку: соответсвуют ли данным три значения
         /// объектность не известна, поэтому проверить нужно и текстовые и объектные предикаты
         /// субъекта на соответствие с указанным значением предиката.
         /// </summary>
         /// <returns>возвращает тоже, что и следующий Match, если триплет соответсвует данным, ложь если нет.</returns>
-        public override void Match()
+        public override bool Match()
         {
             object nodeInfo = HasNodeInfoS ? S.nodeInfo : (S.nodeInfo = Gr.GetNodeInfo(S.Value));
             if (IsObjectRole==null)
                 if (Gr.GetDirect(S.Value, P.Value, nodeInfo).Any(oValue => oValue == O.Value))
                 {
                     IsObjectRole = true;
-                 NextMatch();
+                 return NextMatch();
                 }
                 else if (Gr.GetData(S.Value, P.Value, nodeInfo).Any(oValue => oValue == O.Value))
                 {
                     IsObjectRole = false;
-                    NextMatch();
+                   return NextMatch();
                 }
-                else return;
-            else if ((IsObjectRole.Value
-                    ? Gr.GetDirect(S.Value, P.Value, nodeInfo)
-                    : Gr.GetData(S.Value, P.Value, nodeInfo))
-                    .Any(oValue => oValue == O.Value))
-                    NextMatch();
-           
+                else return false;
+            return ((IsObjectRole.Value
+                ? Gr.GetDirect(S.Value, P.Value, nodeInfo)
+                : Gr.GetData(S.Value, P.Value, nodeInfo))
+                .Any(oValue => oValue == O.Value)) && NextMatch();
         }
     }
     /// <summary>
@@ -133,11 +152,18 @@ namespace CommonRDF
     /// </summary>
     public class SelectSubject : SparqlTriplet
     {
+        public SelectSubject(TValue s, TValue p, TValue o, SparqlBase last)
+            : base(s, p, o, last)
+        {
+            HasNodeInfoO = o.SetNodeInfo;
+            o.SetNodeInfo = true;
+        }
+
         /// <summary>
         /// метод выполняет перебор всех вариантов субъектов и для каждого запускает следующий Match
         /// </summary>
         /// <returns></returns>
-        public override void Match()
+        public override bool Match()
         {
             if (IsObjectRole==null || IsObjectRole.Value)
                 foreach (string value in Gr.GetInverse(O.Value, P.Value, HasNodeInfoO ? O.nodeInfo : (O.nodeInfo = Gr.GetNodeInfo(O.Value))))
@@ -146,7 +172,7 @@ namespace CommonRDF
                     S.Value = value;
                     NextMatch();
                 }
-            if (IsObjectRole!=null && IsObjectRole.Value) return;
+            if (IsObjectRole!=null && IsObjectRole.Value) return false;
             foreach (string value in
                 P.Value == ONames.p_name
                     ? Gr.SearchByName(O.Value).Where(OnPredicate)
@@ -156,6 +182,7 @@ namespace CommonRDF
                 S.Value = value;
                 NextMatch();
             }
+            return false;
         }
         protected bool OnPredicate(string id)
         {
@@ -168,11 +195,17 @@ namespace CommonRDF
     /// </summary>
     public class SelectObject : SparqlTriplet
     {
+        public SelectObject(TValue s, TValue p, TValue o, SparqlBase last)
+            : base(s, p, o, last)
+        {
+            s.SetNodeInfo = true;
+        }
+
         /// <summary>
         /// метод выполняет перебор всех вариантов объектов и для каждого запускает следующий Match
         /// </summary>
         /// <returns></returns>
-        public override void Match()
+        public override bool Match()
         {
             if (IsObjectRole==null|| IsObjectRole.Value)
                 foreach (string value in Gr.GetDirect(S.Value, P.Value, HasNodeInfoS ? S.nodeInfo : (S.nodeInfo = Gr.GetNodeInfo(S.Value))))
@@ -181,13 +214,14 @@ namespace CommonRDF
                     O.Value = value;
                     NextMatch();
                 }
-            if (IsObjectRole!=null && IsObjectRole.Value) return;
+            if (IsObjectRole!=null && IsObjectRole.Value) return false;
             foreach (string value in Gr.GetData(S.Value, P.Value, HasNodeInfoS ? S.nodeInfo : (S.nodeInfo = Gr.GetNodeInfo(S.Value))))
             {
                 IsObjectRole = false;
                 O.Value = value;
                 NextMatch();
             }
+            return false;
         }
     }
     /// <summary>
@@ -195,41 +229,64 @@ namespace CommonRDF
     /// </summary>
     public class SelectPredicate : SparqlTriplet
     {
+        public SelectPredicate(TValue s, TValue p, TValue o, SparqlBase last)
+            : base(s, p, o, last)
+        {
+            s.SetNodeInfo = true;
+        }
+
         /// <summary>
         /// метод находит все предикаты, известного субъекта, с известным значением, и для каждого запускает следующий Match
         /// </summary>
         /// <returns></returns>
-        public override void Match()
+        public override bool Match()
         {
             throw new NotImplementedException();
         }
     }
     public class SelectAllPredicatesBySub :SparqlTriplet{
-        public override void Match()
+        public SelectAllPredicatesBySub(TValue s, TValue p, TValue o, SparqlBase last)
+            : base(s, p, o, last)
+        {
+            s.SetNodeInfo = true;
+        }
+
+        public override bool Match()
         {
             throw new NotImplementedException();
         }
     }
-    public class SelectAllSubjects : SparqlTriplet
-    
+    public class SelectAllSubjects : SparqlBase
+
     {
-        public override void Match()
+        public TValue S;
+        public SelectAllSubjects(TValue s, SparqlBase last):base(last)
         {
-            foreach (var id in Gr.GetEntities())
+            S = s;
+        }
+
+        public override bool Match()
+        {
+            foreach (var id in SparqlTriplet.Gr.GetEntities())
             {
                 S.Value = id;
                 NextMatch();
             }
+            return false;
         }
     }
 
     public class SelectSubjectOpional : SelectSubject
     {
+        public SelectSubjectOpional(TValue s, TValue p, TValue o, SparqlBase last)
+            : base(s, p, o, last)
+        {}
+
         /// <summary>
         /// метод выполняет перебор всех вариантов субъектов и для каждого запускает следующий Match
         /// </summary>
         /// <returns></returns>
-        public override void Match()
+        public override bool Match()
         {
             bool any = false;
             if (IsObjectRole==null || IsObjectRole.Value)
@@ -240,7 +297,7 @@ namespace CommonRDF
                     S.Value = value;
                     NextMatch();
                 }
-            if (any) return;
+            if (any) return true;
             if (IsObjectRole == null || !IsObjectRole.Value)
                 foreach (string value in
                     P.Value == ONames.p_name
@@ -252,22 +309,27 @@ namespace CommonRDF
                     S.Value = value;
                     NextMatch();
                 }
-            if (any) return;
+            if (any) return true;
             S.Value = string.Empty;
-            NextMatch();
+           return NextMatch();
         }
     }
 
     /// <summary>
     /// этот триплет создаётся в ситуаци, когда не известен только объект на данном этапе выполнения. 
     /// </summary>
-    public class SelectObjectOprtional : SparqlTriplet
+    public class SelectObjectOprtional : SelectObject
     {
+        public SelectObjectOprtional(TValue s, TValue p, TValue o, SparqlBase last)
+            : base(s, p, o, last)
+        {
+        }
+
         /// <summary>
         /// метод выполняет перебор всех вариантов объектов и для каждого запускает следующий Match
         /// </summary>
         /// <returns></returns>
-        public override void Match()
+        public override bool Match()
         {
             if (IsObjectRole==null || IsObjectRole.Value)
                 foreach (string value in Gr.GetDirect(S.Value, P.Value,
@@ -278,7 +340,7 @@ namespace CommonRDF
                     O.Value = value;
                     NextMatch();
                 }
-            if (any) return;
+            if (any) return true;
             if (IsObjectRole == null || !IsObjectRole.Value)
             foreach (string value in Gr.GetData(S.Value, P.Value,
                         HasNodeInfoS ? S.nodeInfo : (S.nodeInfo = Gr.GetNodeInfo(S.Value))))
@@ -288,27 +350,42 @@ namespace CommonRDF
                 O.Value = value;
                 NextMatch();
             }
-            if (any) return;
+            if (any) return true;
             O.Value = string.Empty;
-            NextMatch();
+           return NextMatch();
         }
 
         private bool any;
     }
-    public class SelectAllSubjectsOptional : SparqlTriplet
+    public class SelectAllSubjectsOptional : SelectAllSubjects
     {
         private bool any;
-        public override void Match()
+        public SelectAllSubjectsOptional(TValue s, SparqlBase last)
+            : base(s, last)
         {
-            foreach (var id in Gr.GetEntities())
+            S = s;
+        }
+
+        public override bool Match()
+        {
+            foreach (var id in SparqlTriplet.Gr.GetEntities())
             {
                 any = true;
                 S.Value = id;
                 NextMatch();
             }
-            if (any) return;
+            if (any) return true;
             S.Value = string.Empty;
-            NextMatch();
+            return NextMatch();
+        }
+    }
+
+    public static class SparqlBaseExtensions
+    {
+        public static SparqlBase Next(this SparqlBase last, SparqlBase next)
+        {
+            last.NextMatch = next.Match;
+            return next;
         }
     }
 }
