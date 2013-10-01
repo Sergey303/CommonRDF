@@ -68,19 +68,12 @@ namespace CommonRDF
         /// <summary>
         /// Метод, проверяющий соответствующие части фильтра. 
         /// Должен вызвать Match() у обоих внутренних фильтров, т.к. они возможно лишь присваивать ?newP="newV"
-        /// после проверки каждого вызывается Match следующего элемента запроса - nextMatch.
-        /// У вложенных в фильтры SparqlBase, возможно включая и этот, NextMatch-возвращает всегда истину: ()=>true. 
-        /// только у самого корневого фильтра NextMatch ссылается на следующий элемент в запорсе.
         /// </summary>
         /// <returns></returns>
         public override bool Match()
         {
-            bool any = false;
-            if (first.Match()) 
-            any = first.NextMatch();
-            if (second.Match())
-                any = second.NextMatch() || any;
-            return any;
+            bool any = first.Match();
+            return second.Match() || any;
         }
     }
 
@@ -152,7 +145,6 @@ namespace CommonRDF
             : base(calcExpression, parameters, last)
         {
             this.newParamter = newParamter;
-           
         }
 
         public override bool Match()
@@ -169,7 +161,7 @@ namespace CommonRDF
             : base(last)
         {
             Method = Expression.Lambda(equalExpression, parameters.Select(p => p.Parameter)).Compile();
-            this.AllParameters = parameters.Select(p => p.Value).ToArray();
+            AllParameters = parameters.Select(p => p.Value).ToArray();
             last = parameters
                   .Where(p => !p.IsAssigned)
                   .Select(p => p.Value)
@@ -183,9 +175,24 @@ namespace CommonRDF
         {
             return (bool)Method.DynamicInvoke(AllParameters.Select(p => p.Value));
         }
+    }
 
-
-        //private static readonly Regex regParentes = new Regex("\\((?<inside>[^)^(])\\)", RegexOptions.Compiled);
+    internal class FilterTestDoubles : FilterTest
+    {
+        public FilterTestDoubles(Expression equalExpression, List<FilterParameterInfo> parameters, SparqlBase last)
+            : base(equalExpression, parameters, last)
+        {}
+        public override bool Match()
+        {
+            return  (bool)Method.DynamicInvoke(new List<double>(
+                AllParameters.Select(parameter=>
+                {
+                    double caster;
+                    if (!double.TryParse(parameter.Value, out caster))
+                        throw new ArgumentException(parameter.Value + " must be double");
+                    return caster;
+                })));
+        }
     }
 
     internal class FilterParameterInfo

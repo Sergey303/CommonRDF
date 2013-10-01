@@ -10,17 +10,6 @@ namespace CommonRDF
 {
     internal class Query
     {
-        public static Regex QuerySelectReg = new Regex(@"[Ss][Ee][Ll][Ee][Cc][Tt]\s+((\?\w+\s+)+|\*)",
-            RegexOptions.Compiled);
-
-        public static Regex QueryWhereReg = new Regex(@"[Ww][Hh][Ee][Rr][Ee]\s+\{(([^{}]*\{[^{}]*\}[^{}]*)*|[^{}]*)\}",
-            RegexOptions.Compiled);
-
-        public static Regex TripletsReg = new Regex(
-            //@"((?<s>[^\s]+|'.*')\s+(?<p>[^\s]+|'.*')\s+(?<o>[^\s]+|'.*')\.(\s|$))|([Oo][Pp][Tt][Ii][Oo][Nn][Aa][Ll]\s+{\s*(?<os>[^\s]+|'.*')\s+(?<op>[^\s]+|'.*')\s+(?<oo>[^\s]+|'.*')\s*}(\s|$))|[Ff][Ii][Ll][Tt][Ee][Rr]\s+(?<filterttype>[^\s()]+)?\((?<filter>.*)\)"
-            @"(([^\s]+|'.*')\s+([^\s]+|'.*')\s+([^\s]+|'.*')\.(\s|$))|([Oo][Pp][Tt][Ii][Oo][Nn][Aa][Ll]\s+{\s*([^\s]+|'.*')\s+([^\s]+|'.*')\s+([^\s]+|'.*')\s*}(\s|$))|[Ff][Ii][Ll][Tt][Ee][Rr]\s+([^\s()]+)?\((.*)\)"
-            );
-
         public GraphBase Gr;
        // public List<QueryTripletOptional> Optionals;
         // public TValue[] Parameters;
@@ -30,6 +19,7 @@ namespace CommonRDF
         public readonly List<string> SelectParameters=new List<string>();
         public readonly List<string[]> ParametrsValuesList = new List<string[]>();
         private readonly SparqlBase start;
+
         #region Read
 
         public Query(StreamReader stream, GraphBase graph):this(stream.ReadToEnd(), graph) { }
@@ -37,7 +27,7 @@ namespace CommonRDF
         {
             var valuesByName = new Dictionary<string, TValue>();
 
-            var selectMatch = QuerySelectReg.Match(sparqlString);
+            var selectMatch = Re.QuerySelectReg.Match(sparqlString);
             if (selectMatch.Success)
             {
                 string parameters2Select = selectMatch.Groups[1].Value.Trim();
@@ -46,14 +36,21 @@ namespace CommonRDF
                         parameters2Select.Split(new[] {' '}, StringSplitOptions.RemoveEmptyEntries).ToList();
                sparqlString = sparqlString.Replace(selectMatch.Groups[0].Value, "");
             }
-            var whereMatch = QueryWhereReg.Match(sparqlString);
+            var whereMatch = Re.QueryWhereReg.Match(sparqlString);
             if (whereMatch.Success)
             {
                 string tripletsGroup = whereMatch.Groups[1].Value;
-                SparqlBase newTriplet = null, lastTriplet = null;
+                SparqlBase lastTriplet = null;
                 SparqlTriplet.Gr = Gr = graph;
-                Action<Func<bool>> setNextMatchToLast=null;
-                foreach (Match tripletMatch in TripletsReg.Matches(tripletsGroup))
+                FilterParameterInfo.TestNewParameter = pname =>
+                {
+                    TValue p;
+                    bool isOld;
+                    if (!(isOld=valuesByName.TryGetValue(pname, out p)))
+                       valuesByName.Add(pname, p = new TValue());
+                    return new KeyValuePair<TValue, bool>(p, isOld);
+                };
+                foreach (Match tripletMatch in Re.TripletsReg.Matches(tripletsGroup))
                 {
                     var sMatch = tripletMatch.Groups[2];
                     string pValue;
@@ -86,7 +83,7 @@ namespace CommonRDF
                         }
                         else// common filter
                         {
-                            
+                            lastTriplet = lastTriplet.Next(FilterFunctions.Create(filter));
                         }
                     }
                     else throw new Exception("strange query triplet: " + tripletMatch.Value);

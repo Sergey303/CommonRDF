@@ -60,6 +60,10 @@ namespace CommonRDF
         public abstract bool Match();
         public Func<bool> NextMatch;
 
+        protected SparqlBase()
+        {
+            
+        }
         protected SparqlBase(SparqlBase last)
         {
             if(last!=null)
@@ -384,6 +388,7 @@ namespace CommonRDF
     {
         public static SparqlBase Next(this SparqlBase last, SparqlBase next)
         {
+            if(last!=null)
             last.NextMatch = next.Match;
             return next;
         }

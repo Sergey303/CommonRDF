@@ -44,21 +44,22 @@ namespace CommonRDF
             
             LeshProgram l = new LeshProgram(gr);
          //  Perfomance.ComputeTime(
-            l.Run();//, "");
+           // l.Run();//, "");
           
             gr.Test();
+            MethodExpressionsExperiments();
         }
 
         private static void MethodExpressionsExperiments()
         {
-            var s1 = Expression.Parameter(typeof (string), "s1");
+            var s1 = Expression.Parameter(typeof (double), "s1");
             LambdaExpression fExpres =
                 Expression.Lambda(
-                    Expression.Equal(s1, Expression.Constant(1)),
+                    Expression.Equal(s1, Expression.Constant(1.0, typeof(double))),
                     new[] {s1});
             Console.WriteLine(fExpres.ToString());
-            string p = "1";
-            Console.WriteLine(((Func<string, bool>) fExpres.Compile())(p));
+            string p = "1.0";
+            Console.WriteLine(fExpres.Compile().DynamicInvoke(p));
             Console.WriteLine(p);
         }
     }

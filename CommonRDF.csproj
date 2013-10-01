@@ -60,6 +60,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Query.cs" />
+    <Compile Include="RegularExpressions.cs" />
     <Compile Include="SimpleSparql.cs" />
     <Compile Include="TValue.cs" />
   </ItemGroup>
