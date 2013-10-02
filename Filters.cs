@@ -49,7 +49,6 @@ namespace CommonRDF
     /// </summary>
     internal class FilterOr : SparqlBase
     {
-
         public new Func<bool> NextMatch
         {
             set { first.NextMatch = second.NextMatch = value; }

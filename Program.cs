@@ -52,11 +52,12 @@ namespace CommonRDF
 
         private static void MethodExpressionsExperiments()
         {
-            var s1 = Expression.Parameter(typeof (double), "s1");
+            var s1 = Expression.Parameter(typeof (object), "s1");
             LambdaExpression fExpres =
                 Expression.Lambda(
-                    Expression.Equal(s1, Expression.Constant(1.0, typeof(double))),
+                    Expression.Equal(s1, Expression.Constant(1.0, typeof(object))),
                     new[] {s1});
+
             Console.WriteLine(fExpres.ToString());
             string p = "1.0";
             Console.WriteLine(fExpres.Compile().DynamicInvoke(p));

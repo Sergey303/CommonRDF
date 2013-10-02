@@ -48,8 +48,8 @@ namespace CommonRDF
                         : (equalityType == ">"
                             ? ExpressionType.GreaterThan
                             : ExpressionType.LessThan),
-                        ArithmeticOrConst(m.Groups[1].Value, parameters),
-                        ArithmeticOrConst(m.Groups[3].Value, parameters))
+                        GetDoubleArithmeticOrConst(m.Groups[1].Value, parameters),
+                        GetDoubleArithmeticOrConst(m.Groups[3].Value, parameters))
                     , parameters, last);
             }
             //TODO boolean valiable
@@ -57,21 +57,22 @@ namespace CommonRDF
         }
 
         private static Expression GetStringOrArithmetic(string s, List<FilterParameterInfo> parameters,
-            ref bool? isArithmetic)
+            ref bool isArithmetic)
         {
             Match m;
             if ((m = Re.RegSumSubtract.Match(s)).Success)
             {
+                //todo string concatenation +
                 isArithmetic = true;
                 return m.Groups[2].Value == "+" //TODO unary -
-                    ? Expression.Add(ArithmeticOrConst(m.Groups[1].Value, parameters), ArithmeticOrConst(m.Groups[3].Value, parameters))
-                    : Expression.Subtract(ArithmeticOrConst(m.Groups[1].Value, parameters), ArithmeticOrConst(m.Groups[3].Value, parameters));}
+                    ? Expression.Add(GetDoubleArithmeticOrConst(m.Groups[1].Value, parameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, parameters))
+                    : Expression.Subtract(GetDoubleArithmeticOrConst(m.Groups[1].Value, parameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, parameters));}
             if ((m = Re.RegMulDiv.Match(s)).Success)
             {
                 isArithmetic = true;
                 return m.Groups[2].Value == "*"
-                    ? Expression.Multiply(ArithmeticOrConst(m.Groups[1].Value, parameters), ArithmeticOrConst(m.Groups[3].Value, parameters))
-                    : Expression.Divide(ArithmeticOrConst(m.Groups[1].Value, parameters), ArithmeticOrConst(m.Groups[3].Value, parameters));}
+                    ? Expression.Multiply(GetDoubleArithmeticOrConst(m.Groups[1].Value, parameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, parameters))
+                    : Expression.Divide(GetDoubleArithmeticOrConst(m.Groups[1].Value, parameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, parameters));}
 
             s = s.Trim();
             DateTime dt;
@@ -90,24 +91,25 @@ namespace CommonRDF
             }
             //variable
             if (s.StartsWith("?"))
-                return GetParameterOrCreate(s, parameters, isArithmetic!=null && isArithmetic.Value ? typeof(double) : typeof(string)).Parameter;
+                throw new Exception("wrong usages");
+              //  return GetParameterOrCreate(s, parameters, isArithmetic!=null && isArithmetic.Value ? typeof(double) : typeof(string)).Parameter;
             //const
             //TODO < ns:
             
             return Expression.Constant(s);
         }
-        private static Expression ArithmeticOrConst(string s, List<FilterParameterInfo> parameters)
+        private static Expression GetDoubleArithmeticOrConst(string s, List<FilterParameterInfo> parameters)
         {
             Match m;
             //Expressions
             if ((m = Re.RegSumSubtract.Match(s)).Success)
                 return m.Groups[2].Value == "+" //TODO unary -
-                    ? Expression.Add(ArithmeticOrConst(m.Groups[1].Value, parameters), ArithmeticOrConst(m.Groups[3].Value, parameters))
-                    : Expression.Subtract(ArithmeticOrConst(m.Groups[1].Value, parameters), ArithmeticOrConst(m.Groups[3].Value, parameters));
+                    ? Expression.Add(GetDoubleArithmeticOrConst(m.Groups[1].Value, parameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, parameters))
+                    : Expression.Subtract(GetDoubleArithmeticOrConst(m.Groups[1].Value, parameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, parameters));
             if ((m = Re.RegMulDiv.Match(s)).Success)
                 return m.Groups[2].Value == "*"
-                    ? Expression.Multiply(ArithmeticOrConst(m.Groups[1].Value, parameters), ArithmeticOrConst(m.Groups[3].Value, parameters))
-                    : Expression.Divide(ArithmeticOrConst(m.Groups[1].Value, parameters), ArithmeticOrConst(m.Groups[3].Value, parameters));
+                    ? Expression.Multiply(GetDoubleArithmeticOrConst(m.Groups[1].Value, parameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, parameters))
+                    : Expression.Divide(GetDoubleArithmeticOrConst(m.Groups[1].Value, parameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, parameters));
 
             s = s.Trim();
             //variable
@@ -151,28 +153,38 @@ namespace CommonRDF
             var parameters = new List<FilterParameterInfo>();
             if (!isLeftParameter && !isRightParameter)
             {
-                bool? isArithmetic = null;
+                bool isArithmetic = false;
                 //todo
                 var leftExpr = GetStringOrArithmetic(left, parameters, ref isArithmetic);
-                var rightExpr = GetStringOrArithmetic(right, parameters, ref isArithmetic);
-                return isArithmetic == null || !isArithmetic.Value
-                    ? new FilterTest(
-                        Expression.Equal(leftExpr, rightExpr), parameters, last)
-                    : new FilterTestDoubles(Expression.Equal(leftExpr, rightExpr), parameters, last);
+                Expression rightExpr;
+                if (isArithmetic)
+                    rightExpr = GetDoubleArithmeticOrConst(right, parameters);
+                else
+                {
+                    bool isArithmeticSecond = false;
+                    rightExpr = GetStringOrArithmetic(right, parameters, ref isArithmeticSecond);
+                    if (isArithmeticSecond)
+                        leftExpr = GetDoubleArithmeticOrConst(left, parameters);
+                    isArithmetic = isArithmeticSecond;
+                }
+                return isArithmetic
+                    ? new FilterTestDoubles(Expression.Equal(leftExpr, rightExpr), parameters, last)
+                    : new FilterTest(Expression.Equal(leftExpr, rightExpr), parameters, last);
             }
             if (!isLeftParameter)// right parameter
                 return EqualOrAssignWithOneSideParameter(left,
-                    GetParameterOrCreate(right, parameters, typeof(string)),
+                  right,
                     parameters,
                     last);
-            //теперь знаем, то слева параметер, можем его создать/использовать
-            var paramLeftInfo = GetParameterOrCreate(left, parameters, typeof(string));
+          
             if (!isRightParameter) //left parameter
-                return EqualOrAssignWithOneSideParameter(right, paramLeftInfo, parameters, last);
+                return EqualOrAssignWithOneSideParameter(right, left, parameters, last);
+            //теперь знаем, то слева параметер, можем его создать/использовать
+            var paramLeftInfo = GetParameterOrCreate(left, parameters, typeof(string));  
             //оба параметра
             var paramRightInfo = GetParameterOrCreate(right, parameters, typeof(string));
             if (paramLeftInfo.IsAssigned)
-                if (paramRightInfo.IsAssigned)// оба известны - сравниваем как строки
+                if (paramRightInfo.IsAssigned)// todo оба параметра тут известны - как сравнивать?
                     return new FilterTest(Expression.Equal(paramLeftInfo.Parameter, paramLeftInfo.Parameter),
                         new List<FilterParameterInfo>{ paramLeftInfo, paramRightInfo }, last);
                 else
@@ -190,12 +202,14 @@ namespace CommonRDF
             return new FilterAssign(paramLeftInfo.Value, paramRightInfo.Value, last);
         }
 
-        private static SparqlBase EqualOrAssignWithOneSideParameter(string unparameterSide, FilterParameterInfo paramOneSideInfo, 
+        private static SparqlBase EqualOrAssignWithOneSideParameter(string unparameterSide, string paramOneSide, 
             List<FilterParameterInfo> parameters, SparqlBase last)
         {
             var leftParameters = new List<FilterParameterInfo>();
-            bool? isArithmetic=null;
+            bool isArithmetic=false;
             var leftExpression = GetStringOrArithmetic(unparameterSide, leftParameters, ref isArithmetic);
+            FilterParameterInfo paramOneSideInfo = GetParameterOrCreate(paramOneSide, parameters,
+                isArithmetic ? typeof (double) : typeof (string));
             if (paramOneSideInfo.IsAssigned)
                 return new FilterTest(Expression.Equal(leftExpression, paramOneSideInfo.Parameter), parameters, last);
             paramOneSideInfo.IsAssigned = true;
