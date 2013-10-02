@@ -44,7 +44,7 @@ namespace CommonRDF
             
             LeshProgram l = new LeshProgram(gr);
          //  Perfomance.ComputeTime(
-           // l.Run();//, "");
+            l.Run();//, "");
           
             gr.Test();
             MethodExpressionsExperiments();

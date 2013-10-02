@@ -60,11 +60,11 @@ namespace CommonRDF
         public abstract bool Match();
         public Func<bool> NextMatch;
 
-        protected SparqlBase()
+        public SparqlBase()
         {
             
         }
-        protected SparqlBase(SparqlBase last)
+       protected SparqlBase(SparqlBase last)
         {
             if(last!=null)
             last.NextMatch = Match;
@@ -77,8 +77,9 @@ namespace CommonRDF
     /// </summary>
     public abstract class SparqlTriplet : SparqlBase
     {
-        public TValue S, P, O;
-        public bool  HasNodeInfoS, HasNodeInfoO;
+        public readonly TValue S, P, O;
+        public bool HasNodeInfoS, HasNodeInfoO;
+        public bool Any;
 
         /// <summary>
         /// необходим доступ к графу, для вычисления
@@ -100,10 +101,10 @@ namespace CommonRDF
                 P.IsObject = O.IsObject = value;
             }
         }
-      
+
         protected SparqlTriplet(TValue s, TValue p, TValue o, SparqlBase last) : base(last)
         {
-              S = s;
+            S = s;
             P = p;
             O = o;
             HasNodeInfoS = s.SetNodeInfo;
@@ -133,22 +134,22 @@ namespace CommonRDF
         public override bool Match()
         {
             object nodeInfo = HasNodeInfoS ? S.nodeInfo : (S.nodeInfo = Gr.GetNodeInfo(S.Value));
-            if (IsObjectRole==null)
-                if (Gr.GetDirect(S.Value, P.Value, nodeInfo).Any(oValue => oValue == O.Value))
-                {
-                    IsObjectRole = true;
-                 return NextMatch();
-                }
-                else if (Gr.GetData(S.Value, P.Value, nodeInfo).Any(oValue => oValue == O.Value))
-                {
-                    IsObjectRole = false;
-                   return NextMatch();
-                }
-                else return false;
-            return ((IsObjectRole.Value
-                ? Gr.GetDirect(S.Value, P.Value, nodeInfo)
-                : Gr.GetData(S.Value, P.Value, nodeInfo))
-                .Any(oValue => oValue == O.Value)) && NextMatch();
+            if (IsObjectRole != null)
+                return ((IsObjectRole.Value
+                    ? Gr.GetDirect(S.Value, P.Value, nodeInfo)
+                    : Gr.GetData(S.Value, P.Value, nodeInfo))
+                    .Any(oValue => oValue == O.Value)) && NextMatch();
+            if (Gr.GetDirect(S.Value, P.Value, nodeInfo).Any(oValue => oValue == O.Value))
+            {
+                IsObjectRole = true;
+                return NextMatch();
+            }
+            if (Gr.GetData(S.Value, P.Value, nodeInfo).Any(oValue => oValue == O.Value))
+            {
+                IsObjectRole = false;
+                return NextMatch();
+            }
+            return false;
         }
     }
     /// <summary>
@@ -174,9 +175,9 @@ namespace CommonRDF
                 {
                     IsObjectRole = true;
                     S.Value = value;
-                    NextMatch();
+                  Any =  NextMatch() || Any;
                 }
-            if (IsObjectRole!=null && IsObjectRole.Value) return false;
+            if (IsObjectRole!=null && IsObjectRole.Value) return Any;
             foreach (string value in
                 P.Value == ONames.p_name
                     ? Gr.SearchByName(O.Value).Where(OnPredicate)
@@ -184,9 +185,9 @@ namespace CommonRDF
             {
                 IsObjectRole = false;
                 S.Value = value;
-                NextMatch();
+               Any= NextMatch()||Any;
             }
-            return false;
+            return Any;
         }
         protected bool OnPredicate(string id)
         {
@@ -216,16 +217,16 @@ namespace CommonRDF
                 {
                     IsObjectRole = true;
                     O.Value = value;
-                    NextMatch();
+                    Any=NextMatch() || Any;
                 }
-            if (IsObjectRole!=null && IsObjectRole.Value) return false;
+            if (IsObjectRole!=null && IsObjectRole.Value) return Any;
             foreach (string value in Gr.GetData(S.Value, P.Value, HasNodeInfoS ? S.nodeInfo : (S.nodeInfo = Gr.GetNodeInfo(S.Value))))
             {
                 IsObjectRole = false;
                 O.Value = value;
-                NextMatch();
+                Any = NextMatch() || Any;
             }
-            return false;
+            return Any;
         }
     }
     /// <summary>
@@ -271,12 +272,13 @@ namespace CommonRDF
 
         public override bool Match()
         {
+            bool any = false;
             foreach (var id in SparqlTriplet.Gr.GetEntities())
             {
                 S.Value = id;
-                NextMatch();
+                any = NextMatch() || any;
             }
-            return false;
+            return any;
         }
     }
 
@@ -292,30 +294,9 @@ namespace CommonRDF
         /// <returns></returns>
         public override bool Match()
         {
-            bool any = false;
-            if (IsObjectRole==null || IsObjectRole.Value)
-                foreach (string value in Gr.GetInverse(O.Value, P.Value, HasNodeInfoO ? O.nodeInfo : (O.nodeInfo = Gr.GetNodeInfo(O.Value))))
-                {
-                    IsObjectRole = true;
-                    any = true;
-                    S.Value = value;
-                    NextMatch();
-                }
-            if (any) return true;
-            if (IsObjectRole == null || !IsObjectRole.Value)
-                foreach (string value in
-                    P.Value == ONames.p_name
-                        ? Gr.SearchByName(O.Value).Where(OnPredicate)
-                        : Gr.GetEntities().Where(OnPredicate))
-                {
-                    IsObjectRole = false;
-                    any = true;
-                    S.Value = value;
-                    NextMatch();
-                }
-            if (any) return true;
+            if (base.Match()) return true;
             S.Value = string.Empty;
-           return NextMatch();
+            return NextMatch();
         }
     }
 
@@ -335,35 +316,13 @@ namespace CommonRDF
         /// <returns></returns>
         public override bool Match()
         {
-            if (IsObjectRole==null || IsObjectRole.Value)
-                foreach (string value in Gr.GetDirect(S.Value, P.Value,
-                            HasNodeInfoS ? S.nodeInfo : (S.nodeInfo = Gr.GetNodeInfo(S.Value))))
-                {
-                    IsObjectRole = true;
-                    any = true;
-                    O.Value = value;
-                    NextMatch();
-                }
-            if (any) return true;
-            if (IsObjectRole == null || !IsObjectRole.Value)
-            foreach (string value in Gr.GetData(S.Value, P.Value,
-                        HasNodeInfoS ? S.nodeInfo : (S.nodeInfo = Gr.GetNodeInfo(S.Value))))
-            {
-                IsObjectRole = false;
-                any = true;
-                O.Value = value;
-                NextMatch();
-            }
-            if (any) return true;
+            if (base.Match()) return true;
             O.Value = string.Empty;
            return NextMatch();
         }
-
-        private bool any;
     }
     public class SelectAllSubjectsOptional : SelectAllSubjects
     {
-        private bool any;
         public SelectAllSubjectsOptional(TValue s, SparqlBase last)
             : base(s, last)
         {
@@ -372,25 +331,30 @@ namespace CommonRDF
 
         public override bool Match()
         {
-            foreach (var id in SparqlTriplet.Gr.GetEntities())
-            {
-                any = true;
-                S.Value = id;
-                NextMatch();
-            }
-            if (any) return true;
+            if (base.Match()) return true;
             S.Value = string.Empty;
             return NextMatch();
         }
     }
 
-    public static class SparqlBaseExtensions
+    public class SparqlChain:SparqlBase
     {
-        public static SparqlBase Next(this SparqlBase last, SparqlBase next)
+        protected Func<bool> start;
+
+        public SparqlBase Add(params SparqlBase[] nexts)
         {
-            if(last!=null)
-            last.NextMatch = next.Match;
-            return next;
+            if(nexts.Length==0) return this;
+            if (start == null) start = nexts[0].Match;
+
+            for (int i = 0; i < nexts.Length; i++)
+                nexts[i - 1].NextMatch = nexts[i].Match;
+            nexts.Last().NextMatch = () => NextMatch();
+            return this;
+        }
+
+        public override bool Match()
+        {
+            return start != null && start();
         }
     }
 }

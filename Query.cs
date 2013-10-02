@@ -8,7 +8,7 @@ using sema2012m;
 
 namespace CommonRDF
 {
-    internal class Query
+    internal class Query : SparqlChain
     {
         public GraphBase Gr;
        // public List<QueryTripletOptional> Optionals;
@@ -18,7 +18,6 @@ namespace CommonRDF
         public TValue[] ParametersWithMultiValues;
         public readonly List<string> SelectParameters=new List<string>();
         public readonly List<string[]> ParametrsValuesList = new List<string[]>();
-        private readonly SparqlBase start;
 
         #region Read
 
@@ -42,14 +41,6 @@ namespace CommonRDF
                 string tripletsGroup = whereMatch.Groups[1].Value;
                 SparqlBase lastTriplet = null;
                 SparqlTriplet.Gr = Gr = graph;
-                FilterParameterInfo.TestNewParameter = pname =>
-                {
-                    TValue p;
-                    bool isOld;
-                    if (!(isOld=valuesByName.TryGetValue(pname, out p)))
-                       valuesByName.Add(pname, p = new TValue());
-                    return new KeyValuePair<TValue, bool>(p, isOld);
-                };
                 foreach (Match tripletMatch in Re.TripletsReg.Matches(tripletsGroup))
                 {
                     var sMatch = tripletMatch.Groups[2];
@@ -83,7 +74,7 @@ namespace CommonRDF
                         }
                         else// common filter
                         {
-                            lastTriplet = lastTriplet.Next(FilterFunctions.Create(filter));
+                            lastTriplet = FilterFunctions.Create(filter, valuesByName, lastTriplet);
                         }
                     }
                     else throw new Exception("strange query triplet: " + tripletMatch.Value);
@@ -91,10 +82,10 @@ namespace CommonRDF
 
 
                     
-                    if(start==null) start = lastTriplet;
+                    if(start==null) start = lastTriplet.Match;
                 }
                 if (lastTriplet != null)
-                    lastTriplet.NextMatch = Match;
+                    lastTriplet.NextMatch = Last;
             }
           //  sparqlString = sparqlString.Replace(whereMatch.Groups[0].Value, "");
             //QueryTriplet.Gr = Gr;
@@ -132,40 +123,19 @@ namespace CommonRDF
             else
                 p.SyncIsObjectRole(o);
             if (!isNewP)
-                if (!isNewS)
-                {
-                    if (!isNewO)
-                    {
-                        if (isOptional) return lastTriplet;
-                        return new SampleTriplet(s, p, o, lastTriplet);
-                    }
-                    else
-                        return isOptional
-                            ? (SparqlTriplet)new SelectObjectOprtional(s, p, o, lastTriplet)
-                            : new SelectObject(s, p, o, lastTriplet);
-                           
-
-                    s.SetNodeInfo = true;
-                }
-                else if (!isNewO)
-                {
-                    return isOptional
-                        ? new SelectSubjectOpional(s, p, o, lastTriplet)
-                        : new SelectSubject(s, p, o, lastTriplet);
-                }
-                else
-                {
-                    if (isOptional)
-                    {
-                        return
-                            new SelectAllSubjectsOptional(s, lastTriplet).Next(new SelectObjectOprtional(s, p, o, null));
-                    }
-                    else
-                    {
-                        return lastTriplet.Next(new SelectAllSubjects(s, null).Next(new SelectObject(s, p, o, null)));
-
-                    }
-                }
+                return !isNewS
+                    ? (!isNewO
+                        ? (isOptional ? lastTriplet : new SampleTriplet(s, p, o, lastTriplet))
+                        : (isOptional
+                            ? new SelectObjectOprtional(s, p, o, lastTriplet)
+                            : new SelectObject(s, p, o, lastTriplet)))
+                    : (!isNewO
+                        ? (SparqlBase) (isOptional
+                            ? new SelectSubjectOpional(s, p, o, lastTriplet)
+                            : new SelectSubject(s, p, o, lastTriplet))
+                        : (isOptional
+                            ? new SelectObjectOprtional(s, p, o,new SelectAllSubjectsOptional(s,  lastTriplet))
+                            : new SelectObject(s, p, o,new SelectAllSubjects(s,  lastTriplet))));
             else if (!isNewS)
             {
                 if (!isNewO) return new SelectPredicate(s, p, o, lastTriplet);
@@ -207,14 +177,10 @@ namespace CommonRDF
 
         #region Run
 
-        public void Run()
-        {
-            if(start==null) return;
-                start.Match();
-        }
+        
 
 
-        private bool Match()
+        private bool Last()
         {
             ParametrsValuesList.Add(parameters.Select(par => par.Value).ToArray());
             return true;

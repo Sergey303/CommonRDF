@@ -49,30 +49,44 @@ namespace CommonRDF
     /// </summary>
     internal class FilterOr : SparqlBase
     {
-        public new Func<bool> NextMatch
-        {
-            set { first.NextMatch = second.NextMatch = value; }
-        }
-
+        // содержит два условия, обёрнутые в узлы SparqlBase типов одного из фильтор SparqlBase.
         private readonly SparqlBase first;
-        private readonly SparqlBase second;
+        private readonly SparqlChain second;
 
-        public FilterOr(SparqlBase first, SparqlBase second, SparqlBase last)
-            : base(last)
+        public FilterOr(string first, string second, Dictionary<string, TValue> paramByName, SparqlBase last)
+            :base(last)
         {
-            this.first = first;
-            this.second = second;
+            //запомним какие параметры уже были
+            var copy = new Dictionary<string, TValue>(paramByName);
+            this.first = FilterFunctions.Create(first, paramByName, null);
+            // с помощью копии узнаём какие параметры были добавлены в первой ветви.
+            var newParametersInLeft = paramByName.Where(p => !copy.ContainsKey(p.Key)).ToList();
+            foreach (var parameter in newParametersInLeft)
+            {
+                //помечаем их
+                parameter.Value.Value = "hasParellellValue";
+            }
+            //новые параметры в одной ветви будут новыми и во второй
+            this.second.Add(FilterFunctions.Create(second, paramByName, null));
+            //оба звена ведут к консантной истине.
+            
+            //каждое условие - ветвь = цепь, в случае успеха вызовет свой послендний NextMatch
+            
+            this.first.NextMatch = this.second.NextMatch = () => NextMatch();
+            //снимаем метку.
+            foreach (var parameter in newParametersInLeft)
+                parameter.Value.Value = null;
         }
 
         /// <summary>
         /// Метод, проверяющий соответствующие части фильтра. 
-        /// Должен вызвать Match() у обоих внутренних фильтров, т.к. они возможно лишь присваивать ?newP="newV"
+        /// Должен вызвать Match() у обоих внутренних фильтров, т.к. они возможно лишь присваивают ?newP="newV"
         /// </summary>
         /// <returns></returns>
         public override bool Match()
         {
             bool any = first.Match();
-            return second.Match() || any;
+            return (second.Match() || any);
         }
     }
 
@@ -165,9 +179,9 @@ namespace CommonRDF
                   .Where(p => !p.IsAssigned)
                   .Select(p => p.Value)
                   .Aggregate(last,
-                  (current, unknownVariable) => current.Next(new SelectAllSubjects(unknownVariable, null)));
+                  (current, unknownVariable) => new SelectAllSubjects(unknownVariable, current));
             //todo replase all subjects by all subj and data
-            last.Next(this);
+            last.NextMatch=this.Match;
         }
 
         public override bool Match()
@@ -199,9 +213,6 @@ namespace CommonRDF
         public ParameterExpression Parameter;
         public bool IsAssigned;
         public TValue Value;
-
-        public static Func<string, KeyValuePair<TValue, bool>> TestNewParameter;
-
     }
 
    

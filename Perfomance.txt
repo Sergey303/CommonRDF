@@ -310,3 +310,84 @@ run query for w20090506_svetlana_5727  8ticks
 read query for piu_200809051742  0ticks
 run query for piu_200809051742  7ticks
 read query for svet_100616111408_10844  1053ticks
+read query for svet_100616111408_10844  1057ticks
+run query for svet_100616111408_10844  905ticks
+read query for pavl_100531115859_2020  4ticks
+run query for pavl_100531115859_2020  31ticks
+read query for piu_200809051791  4ticks
+run query for piu_200809051791  23ticks
+read query for pavl_100531115859_6952  1ticks
+run query for pavl_100531115859_6952  11ticks
+read query for svet_100616111408_10864  1ticks
+run query for svet_100616111408_10864  9ticks
+read query for w20090506_svetlana_5727  1ticks
+run query for w20090506_svetlana_5727  9ticks
+read query for piu_200809051742  1ticks
+run query for piu_200809051742  10ticks
+read query for svet_100616111408_10844  987ticks
+run query for svet_100616111408_10844  55ticks
+read query for pavl_100531115859_2020  1ticks
+run query for pavl_100531115859_2020  7ticks
+read query for piu_200809051791  1ticks
+run query for piu_200809051791  7ticks
+read query for pavl_100531115859_6952  1ticks
+run query for pavl_100531115859_6952  7ticks
+read query for svet_100616111408_10864  1ticks
+run query for svet_100616111408_10864  7ticks
+read query for w20090506_svetlana_5727  1ticks
+run query for w20090506_svetlana_5727  7ticks
+read query for piu_200809051742  1ticks
+run query for piu_200809051742  7ticks
+read query for svet_100616111408_10844  1069ticks
+read query for svet_100616111408_10844  997ticks
+read query for svet_100616111408_10844  997ticks
+read query for svet_100616111408_10844  1037ticks
+read query for svet_100616111408_10844  18988ticks
+read query for svet_100616111408_10844  1078ticks
+read query for svet_100616111408_10844  123231ticks
+read query for svet_100616111408_10844  28846ticks
+run query for svet_100616111408_10844  553ticks
+read query for pavl_100531115859_2020  4ticks
+run query for pavl_100531115859_2020  257ticks
+read query for piu_200809051791  4ticks
+run query for piu_200809051791  703ticks
+read query for pavl_100531115859_6952  4ticks
+run query for pavl_100531115859_6952  168ticks
+read query for svet_100616111408_10864  4ticks
+run query for svet_100616111408_10864  1487ticks
+read query for w20090506_svetlana_5727  2ticks
+run query for w20090506_svetlana_5727  323ticks
+read query for piu_200809051742  1ticks
+run query for piu_200809051742  18ticks
+read query for svet_100616111408_10844  1048ticks
+read query for svet_100616111408_10844  1020ticks
+run query for svet_100616111408_10844  15926ticks
+read query for pavl_100531115859_2020  2ticks
+read query  1098ticks
+run query  6120ticks
+read query  1014ticks
+run query  72ticks
+read query  210180ticks
+run query  109ticks
+read query  7015ticks
+run query  100ticks
+read query  4374ticks
+read query  1026ticks
+run query  3572ticks
+read query  1030ticks
+run query  39700ticks
+read query  1170ticks
+run query  80ticks
+read query  990ticks
+run query  3146ticks
+read query  999ticks
+run query  1011881ticks
+read query  1051ticks
+run query  8915ticks
+read query  1011ticks
+read query  1030ticks
+run query  0ticks
+read query  985ticks
+run query  0ticks
+read query  1056ticks
+run query  7982ticks
