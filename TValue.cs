@@ -102,7 +102,7 @@ namespace CommonRDF
             }
         }
 
-        protected SparqlTriplet(TValue s, TValue p, TValue o, SparqlBase last) : base(last)
+        protected SparqlTriplet(TValue s, TValue p, TValue o)
         {
             S = s;
             P = p;
@@ -120,7 +120,7 @@ namespace CommonRDF
     /// </summary>
     public class SampleTriplet: SparqlTriplet
     {
-        public SampleTriplet(TValue s, TValue p, TValue o, SparqlBase last) : base(s, p, o, last)
+        public SampleTriplet(TValue s, TValue p, TValue o) : base(s, p, o)
         {
             s.SetNodeInfo = true;
         }
@@ -157,8 +157,8 @@ namespace CommonRDF
     /// </summary>
     public class SelectSubject : SparqlTriplet
     {
-        public SelectSubject(TValue s, TValue p, TValue o, SparqlBase last)
-            : base(s, p, o, last)
+        public SelectSubject(TValue s, TValue p, TValue o)
+            : base(s, p, o)
         {
             HasNodeInfoO = o.SetNodeInfo;
             o.SetNodeInfo = true;
@@ -170,7 +170,8 @@ namespace CommonRDF
         /// <returns></returns>
         public override bool Match()
         {
-            if (IsObjectRole==null || IsObjectRole.Value)
+            Any = false;
+            if (IsObjectRole == null || IsObjectRole.Value)
                 foreach (string value in Gr.GetInverse(O.Value, P.Value, HasNodeInfoO ? O.nodeInfo : (O.nodeInfo = Gr.GetNodeInfo(O.Value))))
                 {
                     IsObjectRole = true;
@@ -200,8 +201,8 @@ namespace CommonRDF
     /// </summary>
     public class SelectObject : SparqlTriplet
     {
-        public SelectObject(TValue s, TValue p, TValue o, SparqlBase last)
-            : base(s, p, o, last)
+        public SelectObject(TValue s, TValue p, TValue o)
+            : base(s, p, o)
         {
             s.SetNodeInfo = true;
         }
@@ -212,6 +213,7 @@ namespace CommonRDF
         /// <returns></returns>
         public override bool Match()
         {
+            Any = false;
             if (IsObjectRole==null|| IsObjectRole.Value)
                 foreach (string value in Gr.GetDirect(S.Value, P.Value, HasNodeInfoS ? S.nodeInfo : (S.nodeInfo = Gr.GetNodeInfo(S.Value))))
                 {
@@ -234,8 +236,8 @@ namespace CommonRDF
     /// </summary>
     public class SelectPredicate : SparqlTriplet
     {
-        public SelectPredicate(TValue s, TValue p, TValue o, SparqlBase last)
-            : base(s, p, o, last)
+        public SelectPredicate(TValue s, TValue p, TValue o)
+            : base(s, p, o)
         {
             s.SetNodeInfo = true;
         }
@@ -250,8 +252,8 @@ namespace CommonRDF
         }
     }
     public class SelectAllPredicatesBySub :SparqlTriplet{
-        public SelectAllPredicatesBySub(TValue s, TValue p, TValue o, SparqlBase last)
-            : base(s, p, o, last)
+        public SelectAllPredicatesBySub(TValue s, TValue p, TValue o)
+            : base(s, p, o)
         {
             s.SetNodeInfo = true;
         }
@@ -265,11 +267,11 @@ namespace CommonRDF
 
     {
         public TValue S;
-        public SelectAllSubjects(TValue s, SparqlBase last):base(last)
+        public SelectAllSubjects(TValue s)
         {
             S = s;
         }
-
+       
         public override bool Match()
         {
             bool any = false;
@@ -284,8 +286,8 @@ namespace CommonRDF
 
     public class SelectSubjectOpional : SelectSubject
     {
-        public SelectSubjectOpional(TValue s, TValue p, TValue o, SparqlBase last)
-            : base(s, p, o, last)
+        public SelectSubjectOpional(TValue s, TValue p, TValue o)
+            : base(s, p, o)
         {}
 
         /// <summary>
@@ -305,8 +307,8 @@ namespace CommonRDF
     /// </summary>
     public class SelectObjectOprtional : SelectObject
     {
-        public SelectObjectOprtional(TValue s, TValue p, TValue o, SparqlBase last)
-            : base(s, p, o, last)
+        public SelectObjectOprtional(TValue s, TValue p, TValue o)
+            : base(s, p, o)
         {
         }
 
@@ -323,11 +325,9 @@ namespace CommonRDF
     }
     public class SelectAllSubjectsOptional : SelectAllSubjects
     {
-        public SelectAllSubjectsOptional(TValue s, SparqlBase last)
-            : base(s, last)
-        {
-            S = s;
-        }
+        public SelectAllSubjectsOptional(TValue s)
+            : base(s)
+        {}
 
         public override bool Match()
         {
@@ -340,16 +340,17 @@ namespace CommonRDF
     public class SparqlChain:SparqlBase
     {
         protected Func<bool> start;
-
-        public SparqlBase Add(params SparqlBase[] nexts)
+        protected SparqlBase last;
+        public void Add(params SparqlBase[] nexts)
         {
-            if(nexts.Length==0) return this;
+            if(nexts.Length==0) return;
             if (start == null) start = nexts[0].Match;
-
-            for (int i = 0; i < nexts.Length; i++)
+            else last.NextMatch = nexts[0].Match;
+            for (int i = 1; i < nexts.Length; i++)
                 nexts[i - 1].NextMatch = nexts[i].Match;
-            nexts.Last().NextMatch = () => NextMatch();
-            return this;
+            
+            last=nexts.Last();
+            last.NextMatch = () => NextMatch();
         }
 
         public override bool Match()

@@ -16,8 +16,7 @@ namespace CommonRDF
         public readonly string ParameterName;
         private readonly Regex regularExpression;
 
-        public SparqlFilterRegex(string parameterExpressionFlags, SparqlBase last)
-            : base(last)
+        public SparqlFilterRegex(string parameterExpressionFlags)
         {
             var regMatch = RegFilteRregex.Match(parameterExpressionFlags);
             ParameterName = regMatch.Groups[1].Value;
@@ -49,16 +48,15 @@ namespace CommonRDF
     /// </summary>
     internal class FilterOr : SparqlBase
     {
-        // содержит два условия, обёрнутые в узлы SparqlBase типов одного из фильтор SparqlBase.
-        private readonly SparqlBase first;
-        private readonly SparqlChain second;
+        /// содержит два условия, обёрнутые в цепи SparqlChain.
+        private readonly SparqlChain first=new SparqlChain();
+        private readonly SparqlChain second=new SparqlChain();
 
-        public FilterOr(string first, string second, Dictionary<string, TValue> paramByName, SparqlBase last)
-            :base(last)
+        public FilterOr(string first, string second, Dictionary<string, TValue> paramByName)
         {
             //запомним какие параметры уже были
             var copy = new Dictionary<string, TValue>(paramByName);
-            this.first = FilterFunctions.Create(first, paramByName, null);
+            this.first.CreateFilterChain(first, paramByName);
             // с помощью копии узнаём какие параметры были добавлены в первой ветви.
             var newParametersInLeft = paramByName.Where(p => !copy.ContainsKey(p.Key)).ToList();
             foreach (var parameter in newParametersInLeft)
@@ -67,11 +65,10 @@ namespace CommonRDF
                 parameter.Value.Value = "hasParellellValue";
             }
             //новые параметры в одной ветви будут новыми и во второй
-            this.second.Add(FilterFunctions.Create(second, paramByName, null));
-            //оба звена ведут к консантной истине.
+            this.second.CreateFilterChain(second, paramByName);
+            //обе цепи ведут к следующему после этого звену.
             
             //каждое условие - ветвь = цепь, в случае успеха вызовет свой послендний NextMatch
-            
             this.first.NextMatch = this.second.NextMatch = () => NextMatch();
             //снимаем метку.
             foreach (var parameter in newParametersInLeft)
@@ -134,8 +131,7 @@ namespace CommonRDF
         private readonly TValue newParamter;
         private readonly TValue value;
 
-        public FilterAssign(TValue newParamter, TValue value, SparqlBase last)
-            : base(last)
+        public FilterAssign(TValue newParamter, TValue value)
         {
             this.newParamter = newParamter;
             this.value = value;
@@ -153,9 +149,8 @@ namespace CommonRDF
 
         public FilterAssignCalculated(TValue newParamter,
             Expression calcExpression,
-            List<FilterParameterInfo> parameters,
-            SparqlBase last)
-            : base(calcExpression, parameters, last)
+            List<FilterParameterInfo> parameters)
+            : base(calcExpression, parameters)
         {
             this.newParamter = newParamter;
         }
@@ -170,18 +165,10 @@ namespace CommonRDF
     {
         protected readonly TValue[] AllParameters;
         protected readonly Delegate Method;
-        public FilterTest(Expression equalExpression, List<FilterParameterInfo> parameters, SparqlBase last)
-            : base(last)
+        public FilterTest(Expression equalExpression, List<FilterParameterInfo> parameters)
         {
             Method = Expression.Lambda(equalExpression, parameters.Select(p => p.Parameter)).Compile();
             AllParameters = parameters.Select(p => p.Value).ToArray();
-            last = parameters
-                  .Where(p => !p.IsAssigned)
-                  .Select(p => p.Value)
-                  .Aggregate(last,
-                  (current, unknownVariable) => new SelectAllSubjects(unknownVariable, current));
-            //todo replase all subjects by all subj and data
-            last.NextMatch=this.Match;
         }
 
         public override bool Match()
@@ -192,19 +179,19 @@ namespace CommonRDF
 
     internal class FilterTestDoubles : FilterTest
     {
-        public FilterTestDoubles(Expression equalExpression, List<FilterParameterInfo> parameters, SparqlBase last)
-            : base(equalExpression, parameters, last)
+        public FilterTestDoubles(Expression equalExpression, List<FilterParameterInfo> parameters)
+            : base(equalExpression, parameters)
         {}
         public override bool Match()
         {
-            return  (bool)Method.DynamicInvoke(new List<double>(
+            return  (bool)Method.DynamicInvoke(
                 AllParameters.Select(parameter=>
                 {
                     double caster;
                     if (!double.TryParse(parameter.Value, out caster))
                         throw new ArgumentException(parameter.Value + " must be double");
                     return caster;
-                })));
+                }));
         }
     }
 

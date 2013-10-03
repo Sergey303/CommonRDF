@@ -9,35 +9,44 @@ namespace CommonRDF
     internal static class FilterFunctions
     {
       
-        internal static SparqlBase Create(string expression, Dictionary<string, TValue> paramByName, SparqlBase last=null)
+        internal static void CreateFilterChain(this SparqlChain sparqlChain,  string expression, Dictionary<string, TValue> paramByName)
         {
-            return AndOrExpression(expression, paramByName, last);
+            AndOrExpression(sparqlChain, expression, paramByName);
         }
 
-        private static SparqlBase AndOrExpression(string s, Dictionary<string, TValue> paramByName, SparqlBase last)
+        private static void AndOrExpression(SparqlChain sparqlChain, string s, Dictionary<string, TValue> paramByName)
         {
             Match m = Re.RegAndOr.Match(s);
             if (m.Success)
                 if (m.Groups[2].Value == "||")
-                    return new FilterOr(m.Groups[1].Value, m.Groups[3].Value, paramByName, last);
+                    sparqlChain.Add(new FilterOr(m.Groups[1].Value, m.Groups[3].Value, paramByName));
                 else
-                    return AndOrExpression(m.Groups[3].Value, paramByName, AndOrExpression(m.Groups[1].Value, paramByName, last));
-            return FilterAtomPredicateSparqlBase(s, paramByName, last);
+                {
+                    AndOrExpression(sparqlChain, m.Groups[1].Value, paramByName);
+                    AndOrExpression(sparqlChain, m.Groups[3].Value, paramByName);
+                }
+            else AtomPredicateSparqlBase(sparqlChain,s, paramByName);
             //TODO Unary NOT
         }
 
-        private static SparqlBase FilterAtomPredicateSparqlBase(string s, Dictionary<string, TValue> paramByName, SparqlBase last)
+        private static void AtomPredicateSparqlBase(SparqlChain sparqlChain, string s, Dictionary<string, TValue> paramByName)
         {
             var m = Re.RegSameTerm.Match(s);
             if (m.Success)
-                return EqualOrAssign(m.Groups[1].Value, m.Groups[2].Value, paramByName, last);
+            {
+                EqualOrAssign(m.Groups[1].Value, m.Groups[2].Value, paramByName, sparqlChain);
+                return;
+            }
             if ((m = Re.RegEquality.Match(s)).Success)
             {
                 var equalityType = m.Groups[2].Value;
                 if (equalityType == "=")
-                    return EqualOrAssign(m.Groups[1].Value, m.Groups[3].Value, paramByName, last);
+                {
+                   EqualOrAssign(m.Groups[1].Value, m.Groups[3].Value, paramByName, sparqlChain);
+                    return;
+                }
                 var localParameters = new List<FilterParameterInfo>();
-                return new FilterTestDoubles(
+                CreateSelectsNewParameters(new FilterTestDoubles(
                     Expression.MakeBinary(equalityType.Length > 1
                         ? (equalityType.StartsWith("!")
                             ? ExpressionType.NotEqual
@@ -49,10 +58,21 @@ namespace CommonRDF
                             : ExpressionType.LessThan),
                         GetDoubleArithmeticOrConst(m.Groups[1].Value, paramByName, localParameters),
                         GetDoubleArithmeticOrConst(m.Groups[3].Value, paramByName, localParameters))
-                    , localParameters, last);
+                    , localParameters), localParameters, sparqlChain);
+                return;
             }
             //TODO boolean valiable
             throw new NotImplementedException();
+        }
+
+        public static void CreateSelectsNewParameters(FilterTest test,
+            List<FilterParameterInfo> parameters, SparqlChain sparqlChain)
+        {
+            sparqlChain.Add(parameters
+                .Where(p => !p.IsAssigned)
+                .Select(p => new SelectAllSubjects(p.Value) as SparqlBase).ToArray());
+            //todo replase all subjects by all subj and data
+            sparqlChain.Add(test);
         }
 
         private static Expression GetStringOrArithmetic(string s, List<FilterParameterInfo> localParameters, ref bool isArithmetic, Dictionary<string, TValue> paramByName)
@@ -144,7 +164,7 @@ namespace CommonRDF
             return existing;
         }
 
-        private static SparqlBase EqualOrAssign(string left, string right, Dictionary<string, TValue> paramByName, SparqlBase last)
+        private static void EqualOrAssign(string left, string right, Dictionary<string, TValue> paramByName, SparqlChain sparqlChain)
         {
             bool isLeftParameter = left.StartsWith("?"), isRightParameter = right.StartsWith("?");
             var localParameters = new List<FilterParameterInfo>();
@@ -164,64 +184,80 @@ namespace CommonRDF
                         leftExpr = GetDoubleArithmeticOrConst(left, paramByName, localParameters);
                     isArithmetic = isArithmeticSecond;
                 }
-                return isArithmetic
-                    ? new FilterTestDoubles(Expression.Equal(leftExpr, rightExpr), localParameters, last)
-                    : new FilterTest(Expression.Equal(leftExpr, rightExpr), localParameters, last);
+                 CreateSelectsNewParameters(isArithmetic
+                    ? new FilterTestDoubles(Expression.Equal(leftExpr, rightExpr), localParameters)
+                    : new FilterTest(Expression.Equal(leftExpr, rightExpr), localParameters),
+                    localParameters, sparqlChain);
+                return;
             }
-            if (!isLeftParameter)// right parameter
-                return EqualOrAssignWithOneSideParameter(left,
-                  right,
-                    localParameters,
-                    last, paramByName);
-          
+            if (!isLeftParameter) // right parameter
+            {
+                EqualOrAssignWithOneSideParameter(left, right, localParameters, paramByName, sparqlChain);
+                return;
+            }
+
             if (!isRightParameter) //left parameter
-                return EqualOrAssignWithOneSideParameter(right, left, localParameters, last, paramByName);
+            {
+                EqualOrAssignWithOneSideParameter(right, left, localParameters, paramByName, sparqlChain);
+                return;
+            }
             //теперь знаем, то слева параметер, можем его создать/использовать
             var paramLeftInfo = GetParameterOrCreate(left, localParameters,paramByName, typeof(string));  
             //оба параметра
             var paramRightInfo = GetParameterOrCreate(right, localParameters, paramByName, typeof(string));
             if (paramLeftInfo.IsAssigned)
                 if (paramRightInfo.IsAssigned)// todo оба параметра тут известны - как сравнивать?
-                    return new FilterTest(Expression.Equal(paramLeftInfo.Parameter, paramLeftInfo.Parameter),
-                        new List<FilterParameterInfo>{ paramLeftInfo, paramRightInfo }, last);
+                {  CreateSelectsNewParameters(new FilterTest(Expression.Equal(paramLeftInfo.Parameter, paramLeftInfo.Parameter),
+                        localParameters),localParameters, sparqlChain);
+                    return;
+                }
                 else
                 {
                     // правый параметер неизвестный
                     paramRightInfo.IsAssigned = true;
-                    return new FilterAssign(paramRightInfo.Value, paramLeftInfo.Value, last);
+                     sparqlChain.Add(new FilterAssign(paramRightInfo.Value, paramLeftInfo.Value));
+                    return;
                 }
             
             if (!paramRightInfo.IsAssigned) //оба не известны - сравниваем
-                return new FilterTest(Expression.Equal(paramLeftInfo.Parameter, paramLeftInfo.Parameter),
-                    new List<FilterParameterInfo> { paramLeftInfo, paramRightInfo }, last);
+            { CreateSelectsNewParameters(new FilterTest(Expression.Equal(paramLeftInfo.Parameter, paramLeftInfo.Parameter),
+                    localParameters), localParameters , sparqlChain);
+                return;
+            }
             // левый параметер неизвестный
             paramLeftInfo.IsAssigned = true;
-            return new FilterAssign(paramLeftInfo.Value, paramRightInfo.Value, last);
+            sparqlChain.Add(new FilterAssign(paramLeftInfo.Value, paramRightInfo.Value));
         }
 
-        private static SparqlBase EqualOrAssignWithOneSideParameter(string unparameterSide, string paramOneSide, List<FilterParameterInfo> localParameters, SparqlBase last, Dictionary<string, TValue> paramByName)
+        private static void EqualOrAssignWithOneSideParameter(string unparameterSide, string paramOneSide, List<FilterParameterInfo> localParameters, Dictionary<string, TValue> paramByName, SparqlChain sparqlChain)
         {
             var leftParameters = new List<FilterParameterInfo>();
             bool isArithmetic=false;
             var leftExpression = GetStringOrArithmetic(unparameterSide, leftParameters, ref isArithmetic, paramByName);
             FilterParameterInfo paramOneSideInfo = GetParameterOrCreate(paramOneSide, localParameters, paramByName, isArithmetic ? typeof (double) : typeof (string));
             if (paramOneSideInfo.IsAssigned)
-                return new FilterTest(Expression.Equal(leftExpression, paramOneSideInfo.Parameter), localParameters, last);
+            {
+                CreateSelectsNewParameters(new FilterTest(Expression.Equal(leftExpression, paramOneSideInfo.Parameter), localParameters), leftParameters, sparqlChain);
+                return;
+            }
             paramOneSideInfo.IsAssigned = true;
             if (leftParameters.Count == 0) //knoun is const
-                return new FilterAssign(paramOneSideInfo.Value,
+            {
+                sparqlChain.Add(new FilterAssign(paramOneSideInfo.Value,
                     new TValue
                     {
                         Value = (Expression.Lambda<Func<dynamic>>(leftExpression, new ParameterExpression[] { })).Compile()()
-                    },
-                    last);
+                    }));
+                return;
+            }
             if (leftParameters.Contains(paramOneSideInfo)) //не исключаем и  ?newp=?newp
             {
                 //TODO always true/false
-                return new FilterTest(Expression.Equal(leftExpression, paramOneSideInfo.Parameter),
-                    localParameters.Concat(leftParameters).Distinct().ToList(), last);
+                CreateSelectsNewParameters(new FilterTest(Expression.Equal(leftExpression, paramOneSideInfo.Parameter),
+                    localParameters=localParameters.Concat(leftParameters).Distinct().ToList()), localParameters, sparqlChain);
+                return;
             }
-            return new FilterAssignCalculated(paramOneSideInfo.Value, leftExpression, leftParameters, last);
+            CreateSelectsNewParameters(new FilterAssignCalculated(paramOneSideInfo.Value, leftExpression, leftParameters), leftParameters, sparqlChain);
         }
 
         public static bool LangMatches(string languageTag, string languageRange)

@@ -50,13 +50,13 @@ namespace CommonRDF
                     {
                         pValue = tripletMatch.Groups[3].Value;
                         oValue = tripletMatch.Groups[4].Value;
-                        lastTriplet = CreateTriplet(sMatch, valuesByName, pValue, oValue, false, lastTriplet);
+                        CreateTriplet(sMatch, valuesByName, pValue, oValue, false);
                     }
                     else if ((sMatch = tripletMatch.Groups[7]).Success)
                     {
                         pValue = tripletMatch.Groups[8].Value;
                         oValue = tripletMatch.Groups[9].Value;
-                        lastTriplet = CreateTriplet(sMatch, valuesByName, pValue, oValue, true, lastTriplet);
+                        CreateTriplet(sMatch, valuesByName, pValue, oValue, true);
                     }
                     else if ((sMatch = tripletMatch.Groups[12]).Success)
                     {
@@ -64,28 +64,23 @@ namespace CommonRDF
                         var filterType = tripletMatch.Groups[11].Value.ToLower();
                         if (filterType == "regex")
                         {
-                            var newFilter = new SparqlFilterRegex(filter, lastTriplet);
+                            var newFilter = new SparqlFilterRegex(filter);
                             if (!valuesByName.TryGetValue(newFilter.ParameterName, out newFilter.Parameter))
                             {
                                 valuesByName.Add(newFilter.ParameterName, newFilter.Parameter = new TValue());
                                 throw new NotImplementedException("new parameter in fiter regex");
                             }
-                            lastTriplet = newFilter;
+                            Add(newFilter);
                         }
                         else// common filter
                         {
-                            lastTriplet = FilterFunctions.Create(filter, valuesByName, lastTriplet);
+                            this.CreateFilterChain(filter, valuesByName);
                         }
                     }
                     else throw new Exception("strange query triplet: " + tripletMatch.Value);
-
-
-
-                    
-                    if(start==null) start = lastTriplet.Match;
+                  
                 }
-                if (lastTriplet != null)
-                    lastTriplet.NextMatch = Last;
+                NextMatch = Last;
             }
           //  sparqlString = sparqlString.Replace(whereMatch.Groups[0].Value, "");
             //QueryTriplet.Gr = Gr;
@@ -96,7 +91,7 @@ namespace CommonRDF
             ParametersNames = valuesByName.Where(v => v.Value.Value == null).Select(kv => kv.Key).ToArray();
         }
 
-        private static SparqlBase CreateTriplet(Group sMatch, Dictionary<string, TValue> valuesByName, string pValue, string oValue, bool isOptional, SparqlBase lastTriplet)
+        private void CreateTriplet(Group sMatch, Dictionary<string, TValue> valuesByName, string pValue, string oValue, bool isOptional)
         {
             bool isData;
             TValue s, p, o;
@@ -123,22 +118,21 @@ namespace CommonRDF
             else
                 p.SyncIsObjectRole(o);
             if (!isNewP)
-                return !isNewS
-                    ? (!isNewO
-                        ? (isOptional ? lastTriplet : new SampleTriplet(s, p, o, lastTriplet))
-                        : (isOptional
-                            ? new SelectObjectOprtional(s, p, o, lastTriplet)
-                            : new SelectObject(s, p, o, lastTriplet)))
-                    : (!isNewO
-                        ? (SparqlBase) (isOptional
-                            ? new SelectSubjectOpional(s, p, o, lastTriplet)
-                            : new SelectSubject(s, p, o, lastTriplet))
-                        : (isOptional
-                            ? new SelectObjectOprtional(s, p, o,new SelectAllSubjectsOptional(s,  lastTriplet))
-                            : new SelectObject(s, p, o,new SelectAllSubjects(s,  lastTriplet))));
+                if (!isNewS)
+                    if (!isNewO)
+                        if (isOptional) return;
+                        else Add(new SampleTriplet(s, p, o));
+                    else if (isOptional) Add(new SelectObjectOprtional(s, p, o));
+                    else Add(new SelectObject(s, p, o));
+                else if (!isNewO)
+                    Add(isOptional
+                        ? new SelectSubjectOpional(s, p, o)
+                        : new SelectSubject(s, p, o));
+                else if (isOptional) Add(new SelectAllSubjectsOptional(s), new SelectObjectOprtional(s, p, o));
+                else Add(new SelectAllSubjects(s), new SelectObject(s, p, o));
             else if (!isNewS)
             {
-                if (!isNewO) return new SelectPredicate(s, p, o, lastTriplet);
+                if (!isNewO) Add( new SelectPredicate(s, p, o));
                 else
                 {
                     //Action = SelectPredicateObject;
@@ -152,7 +146,6 @@ namespace CommonRDF
             {
                 //Action = SelectAll;
             }
-            return null;
         }
 
         private static bool TestParameter(string spoValue, out TValue spo, Dictionary<string, TValue> paramByName)
