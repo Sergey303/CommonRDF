@@ -173,7 +173,7 @@ namespace CommonRDF
 
         public override bool Match()
         {
-            return (bool)Method.DynamicInvoke(AllParameters.Select(p => p.Value));
+            return (bool)Method.DynamicInvoke(AllParameters.Select(p => p.Value).ToArray()) && NextMatch();
         }
     }
 
@@ -191,7 +191,7 @@ namespace CommonRDF
                     if (!double.TryParse(parameter.Value, out caster))
                         throw new ArgumentException(parameter.Value + " must be double");
                     return caster;
-                }));
+                })) && NextMatch();
         }
     }
 

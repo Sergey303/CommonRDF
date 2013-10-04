@@ -3,16 +3,17 @@ using System.Text.RegularExpressions;
 
 namespace CommonRDF
 {
-    internal class Re
+    internal class Reg
     {
-        internal static readonly Regex QuerySelectReg = CreateRegex(@"[Ss][Ee][Ll][Ee][Cc][Tt]\s+((\?\w+\s+)+|\*)");
-        internal static readonly Regex QueryWhereReg = CreateRegex(@"[Ww][Hh][Ee][Rr][Ee]\s+\{(([^{}]*\{[^{}]*\}[^{}]*)*|[^{}]*)\}");
+        internal static readonly Regex QuerySelect = CreateRegex(@"^\s*[Ss][Ee][Ll][Ee][Cc][Tt]\s+((\?\w+\s+)+|\*)\s*");
+        internal static readonly Regex QueryWhere = CreateRegex(@"^\s*[Ww][Hh][Ee][Rr][Ee]\s+\{(([^{}]*\{[^{}]*\}[^{}]*)*|[^{}]*)\}\s*");
 
-        internal static Regex TripletsReg = CreateRegex(
-            //@"((?<s>[^\s]+|'.*')\s+(?<p>[^\s]+|'.*')\s+(?<o>[^\s]+|'.*')\.(\s|$))|([Oo][Pp][Tt][Ii][Oo][Nn][Aa][Ll]\s+{\s*(?<os>[^\s]+|'.*')\s+(?<op>[^\s]+|'.*')\s+(?<oo>[^\s]+|'.*')\s*}(\s|$))|[Ff][Ii][Ll][Tt][Ee][Rr]\s+(?<filterttype>[^\s()]+)?\((?<filter>.*)\)"
-            @"(([^\s]+|'.*')\s+([^\s]+|'.*')\s+([^\s]+|'.*')\.(\s|$))|([Oo][Pp][Tt][Ii][Oo][Nn][Aa][Ll]\s+{\s*([^\s]+|'.*')\s+([^\s]+|'.*')\s+([^\s]+|'.*')\s*}(\s|$))|[Ff][Ii][Ll][Tt][Ee][Rr]\s+([^\s()]+)?\((.*?)\)"
-            );
-
+        internal static Regex Triplet = CreateRegex(
+            @"^\s*([\S]+)\s+([\S]+|'.*')\s+([\S]+|'.*')\.(\s*|$)");
+        internal static Regex TripletOptional = CreateRegex(
+            @"^\s*[Oo][Pp][Tt][Ii][Oo][Nn][Aa][Ll]\s*{\s*([\S]+)\s+([\S]+|'.*')\s+([\S]+|'.*')\s*}(\s*|$)");
+        internal static Regex Filter = CreateRegex(
+            @"^\s*[Ff][Ii][Ll][Tt][Ee][Rr]\s+([^\s()]+)?\((.*?)\)\s*");
         private static Regex CreateRegex(string pattern, RegexOptions add=RegexOptions.None)
         {
             return new Regex(pattern, add|
@@ -21,18 +22,18 @@ namespace CommonRDF
         
         #region Filter
 
-        internal static readonly Regex RegAndOr = CreateRegex(@"^\s*(\S.*?)\s*(\|\||&&)\s*(\S.*)\s*$");
+        internal static readonly Regex AndOr = CreateRegex(@"^\s*(\S.*?)\s*(\|\||&&)\s*(\S.*)\s*$");
 
-        internal static readonly Regex RegEquality =
+        internal static readonly Regex Equality =
             CreateRegex(@"^\s*([^<>=\s][^<>=]*?)\s*(<\s*=|=\s*>|!\s*=|=|<|>)\s*(\S.*?)\s*$");
 
-        internal static readonly Regex RegNot = CreateRegex(@"^\s*!\s*(\S.*?)\s*$");
+        internal static readonly Regex Not = CreateRegex(@"^\s*!\s*(\S.*?)\s*$");
 
         internal static readonly Regex RegSameTerm =
             CreateRegex(@"^\s*[Ss][Aa][Mm][Ee][Tt][Ee][Rr][Mm]\s*\(\s*(\S.*?)\s*,\s*(\S.*?)\s*\)\s*$");
-
-        internal static readonly Regex RegMulDiv = CreateRegex(@"^\s*(\S.*?)\s*(\*|/)\s*(\S.*?)\s*$");
-        internal static readonly Regex RegSumSubtract = CreateRegex(@"^\s*(\S.*?)\s*(\+|-)\s*(\S.*?)\s*$");
+        internal static readonly Regex Bound = CreateRegex(@"^\s*[Bb][Oo][Uu][Nn][Dd]\s*\(\s*(\S.*?)\s*$");
+        internal static readonly Regex MulDiv = CreateRegex(@"^\s*(\S.*?)\s*(\*|/)\s*(\S.*?)\s*$");
+        internal static readonly Regex SumSubtract = CreateRegex(@"^\s*(\S.*?)\s*(\+|-)\s*(\S.*?)\s*$");
         // todo private static readonly Regex regParentes = new Regex("\\((?<inside>[^)^(])\\)", RegexOptions.Compiled);
 
         #endregion

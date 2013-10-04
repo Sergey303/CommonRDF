@@ -22,7 +22,7 @@ namespace CommonRDF
         // Проект twomillions
            GraphBase gr = new GraphTripletsTree(@"..\..\twomillions\");
            //Console.WriteLine("Graph ok duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
-           //gr.Load(@"..\..\twomillions\tm_0.xml");
+          // gr.Load(@"..\..\twomillions\tm_0.xml");
            //return;
             
         // Проект Freebase3M
@@ -33,7 +33,7 @@ namespace CommonRDF
             //GraphBase gr = new GraphTripletsTree(@"..\..\???\");
             //gr.Load(@"???");
 
-           // gr.CreateGraph();
+           //gr.CreateGraph();
             Console.WriteLine("Graph ok duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
             //Console.WriteLine("Test ok duration========================" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
             

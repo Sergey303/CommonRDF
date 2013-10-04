@@ -16,7 +16,7 @@ namespace CommonRDF
 
         private static void AndOrExpression(SparqlChain sparqlChain, string s, Dictionary<string, TValue> paramByName)
         {
-            Match m = Re.RegAndOr.Match(s);
+            Match m = Reg.AndOr.Match(s);
             if (m.Success)
                 if (m.Groups[2].Value == "||")
                     sparqlChain.Add(new FilterOr(m.Groups[1].Value, m.Groups[3].Value, paramByName));
@@ -31,13 +31,25 @@ namespace CommonRDF
 
         private static void AtomPredicateSparqlBase(SparqlChain sparqlChain, string s, Dictionary<string, TValue> paramByName)
         {
-            var m = Re.RegSameTerm.Match(s);
+            var m = Reg.RegSameTerm.Match(s);
             if (m.Success)
             {
                 EqualOrAssign(m.Groups[1].Value, m.Groups[2].Value, paramByName, sparqlChain);
                 return;
             }
-            if ((m = Re.RegEquality.Match(s)).Success)
+            if ((m = Reg.Bound.Match(s)).Success)
+            {
+                var localParameters = new List<FilterParameterInfo>();
+                var parameter = GetParameterOrCreate(m.Groups[1].Value, localParameters, paramByName, typeof(string));
+                if (!parameter.IsAssigned) throw new ArgumentNullException(m.Groups[1].Value);
+                sparqlChain.Add(
+                    new FilterTest(
+                        Expression.And(
+                            Expression.NotEqual(parameter.Parameter,Expression.Constant(null)),
+                            Expression.NotEqual(parameter.Parameter,Expression.Constant(string.Empty))), localParameters));
+                return;
+            }
+            else if ((m = Reg.Equality.Match(s)).Success)
             {
                 var equalityType = m.Groups[2].Value;
                 if (equalityType == "=")
@@ -78,14 +90,14 @@ namespace CommonRDF
         private static Expression GetStringOrArithmetic(string s, List<FilterParameterInfo> localParameters, ref bool isArithmetic, Dictionary<string, TValue> paramByName)
         {
             Match m;
-            if ((m = Re.RegSumSubtract.Match(s)).Success)
+            if ((m = Reg.SumSubtract.Match(s)).Success)
             {
                 //todo string concatenation +
                 isArithmetic = true;
                 return m.Groups[2].Value == "+" //TODO unary -
                     ? Expression.Add(GetDoubleArithmeticOrConst(m.Groups[1].Value, paramByName, localParameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, paramByName, localParameters))
                     : Expression.Subtract(GetDoubleArithmeticOrConst(m.Groups[1].Value, paramByName, localParameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, paramByName, localParameters));}
-            if ((m = Re.RegMulDiv.Match(s)).Success)
+            if ((m = Reg.MulDiv.Match(s)).Success)
             {
                 isArithmetic = true;
                 return m.Groups[2].Value == "*"
@@ -120,11 +132,11 @@ namespace CommonRDF
         {
             Match m;
             //Expressions
-            if ((m = Re.RegSumSubtract.Match(s)).Success)
+            if ((m = Reg.SumSubtract.Match(s)).Success)
                 return m.Groups[2].Value == "+" //TODO unary -
                     ? Expression.Add(GetDoubleArithmeticOrConst(m.Groups[1].Value, paramByName, parameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, paramByName, parameters))
                     : Expression.Subtract(GetDoubleArithmeticOrConst(m.Groups[1].Value, paramByName, parameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, paramByName, parameters));
-            if ((m = Re.RegMulDiv.Match(s)).Success)
+            if ((m = Reg.MulDiv.Match(s)).Success)
                 return m.Groups[2].Value == "*"
                     ? Expression.Multiply(GetDoubleArithmeticOrConst(m.Groups[1].Value, paramByName, parameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, paramByName, parameters))
                     : Expression.Divide(GetDoubleArithmeticOrConst(m.Groups[1].Value, paramByName, parameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, paramByName, parameters));

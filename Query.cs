@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using sema2012m;
 
 namespace CommonRDF
 {
@@ -26,7 +25,7 @@ namespace CommonRDF
         {
             var valuesByName = new Dictionary<string, TValue>();
 
-            var selectMatch = Re.QuerySelectReg.Match(sparqlString);
+            var selectMatch = Reg.QuerySelect.Match(sparqlString);
             if (selectMatch.Success)
             {
                 string parameters2Select = selectMatch.Groups[1].Value.Trim();
@@ -35,33 +34,26 @@ namespace CommonRDF
                         parameters2Select.Split(new[] {' '}, StringSplitOptions.RemoveEmptyEntries).ToList();
                sparqlString = sparqlString.Replace(selectMatch.Groups[0].Value, "");
             }
-            var whereMatch = Re.QueryWhereReg.Match(sparqlString);
+            var whereMatch = Reg.QueryWhere.Match(sparqlString);
             if (whereMatch.Success)
             {
                 string tripletsGroup = whereMatch.Groups[1].Value;
-                SparqlBase lastTriplet = null;
                 SparqlTriplet.Gr = Gr = graph;
-                foreach (Match tripletMatch in Re.TripletsReg.Matches(tripletsGroup))
+                Match tripletMatch;
+                while (tripletsGroup!=string.Empty)
                 {
-                    var sMatch = tripletMatch.Groups[2];
-                    string pValue;
-                    string oValue;
-                    if (sMatch.Success)
+                    if ((tripletMatch = Reg.Triplet.Match(tripletsGroup)).Success)
+                        CreateTriplet(tripletMatch.Groups[1].Value,
+                            tripletMatch.Groups[2].Value,
+                            tripletMatch.Groups[3].Value, valuesByName, false);
+                    else if ((tripletMatch = Reg.TripletOptional.Match(tripletsGroup)).Success)
+                        CreateTriplet(tripletMatch.Groups[1].Value,
+                            tripletMatch.Groups[2].Value,
+                            tripletMatch.Groups[3].Value, valuesByName, true);
+                    else if ((tripletMatch=Reg.Filter.Match(tripletsGroup)).Success)
                     {
-                        pValue = tripletMatch.Groups[3].Value;
-                        oValue = tripletMatch.Groups[4].Value;
-                        CreateTriplet(sMatch, valuesByName, pValue, oValue, false);
-                    }
-                    else if ((sMatch = tripletMatch.Groups[7]).Success)
-                    {
-                        pValue = tripletMatch.Groups[8].Value;
-                        oValue = tripletMatch.Groups[9].Value;
-                        CreateTriplet(sMatch, valuesByName, pValue, oValue, true);
-                    }
-                    else if ((sMatch = tripletMatch.Groups[12]).Success)
-                    {
-                        var filter = sMatch.Value;
-                        var filterType = tripletMatch.Groups[11].Value.ToLower();
+                        var filter = tripletMatch.Groups[2].Value;
+                        var filterType = tripletMatch.Groups[1].Value.ToLower();
                         if (filterType == "regex")
                         {
                             var newFilter = new SparqlFilterRegex(filter);
@@ -72,13 +64,13 @@ namespace CommonRDF
                             }
                             Add(newFilter);
                         }
-                        else// common filter
+                        else // common filter
                         {
                             this.CreateFilterChain(filter, valuesByName);
                         }
                     }
                     else throw new Exception("strange query triplet: " + tripletMatch.Value);
-                  
+                    tripletsGroup=tripletsGroup.Remove(0, tripletMatch.Length);
                 }
                 NextMatch = Last;
             }
@@ -91,16 +83,15 @@ namespace CommonRDF
             ParametersNames = valuesByName.Where(v => v.Value.Value == null).Select(kv => kv.Key).ToArray();
         }
 
-        private void CreateTriplet(Group sMatch, Dictionary<string, TValue> valuesByName, string pValue, string oValue, bool isOptional)
+        private void CreateTriplet(string sValue, string pValue, string oValue, Dictionary<string, TValue> valuesByName, bool isOptional)
         {
             bool isData;
             TValue s, p, o;
-            string sValue = sMatch.Value.TrimStart('<').TrimEnd('>');
-            bool isNewS = TestParameter(sValue,
+            bool isNewS = TestParameter(sValue.TrimStart('<').TrimEnd('>'),
                 out s, valuesByName);
-            bool isNewP = TestParameter(pValue = pValue.TrimStart('<').TrimEnd('>'),
+            bool isNewP = TestParameter(pValue.TrimStart('<').TrimEnd('>'),
                 out p, valuesByName);
-            bool isNewO = TestParameter(oValue = (isData = oValue.StartsWith("'"))
+            bool isNewO = TestParameter((isData = oValue.StartsWith("'"))
                 ? oValue.Trim('\'')
                 : oValue.TrimStart('<').TrimEnd('>'), out o, valuesByName);
 
