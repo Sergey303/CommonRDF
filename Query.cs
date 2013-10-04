@@ -52,7 +52,7 @@ namespace CommonRDF
                             tripletMatch.Groups[3].Value, valuesByName, true);
                     else if ((tripletMatch=Reg.Filter.Match(tripletsGroup)).Success)
                     {
-                        var filter = tripletMatch.Groups[2].Value;
+                        var filter = tripletMatch.Groups["filter"].Value;
                         var filterType = tripletMatch.Groups[1].Value.ToLower();
                         if (filterType == "regex")
                         {

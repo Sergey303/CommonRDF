@@ -184,14 +184,16 @@ namespace CommonRDF
         {}
         public override bool Match()
         {
-            return  (bool)Method.DynamicInvoke(
-                AllParameters.Select(parameter=>
-                {
-                    double caster;
-                    if (!double.TryParse(parameter.Value, out caster))
-                        throw new ArgumentException(parameter.Value + " must be double");
-                    return caster;
-                })) && NextMatch();
+            var doubles = AllParameters.Select(parameter=>
+            {
+                double caster;
+                if (!double.TryParse(parameter.Value, out caster))
+                    throw new ArgumentException(parameter.Value + " must be double");
+                return caster;
+            }).ToArray();
+            return doubles.Length == 1
+                ? (bool) Method.DynamicInvoke(doubles[0]) && NextMatch()
+                : (bool) Method.DynamicInvoke(doubles) && NextMatch();
         }
     }
 
