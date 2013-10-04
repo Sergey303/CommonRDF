@@ -16,14 +16,27 @@ namespace CommonRDF
 
         private static void AndOrExpression(SparqlChain sparqlChain, string s, Dictionary<string, TValue> paramByName)
         {
-            Match m = Reg.AndOr.Match(s);
-            if (m.Success)
-                if (m.Groups[2].Value == "||")
-                    sparqlChain.Add(new FilterOr(m.Groups[1].Value, m.Groups[3].Value, paramByName));
+            Match m;;
+            while ((m = Reg.InsideBrackets.Match(s)).Success)
+                s = m.Groups["inside"].Value;
+
+            if ((m=Reg.AndOrNot.Match(s)).Success)
+                if (m.Groups["not"].Value != string.Empty) throw new NotImplementedException("not");
                 else
                 {
-                    AndOrExpression(sparqlChain, m.Groups[1].Value, paramByName);
-                    AndOrExpression(sparqlChain, m.Groups[3].Value, paramByName);
+                    var left = m.Groups["insideLeft"].Value;
+                    if(left==string.Empty)
+                        left = m.Groups["left"].Value;
+                    var right = m.Groups["insideRight"].Value;
+                    if(right==string.Empty)
+                        right = m.Groups["right"].Value;
+                    if (m.Groups["center"].Value == "||")
+                        sparqlChain.Add(new FilterOr(left, right, paramByName));
+                else //&&
+                    {
+                        AndOrExpression(sparqlChain, left, paramByName);
+                        AndOrExpression(sparqlChain,right, paramByName);
+                    }
                 }
             else AtomPredicateSparqlBase(sparqlChain,s, paramByName);
             //TODO Unary NOT

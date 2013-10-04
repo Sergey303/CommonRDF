@@ -14,6 +14,8 @@ namespace CommonRDF
             @"^\s*[Oo][Pp][Tt][Ii][Oo][Nn][Aa][Ll]\s*{\s*([\S]+)\s+([\S]+|'.*')\s+([\S]+|'.*')\s*}\s*");
         internal static Regex Filter = CreateRegex(
             @"^\s*[Ff][Ii][Ll][Tt][Ee][Rr]\s+([^\s()]+)?\(\s*(?<filter>[^()]*(((?<Open>\()[^()]*)+((?<Close-Open>\))[^()]*)+)*(?(Open)(?!)))\s*\)\s*");
+        internal static Regex BracketsOfAndOrNot = CreateRegex(
+            @"(?<inside>[^()]*(((?<Open>\()[^()]*)+((?<Close-Open>\))[^()]*)+)*(?(Open)(?!)))");
         private static Regex CreateRegex(string pattern, RegexOptions add=RegexOptions.None)
         {
             return new Regex(pattern, add|
@@ -22,7 +24,8 @@ namespace CommonRDF
         
         #region Filter
 
-        internal static readonly Regex AndOr = CreateRegex(@"^\s*(\S.*?)\s*(\|\||&&)\s*(\S.*)\s*$");
+        internal static readonly Regex InsideBrackets = CreateRegex(@"^\s*\(\s*(?<inside>[^()]*(((?<Open>\()[^()]*)+((?<Close-Open>\))[^()]*)+)*(?(Open)(?!)))\s*\)\s*$", RegexOptions.ExplicitCapture);
+        internal static readonly Regex AndOrNot = CreateRegex(@"^\s*(\!\s*(?<not>.*))|(?<left>(\(\s*(?<insideLeft>[^()]*(((?<Open>\()[^()]*)+((?<Close-Open>\))[^()]*)+)*(?(Open)(?!)))\s*\))|\S.*?)\s*(?<center>\|\||&&)\s*(?<right>(\(\s*(?<insideRight>[^()]*(((?<OpenL>\()[^()]*)+((?<CloseL-OpenL>\))[^()]*)+)*(?(OpenL)(?!)))\s*\))|\S.*)\s*$", RegexOptions.ExplicitCapture);
 
         internal static readonly Regex Equality =
             CreateRegex(@"^\s*([^<>=\s][^<>=]*?)\s*(<\s*=|=\s*>|!\s*=|=|<|>)\s*(\S.*?)\s*$");
