@@ -52,11 +52,11 @@ namespace CommonRDF
         private readonly SparqlChain first=new SparqlChain();
         private readonly SparqlChain second=new SparqlChain();
 
-        public FilterOr(string first, string second, Dictionary<string, TValue> paramByName)
+        public FilterOr(string first, string second, Dictionary<string, TValue> paramByName, bool isNot)
         {
             //запомним какие параметры уже были
             var copy = new Dictionary<string, TValue>(paramByName);
-            this.first.CreateFilterChain(first, paramByName);
+           FilterFunctions.AndOrExpression(this.first, first, paramByName, isNot);
             // с помощью копии узнаём какие параметры были добавлены в первой ветви.
             var newParametersInLeft = paramByName.Where(p => !copy.ContainsKey(p.Key)).ToList();
             foreach (var parameter in newParametersInLeft)
@@ -65,7 +65,7 @@ namespace CommonRDF
                 parameter.Value.Value = "hasParellellValue";
             }
             //новые параметры в одной ветви будут новыми и во второй
-            this.second.CreateFilterChain(second, paramByName);
+            FilterFunctions.AndOrExpression(this.second, second, paramByName, isNot);
             //обе цепи ведут к следующему после этого звену.
             
             //каждое условие - ветвь = цепь, в случае успеха вызовет свой послендний NextMatch
@@ -179,18 +179,19 @@ namespace CommonRDF
 
     internal class FilterTestDoubles : FilterTest
     {
+        private readonly double[] doubles;
+
         public FilterTestDoubles(Expression equalExpression, List<FilterParameterInfo> parameters)
             : base(equalExpression, parameters)
-        {}
+        {
+            doubles = new double[AllParameters.Length];
+        }
+
         public override bool Match()
         {
-            var doubles = AllParameters.Select(parameter=>
-            {
-                double caster;
-                if (!double.TryParse(parameter.Value, out caster))
-                    throw new ArgumentException(parameter.Value + " must be double");
-                return caster;
-            }).ToArray();
+            for (int i = 0; i < doubles.Length; i++)
+                if (!double.TryParse(AllParameters[i].Value, out doubles[i]))
+                    return false;
             return doubles.Length == 1
                 ? (bool) Method.DynamicInvoke(doubles[0]) && NextMatch()
                 : (bool) Method.DynamicInvoke(doubles) && NextMatch();

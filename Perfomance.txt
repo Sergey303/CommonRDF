@@ -32,3 +32,14 @@ read query  1186ticks
 run query  172ticks
 read query  1159ticks
 run query  167ticks
+read query  1931ticks
+run query  188ticks
+read query  1866ticks
+read query  1887ticks
+run query  172ticks
+read query  1844ticks
+run query  175ticks
+read query  1726ticks
+run query  200ticks
+read query  1767ticks
+run query  161ticks

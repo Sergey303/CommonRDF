@@ -14,4 +14,4 @@ where { filter (?person=piu_200809051791 ||
 optional {?s http://fogid.net/o/from-date ?fd}
 optional {?s http://fogid.net/o/to-date ?td} 
 optional {?s http://fogid.net/o/role ?ro} 
-filter ((( bound(?fd) && bound(?td)) && (?fd => 1987 - 100 && 1987 - 10 <= ?td+10)))}
+filter (( !bound(?fd) || ?fd => 1987 - 10*10) && ( !bound(?td) || 1987 - 10 <= ?td+10))}

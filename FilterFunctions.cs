@@ -14,80 +14,98 @@ namespace CommonRDF
             AndOrExpression(sparqlChain, expression, paramByName);
         }
 
-        private static void AndOrExpression(SparqlChain sparqlChain, string s, Dictionary<string, TValue> paramByName)
+        internal static void AndOrExpression(SparqlChain sparqlChain, string s, Dictionary<string, TValue> paramByName, bool isNot=false)
         {
             Match m;;
-            while ((m = Reg.InsideBrackets.Match(s)).Success)
-                s = m.Groups["inside"].Value;
-
-            if ((m=Reg.AndOrNot.Match(s)).Success)
-                if (m.Groups["not"].Value != string.Empty) throw new NotImplementedException("not");
+            if ((m = Reg.ManyNotAllInBrackets.Match(s)).Success)
+                AndOrExpression(sparqlChain, m.Groups["insideOneNot"].Value, paramByName, !isNot);
+            if ((m = Reg.InsideBrackets.Match(s)).Success)
+                AndOrExpression(sparqlChain, m.Groups["inside"].Value, paramByName, !isNot);
+            if ((m = Reg.AndOr.Match(s)).Success)
+                if (m.Groups["not"].Value != string.Empty)
+                    AndOrExpression(sparqlChain, m.Groups["not"].Value, paramByName, !isNot);
                 else
                 {
                     var left = m.Groups["insideLeft"].Value;
-                    if(left==string.Empty)
+                    if (left == string.Empty)
                         left = m.Groups["left"].Value;
                     var right = m.Groups["insideRight"].Value;
-                    if(right==string.Empty)
+                    if (right == string.Empty)
                         right = m.Groups["right"].Value;
-                    if (m.Groups["center"].Value == "||")
-                        sparqlChain.Add(new FilterOr(left, right, paramByName));
-                else //&&
+
+                    if ((!isNot) && (m.Groups["center"].Value == "||") || (isNot && (m.Groups["center"].Value == "&&")))
+                        sparqlChain.Add(new FilterOr(left, right, paramByName, isNot));
+                    else //if ((m.Groups["center"].Value == "&&") || (isNot && (m.Groups["center"].Value == "||"))) //&&
                     {
-                        AndOrExpression(sparqlChain, left, paramByName);
-                        AndOrExpression(sparqlChain,right, paramByName);
+                        AndOrExpression(sparqlChain, left, paramByName, isNot);
+                        AndOrExpression(sparqlChain, right, paramByName, isNot);
                     }
+
                 }
-            else AtomPredicateSparqlBase(sparqlChain,s, paramByName);
-            //TODO Unary NOT
+            else 
+            { //todo must be if and recursive?
+                while ((m = Reg.ManyNotAtom.Match(s)).Success)
+                {
+                    isNot = !isNot;
+                    s = m.Groups["insideOneNot"].Value;
+                }
+                AtomPredicateSparqlBase(sparqlChain,s, paramByName, isNot);
+            }
         }
 
-        private static void AtomPredicateSparqlBase(SparqlChain sparqlChain, string s, Dictionary<string, TValue> paramByName)
+        private static void AtomPredicateSparqlBase(SparqlChain sparqlChain, string s, Dictionary<string, TValue> paramByName, bool isNot)
         {
             var m = Reg.RegSameTerm.Match(s);
+            var localParameters = new List<FilterParameterInfo>();
             if (m.Success)
+                if (isNot)
+                    CreateSelectsNewParameters(new FilterTestDoubles(
+                        Expression.NotEqual(
+                            GetDoubleArithmeticOrConst(m.Groups[1].Value, paramByName, localParameters),
+                            GetDoubleArithmeticOrConst(m.Groups[3].Value, paramByName, localParameters))
+                        , localParameters), localParameters, sparqlChain);
+                else
+                    EqualOrAssign(m.Groups[1].Value, m.Groups[2].Value, paramByName, sparqlChain);
+            else if ((m = Reg.Bound.Match(s)).Success)
             {
-                EqualOrAssign(m.Groups[1].Value, m.Groups[2].Value, paramByName, sparqlChain);
-                return;
-            }
-            if ((m = Reg.Bound.Match(s)).Success)
-            {
-                var localParameters = new List<FilterParameterInfo>();
-                var parameter = GetParameterOrCreate(m.Groups[1].Value, localParameters, paramByName, typeof(string));
+                var parameter = GetParameterOrCreate(m.Groups[1].Value, localParameters, paramByName, typeof (string));
                 if (!parameter.IsAssigned) throw new ArgumentNullException(m.Groups[1].Value);
+                Expression equalExpression = Expression.And(
+                    Expression.NotEqual(
+                        parameter.Parameter, Expression.Constant(null)),
+                    Expression.NotEqual(
+                        parameter.Parameter, Expression.Constant(string.Empty)));
                 sparqlChain.Add(
-                    new FilterTest(
-                        Expression.And(
-                            Expression.NotEqual(parameter.Parameter,Expression.Constant(null)),
-                            Expression.NotEqual(parameter.Parameter,Expression.Constant(string.Empty))), localParameters));
-                return;
+                    new FilterTest(isNot ? Expression.Not(equalExpression) : equalExpression, localParameters));
             }
             else if ((m = Reg.Equality.Match(s)).Success)
             {
                 var equalityType = m.Groups[2].Value;
-                if (equalityType == "=")
+                if (equalityType == "=" && !isNot)
                 {
-                   EqualOrAssign(m.Groups[1].Value, m.Groups[3].Value, paramByName, sparqlChain);
+                    EqualOrAssign(m.Groups[1].Value, m.Groups[3].Value, paramByName, sparqlChain);
                     return;
                 }
-                var localParameters = new List<FilterParameterInfo>();
+                Expression expression = Expression.MakeBinary(equalityType.Length > 1
+                    ? (equalityType.StartsWith("!")
+                        ? ExpressionType.NotEqual
+                        : equalityType.StartsWith("<")
+                            ? ExpressionType.LessThanOrEqual
+                            : ExpressionType.GreaterThanOrEqual)
+                    : (equalityType == ">"
+                        ? ExpressionType.GreaterThan
+                        : equalityType == "<"
+                            ? ExpressionType.LessThan
+                            : ExpressionType.Equal),
+                    GetDoubleArithmeticOrConst(m.Groups[1].Value, paramByName, localParameters),
+                    GetDoubleArithmeticOrConst(m.Groups[3].Value, paramByName, localParameters));
                 CreateSelectsNewParameters(new FilterTestDoubles(
-                    Expression.MakeBinary(equalityType.Length > 1
-                        ? (equalityType.StartsWith("!")
-                            ? ExpressionType.NotEqual
-                            : equalityType.StartsWith("<")
-                                ? ExpressionType.LessThanOrEqual
-                                : ExpressionType.GreaterThanOrEqual)
-                        : (equalityType == ">"
-                            ? ExpressionType.GreaterThan
-                            : ExpressionType.LessThan),
-                        GetDoubleArithmeticOrConst(m.Groups[1].Value, paramByName, localParameters),
-                        GetDoubleArithmeticOrConst(m.Groups[3].Value, paramByName, localParameters))
+                    isNot ? Expression.Not(expression) : expression
                     , localParameters), localParameters, sparqlChain);
-                return;
             }
-            //TODO boolean valiable
-            throw new NotImplementedException();
+            else
+                //TODO boolean valiable
+                throw new NotImplementedException();
         }
 
         public static void CreateSelectsNewParameters(FilterTest test,
@@ -102,21 +120,12 @@ namespace CommonRDF
 
         private static Expression GetStringOrArithmetic(string s, List<FilterParameterInfo> localParameters, ref bool isArithmetic, Dictionary<string, TValue> paramByName)
         {
-            Match m;
-            if ((m = Reg.SumSubtract.Match(s)).Success)
-            {
-                //todo string concatenation +
-                isArithmetic = true;
-                return m.Groups[2].Value == "+" //TODO unary -
-                    ? Expression.Add(GetDoubleArithmeticOrConst(m.Groups[1].Value, paramByName, localParameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, paramByName, localParameters))
-                    : Expression.Subtract(GetDoubleArithmeticOrConst(m.Groups[1].Value, paramByName, localParameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, paramByName, localParameters));}
-            if ((m = Reg.MulDiv.Match(s)).Success)
+            Expression expression = null;
+            if (TestDoubleArithmeticOrConst(s, paramByName, localParameters, ref expression))
             {
                 isArithmetic = true;
-                return m.Groups[2].Value == "*"
-                    ? Expression.Multiply(GetDoubleArithmeticOrConst(m.Groups[1].Value, paramByName, localParameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, paramByName, localParameters))
-                    : Expression.Divide(GetDoubleArithmeticOrConst(m.Groups[1].Value, paramByName, localParameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, paramByName, localParameters));}
-
+                return expression;
+            }
             s = s.Trim();
             DateTime dt;
             double i;
@@ -145,14 +154,9 @@ namespace CommonRDF
         {
             Match m;
             //Expressions
-            if ((m = Reg.SumSubtract.Match(s)).Success)
-                return m.Groups[2].Value == "+" //TODO unary -
-                    ? Expression.Add(GetDoubleArithmeticOrConst(m.Groups[1].Value, paramByName, parameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, paramByName, parameters))
-                    : Expression.Subtract(GetDoubleArithmeticOrConst(m.Groups[1].Value, paramByName, parameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, paramByName, parameters));
-            if ((m = Reg.MulDiv.Match(s)).Success)
-                return m.Groups[2].Value == "*"
-                    ? Expression.Multiply(GetDoubleArithmeticOrConst(m.Groups[1].Value, paramByName, parameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, paramByName, parameters))
-                    : Expression.Divide(GetDoubleArithmeticOrConst(m.Groups[1].Value, paramByName, parameters), GetDoubleArithmeticOrConst(m.Groups[3].Value, paramByName, parameters));
+            Expression expression=null;
+            if (TestDoubleArithmeticOrConst(s, paramByName, parameters, ref expression))
+                return expression;
 
             s = s.Trim();
             //variable
@@ -168,6 +172,38 @@ namespace CommonRDF
             if (DateTime.TryParse(s, out dt))
                 return Expression.Constant((double)dt.ToUniversalTime().Ticks, typeof(double));
             throw new Exception("undefined arithmetic: "+s);
+        }
+
+        private static bool TestDoubleArithmeticOrConst(string s, Dictionary<string, TValue> paramByName, List<FilterParameterInfo> parameters,
+            ref Expression expression)
+        {
+            Match m;
+            if ((m=Reg.USubtrAllInBrackets.Match(s)).Success)
+            {
+                s = m.Groups["inside"].Value;
+                expression = Expression.Subtract(Expression.Constant(0),
+                    GetDoubleArithmeticOrConst(s, paramByName, parameters));
+                return true;
+            }
+            if ((m = Reg.SumSubtract.Match(s)).Success)
+                {
+                    expression = m.Groups["center"].Value == "+"
+                        ? Expression.Add(GetDoubleArithmeticOrConst(m.Groups["left"].Value, paramByName, parameters),
+                            GetDoubleArithmeticOrConst(m.Groups["right"].Value, paramByName, parameters))
+                        : Expression.Subtract(GetDoubleArithmeticOrConst(m.Groups["left"].Value, paramByName, parameters),
+                            GetDoubleArithmeticOrConst(m.Groups["right"].Value, paramByName, parameters));
+                    return true;
+                }
+            if ((m = Reg.MulDiv.Match(s)).Success)
+                {
+                    expression = m.Groups["center"].Value == "*"
+                        ? Expression.Multiply(GetDoubleArithmeticOrConst(m.Groups["left"].Value, paramByName, parameters),
+                            GetDoubleArithmeticOrConst(m.Groups["right"].Value, paramByName, parameters))
+                        : Expression.Divide(GetDoubleArithmeticOrConst(m.Groups["left"].Value, paramByName, parameters),
+                            GetDoubleArithmeticOrConst(m.Groups["right"].Value, paramByName, parameters));
+                    return true;
+                }
+            return false;
         }
 
         private static FilterParameterInfo GetParameterOrCreate(string name, IList<FilterParameterInfo> localParameters, Dictionary<string, TValue> paramByName, Type type)
