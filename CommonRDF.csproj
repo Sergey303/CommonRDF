@@ -68,7 +68,7 @@
     <Content Include="Comments.txt" />
     <Content Include="Perfomance.txt" />
     <Content Include="query Organizations and events in which participated Andrey Ershov.txt" />
-    <Content Include="query.txt" />
+    <None Include="query.rq" />
     <Content Include="querySimpleЕршов.txt" />
     <Content Include="orgs with portraits.txt" />
     <Content Include="mag Perfomance.txt" />
