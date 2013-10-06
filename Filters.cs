@@ -179,18 +179,21 @@ namespace CommonRDF
 
     internal class FilterTestDoubles : FilterTest
     {
-        private readonly double[] doubles;
+        private readonly object[] doubles;
 
         public FilterTestDoubles(Expression equalExpression, List<FilterParameterInfo> parameters)
             : base(equalExpression, parameters)
         {
-            doubles = new double[AllParameters.Length];
+            doubles = new object[AllParameters.Length];
         }
 
         public override bool Match()
         {
+            double casted;
             for (int i = 0; i < doubles.Length; i++)
-                if (!double.TryParse(AllParameters[i].Value, out doubles[i]))
+                if (double.TryParse(AllParameters[i].Value, out casted))
+                    doubles[i] = casted;
+                else
                     return false;
             return doubles.Length == 1
                 ? (bool) Method.DynamicInvoke(doubles[0]) && NextMatch()

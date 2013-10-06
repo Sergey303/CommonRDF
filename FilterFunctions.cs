@@ -121,7 +121,7 @@ namespace CommonRDF
         private static Expression GetStringOrArithmetic(string s, List<FilterParameterInfo> localParameters, ref bool isArithmetic, Dictionary<string, TValue> paramByName)
         {
             Expression expression = null;
-            if (TestDoubleArithmeticOrConst(s, paramByName, localParameters, ref expression))
+            if (TestDoubleArithmeticExpression(s, paramByName, localParameters, ref expression))
             {
                 isArithmetic = true;
                 return expression;
@@ -155,9 +155,8 @@ namespace CommonRDF
             Match m;
             //Expressions
             Expression expression=null;
-            if (TestDoubleArithmeticOrConst(s, paramByName, parameters, ref expression))
+            if (TestDoubleArithmeticExpression(s, paramByName, parameters, ref expression))
                 return expression;
-
             s = s.Trim();
             //variable
             if (s.StartsWith("?"))
@@ -174,14 +173,14 @@ namespace CommonRDF
             throw new Exception("undefined arithmetic: "+s);
         }
 
-        private static bool TestDoubleArithmeticOrConst(string s, Dictionary<string, TValue> paramByName, List<FilterParameterInfo> parameters,
+        private static bool TestDoubleArithmeticExpression(string s, Dictionary<string, TValue> paramByName, List<FilterParameterInfo> parameters,
             ref Expression expression)
         {
             Match m;
             if ((m=Reg.USubtrAllInBrackets.Match(s)).Success)
             {
                 s = m.Groups["inside"].Value;
-                expression = Expression.Subtract(Expression.Constant(0),
+                expression = Expression.Subtract(Expression.Constant(0.0),
                     GetDoubleArithmeticOrConst(s, paramByName, parameters));
                 return true;
             }
@@ -203,6 +202,12 @@ namespace CommonRDF
                             GetDoubleArithmeticOrConst(m.Groups["right"].Value, paramByName, parameters));
                     return true;
                 }
+            if ((m = Reg.USubtrAtom.Match(s)).Success)
+            {
+               expression= Expression.Subtract(Expression.Constant(0.0),
+                    GetDoubleArithmeticOrConst(m.Groups["inside"].Value, paramByName, parameters));
+               return true;
+            }
             return false;
         }
 
