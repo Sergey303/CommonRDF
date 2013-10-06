@@ -51,6 +51,8 @@ namespace CommonRDF
         /// </summary>
         internal static readonly Regex AndOr = CreateRegex(@"^\s*(?<left>(\(\s*(?<insideLeft>[^()]*(((?<Open>\()[^()]*)+((?<Close-Open>\))[^()]*)+)*(?(Open)(?!)))\s*\))|\S.*?)\s*(?<center>\|\||&&)\s*(?<right>(\(\s*(?<insideRight>[^()]*(((?<OpenL>\()[^()]*)+((?<CloseL-OpenL>\))[^()]*)+)*(?(OpenL)(?!)))\s*\))|\S.*)\s*$", RegexOptions.ExplicitCapture);
 
+        
+
         internal static readonly Regex Equality =
             CreateRegex(@"^\s*([^<>=\s][^<>=]*?)\s*(<\s*=|=\s*>|!\s*=|=|<|>)\s*(\S.*?)\s*$");
         
@@ -58,6 +60,8 @@ namespace CommonRDF
             CreateRegex(@"^\s*[Ss][Aa][Mm][Ee][Tt][Ee][Rr][Mm]\s*\(\s*(\S.*?)\s*,\s*(\S.*?)\s*\)\s*$");
 
         internal static readonly Regex Bound = CreateRegex(@"^\s*[Bb][Oo][Uu][Nn][Dd]\s*\(\s*(\S.*?)\s*\)\s*$");
+        internal static readonly Regex Lang = CreateRegex(@"^\s*?[Ll][Aa][Nn][Gg]\s*?\(\s*(\S.*?)\s*\)\s*$");
+        internal static readonly Regex LangMatches = CreateRegex(@"^\s*?[Ll][Aa][Nn][Gg][Mm][Aa][Tt][Cc][Hh][Ee][Ss]\s*?\(\s*?(\S.*?)\s*?,\s*?(\S.*?)\s*?\)\s*?$");
         /// <summary>
         /// действует только если строка начинается с унарного минуса, затем всё выражение в скобках.
         /// -(....)

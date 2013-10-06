@@ -72,7 +72,7 @@ namespace CommonRDF
             this.first.NextMatch = this.second.NextMatch = () => NextMatch();
             //снимаем метку.
             foreach (var parameter in newParametersInLeft)
-                parameter.Value.Value = null;
+                parameter.Value.Value = string.Empty;
         }
 
         /// <summary>
@@ -157,47 +157,46 @@ namespace CommonRDF
 
         public override bool Match()
         {
-            newParamter.Value = Method.DynamicInvoke(AllParameters.Select(p => p.Value)).ToString();
+            if (md == "{?personName.Lang}")
+            {
+                
+            }
+            newParamter.Value = Method.DynamicInvoke(AllParameters).ToString();
             return NextMatch();
         }
     }
     internal class FilterTest : SparqlBase
     {
-        protected readonly TValue[] AllParameters;
+        protected readonly object[] AllParameters;
         protected readonly Delegate Method;
+        protected readonly string md;
         public FilterTest(Expression equalExpression, List<FilterParameterInfo> parameters)
         {
+            md = equalExpression.ToString();
             Method = Expression.Lambda(equalExpression, parameters.Select(p => p.Parameter)).Compile();
             AllParameters = parameters.Select(p => p.Value).ToArray();
         }
 
         public override bool Match()
         {
-            return (bool)Method.DynamicInvoke(AllParameters.Select(p => p.Value).ToArray()) && NextMatch();
+            if (md == "(?fd.Value != \"\")")
+            {
+                
+            }
+            return (bool)Method.DynamicInvoke(AllParameters) && NextMatch();
         }
     }
 
     internal class FilterTestDoubles : FilterTest
     {
-        private readonly object[] doubles;
-
         public FilterTestDoubles(Expression equalExpression, List<FilterParameterInfo> parameters)
             : base(equalExpression, parameters)
         {
-            doubles = new object[AllParameters.Length];
         }
 
         public override bool Match()
         {
-            double casted;
-            for (int i = 0; i < doubles.Length; i++)
-                if (double.TryParse(AllParameters[i].Value, out casted))
-                    doubles[i] = casted;
-                else
-                    return false;
-            return doubles.Length == 1
-                ? (bool) Method.DynamicInvoke(doubles[0]) && NextMatch()
-                : (bool) Method.DynamicInvoke(doubles) && NextMatch();
+            return AllParameters.All(t => (t as TValue).IsDouble) && base.Match();
         }
     }
 

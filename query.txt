@@ -14,4 +14,10 @@ where { filter (?person=piu_200809051791 ||
 optional {?s http://fogid.net/o/from-date ?fd}
 optional {?s http://fogid.net/o/to-date ?td} 
 optional {?s http://fogid.net/o/role ?ro} 
-filter (( bound(?fd) && bound(?td)) && - ?fd + ?td => -(- 1*10+50/10))}
+filter (( bound(?fd) && bound(?td)) && - ?fd + ?td => -(- 1*10+50/10))
+filter ( lang(?personName)=?personNameLang)
+filter ( !langMatches(?personNameLang, "*") 
+|| langMatches(?personNameLang, "ru") 
+|| langMatches(lang(?personName), "ru-ru") 
+|| langMatches(lang(?personName), "RU")
+|| langMatches(lang(?personName), "RU-ru"))}

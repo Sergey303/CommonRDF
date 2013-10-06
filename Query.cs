@@ -23,7 +23,7 @@ namespace CommonRDF
         public Query(StreamReader stream, GraphBase graph):this(stream.ReadToEnd(), graph) { }
         public Query(string sparqlString, GraphBase graph)
         {
-            var valuesByName = new Dictionary<string, TValue>();
+           
 
             var selectMatch = Reg.QuerySelect.Match(sparqlString);
             if (selectMatch.Success)
@@ -33,15 +33,16 @@ namespace CommonRDF
                     SelectParameters =
                         parameters2Select.Split(new[] {' '}, StringSplitOptions.RemoveEmptyEntries).ToList();
                sparqlString = sparqlString.Replace(selectMatch.Groups[0].Value, "");
-            }
+            } 
+            var valuesByName = new Dictionary<string, TValue>();
             var whereMatch = Reg.QueryWhere.Match(sparqlString);
             if (whereMatch.Success)
             {
                 string tripletsGroup = whereMatch.Groups[1].Value;
                 SparqlTriplet.Gr = Gr = graph;
-                Match tripletMatch;
                 while (tripletsGroup!=string.Empty)
                 {
+                    Match tripletMatch;
                     if ((tripletMatch = Reg.Triplet.Match(tripletsGroup)).Success)
                         CreateTriplet(tripletMatch.Groups[1].Value,
                             tripletMatch.Groups[2].Value,
@@ -79,8 +80,8 @@ namespace CommonRDF
             //QueryTriplet.Match = Match;
             //QueryTripletOptional.Gr = Gr;
             //QueryTripletOptional.MatchOptional = MatchOptional;
-            parameters = valuesByName.Values.Where(v => v.Value == null).ToArray();
-            ParametersNames = valuesByName.Where(v => v.Value.Value == null).Select(kv => kv.Key).ToArray();
+            parameters = valuesByName.Values.Where(v => v.Value == string.Empty).ToArray();
+            ParametersNames = valuesByName.Where(v => v.Value.Value == string.Empty).Select(kv => kv.Key).ToArray();
         }
 
         private void CreateTriplet(string sValue, string pValue, string oValue, Dictionary<string, TValue> valuesByName, bool isOptional)

@@ -46,8 +46,8 @@ namespace CommonRDF
          //  Perfomance.ComputeTime(
             l.Run();//, "");
           
-            gr.Test();
-            MethodExpressionsExperiments();
+            //gr.Test();
+          //  MethodExpressionsExperiments();
         }
 
         private static void MethodExpressionsExperiments()

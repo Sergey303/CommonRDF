@@ -6,8 +6,7 @@ namespace CommonRDF
 {
     public class TValue
     {
-        //public static readonly Hashtable Cach = new Hashtable();(RecordEx)(Cach[id] ?? (Cach[id] = 
-        public string Value;
+        public string Value=string.Empty;
         public object nodeInfo;
         public bool SetNodeInfo;
         public bool? IsObject;
@@ -23,6 +22,25 @@ namespace CommonRDF
             remove
             {
                 whenObjSetted -= value;
+            }
+        }
+
+        public string Lang=string.Empty;
+        public double DoubleValue;
+
+        public bool IsDouble
+        {
+            get
+            {
+                if (double.TryParse(Value, out DoubleValue))
+                    return true;
+                DateTime dateTime;
+                if (DateTime.TryParse(Value, out dateTime))
+                {
+                    DoubleValue = dateTime.Ticks;
+                    return true;
+                }
+                return false;
             }
         }
 
@@ -222,10 +240,11 @@ namespace CommonRDF
                     Any=NextMatch() || Any;
                 }
             if (IsObjectRole!=null && IsObjectRole.Value) return Any;
-            foreach (string value in Gr.GetData(S.Value, P.Value, HasNodeInfoS ? S.nodeInfo : (S.nodeInfo = Gr.GetNodeInfo(S.Value))))
+            foreach (var valueLang in Gr.GetDataLangPairs(S.Value, P.Value, HasNodeInfoS ? S.nodeInfo : (S.nodeInfo = Gr.GetNodeInfo(S.Value))))
             {
                 IsObjectRole = false;
-                O.Value = value;
+                O.Value = valueLang.data;
+                O.Lang = valueLang.lang ?? string.Empty;
                 Any = NextMatch() || Any;
             }
             return Any;
@@ -319,7 +338,7 @@ namespace CommonRDF
         public override bool Match()
         {
             if (base.Match()) return true;
-            O.Value = string.Empty;
+            O.Lang = O.Value = string.Empty;
            return NextMatch();
         }
     }
