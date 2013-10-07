@@ -28,7 +28,7 @@ namespace CommonRDF
                         right = m.Groups["right"].Value;
 
                     if ((!isNot) && (m.Groups["center"].Value == "||") || (isNot && (m.Groups["center"].Value == "&&")))
-                        sparqlChain.Add(new FilterOr(left, right, sparqlChain.valuesByName, isNot));
+                        sparqlChain.Add(new FilterOr(left, right, sparqlChain, isNot));
                     else //if ((m.Groups["center"].Value == "&&") || (isNot && (m.Groups["center"].Value == "||"))) //&&
                     {
                         AndOrExpression(sparqlChain, left, isNot);
@@ -160,7 +160,8 @@ namespace CommonRDF
             //todo concatenation
             bool isData = true;
           s =  scp.TestDataConst(s, ref isData);
-            if (isData) return Expression.Constant(s);
+            if (isData || s.StartsWith("http")) return Expression.Constant(s);
+            
             Expression expression = null;
             if (scp.TestDoubleArithmeticExpression(s, localParameters, ref expression))
             {

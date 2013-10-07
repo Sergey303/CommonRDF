@@ -52,20 +52,20 @@ namespace CommonRDF
         private readonly SparqlChainParametred first;
         private readonly SparqlChainParametred second;
 
-        public FilterOr(string first, string second, Dictionary<string, TValue> paramByName, bool isNot)
+        public FilterOr(string first, string second, SparqlChainParametred sparqlChainRoot, bool isNot)
         {
             //запомним какие параметры уже были
-            var copy = new Dictionary<string, TValue>(paramByName);
-            (this.first = new SparqlChainParametred(paramByName)).AndOrExpression(first, isNot);
+            var copy = new Dictionary<string, TValue>(sparqlChainRoot.valuesByName);
+            (this.first = new SparqlChainParametred(sparqlChainRoot)).AndOrExpression(first, isNot);
             // с помощью копии узнаём какие параметры были добавлены в первой ветви.
-            var newParametersInLeft = paramByName.Where(p => !copy.ContainsKey(p.Key)).ToList();
+            var newParametersInLeft = sparqlChainRoot.valuesByName.Where(p => !copy.ContainsKey(p.Key)).ToList();
             foreach (var parameter in newParametersInLeft)
             {
                 //помечаем их
                 parameter.Value.Value = "hasParellellValue";
             }
             //новые параметры в одной ветви будут новыми и во второй
-            (this.second=new SparqlChainParametred(paramByName)).AndOrExpression(second, isNot);
+            (this.second = new SparqlChainParametred(sparqlChainRoot)).AndOrExpression(second, isNot);
             //обе цепи ведут к следующему после этого звену.
             
             //каждое условие - ветвь = цепь, в случае успеха вызовет свой послендний NextMatch
@@ -165,20 +165,15 @@ namespace CommonRDF
     {
         protected readonly object[] AllParameters;
         protected readonly Delegate Method;
-        protected readonly string md;
+
         public FilterTest(Expression equalExpression, List<FilterParameterInfo> parameters)
         {
-            md = equalExpression.ToString();
             Method = Expression.Lambda(equalExpression, parameters.Select(p => p.Parameter)).Compile();
             AllParameters = parameters.Select(p => p.Value).ToArray();
         }
 
         public override bool Match()
         {
-            if (md == "(?fd.Value != \"\")")
-            {
-                
-            }
             return (bool)Method.DynamicInvoke(AllParameters) && NextMatch();
         }
     }

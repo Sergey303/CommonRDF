@@ -8,9 +8,10 @@ namespace CommonRDF
         protected readonly Dictionary<string, string> prefixes = new Dictionary<string, string>();
         internal readonly Dictionary<string, TValue> valuesByName = new Dictionary<string, TValue>();
 
-        public SparqlChainParametred(Dictionary<string, TValue> paramByName)
+        public SparqlChainParametred(SparqlChainParametred parent)
         {
-            valuesByName = paramByName;
+            valuesByName = parent.valuesByName;
+            prefixes = parent.prefixes;
         }
 
         protected SparqlChainParametred()
