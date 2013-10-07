@@ -49,14 +49,14 @@ namespace CommonRDF
     internal class FilterOr : SparqlBase
     {
         /// содержит два условия, обёрнутые в цепи SparqlChain.
-        private readonly SparqlChain first=new SparqlChain();
-        private readonly SparqlChain second=new SparqlChain();
+        private readonly SparqlChainParametred first;
+        private readonly SparqlChainParametred second;
 
         public FilterOr(string first, string second, Dictionary<string, TValue> paramByName, bool isNot)
         {
             //запомним какие параметры уже были
             var copy = new Dictionary<string, TValue>(paramByName);
-           FilterFunctions.AndOrExpression(this.first, first, paramByName, isNot);
+            (this.first = new SparqlChainParametred(paramByName)).AndOrExpression(first, isNot);
             // с помощью копии узнаём какие параметры были добавлены в первой ветви.
             var newParametersInLeft = paramByName.Where(p => !copy.ContainsKey(p.Key)).ToList();
             foreach (var parameter in newParametersInLeft)
@@ -65,7 +65,7 @@ namespace CommonRDF
                 parameter.Value.Value = "hasParellellValue";
             }
             //новые параметры в одной ветви будут новыми и во второй
-            FilterFunctions.AndOrExpression(this.second, second, paramByName, isNot);
+            (this.second=new SparqlChainParametred(paramByName)).AndOrExpression(second, isNot);
             //обе цепи ведут к следующему после этого звену.
             
             //каждое условие - ветвь = цепь, в случае успеха вызовет свой послендний NextMatch
@@ -157,10 +157,6 @@ namespace CommonRDF
 
         public override bool Match()
         {
-            if (md == "{?personName.Lang}")
-            {
-                
-            }
             newParamter.Value = Method.DynamicInvoke(AllParameters).ToString();
             return NextMatch();
         }

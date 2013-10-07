@@ -62,6 +62,7 @@
     <Compile Include="Query.cs" />
     <Compile Include="RegularExpressions.cs" />
     <Compile Include="SimpleSparql.cs" />
+    <Compile Include="SparqlChainParametred.cs" />
     <Compile Include="TValue.cs" />
   </ItemGroup>
   <ItemGroup>

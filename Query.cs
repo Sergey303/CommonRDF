@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace CommonRDF
 {
-    internal class Query : SparqlChain
+    internal partial class Query : SparqlChainParametred
     {
         public GraphBase Gr;
        // public List<QueryTripletOptional> Optionals;
@@ -15,43 +16,55 @@ namespace CommonRDF
         public string[] ParametersNames;
         private readonly TValue[] parameters;
         public TValue[] ParametersWithMultiValues;
-        public readonly List<string> SelectParameters=new List<string>();
+        public readonly string[] SelectParameters = new string[0];
         public readonly List<string[]> ParametrsValuesList = new List<string[]>();
+
 
         #region Read
 
-        public Query(StreamReader stream, GraphBase graph):this(stream.ReadToEnd(), graph) { }
+        public Query(StreamReader stream, GraphBase graph):this(stream.ReadToEnd(), graph)
+        {
+        }
+
         public Query(string sparqlString, GraphBase graph)
         {
-           
+            Match prefixMatch;
+            while ((prefixMatch = Reg.QueryPrefix.Match(sparqlString)).Success)
+            {
+                var prefix = prefixMatch.Groups[1].Value;
+                var value = prefixMatch.Groups[2].Value;
+                prefixes.Add(prefix, value);
+                sparqlString = sparqlString.Remove(0, prefixMatch.Length);
+            }
 
             var selectMatch = Reg.QuerySelect.Match(sparqlString);
             if (selectMatch.Success)
-            {
-                string parameters2Select = selectMatch.Groups[1].Value.Trim();
-                if (parameters2Select != "*")
-                    SelectParameters =
-                        parameters2Select.Split(new[] {' '}, StringSplitOptions.RemoveEmptyEntries).ToList();
-               sparqlString = sparqlString.Replace(selectMatch.Groups[0].Value, "");
-            } 
-            var valuesByName = new Dictionary<string, TValue>();
+                if (selectMatch.Groups[1].Value != "*")
+                {
+                    CaptureCollection captureCollection = selectMatch.Groups["p"].Captures;
+                    SelectParameters = new string[captureCollection.Count];
+                    for (int i = 0; i < SelectParameters.Length; i++)
+                        SelectParameters[i] = captureCollection[i].Value;
+                    sparqlString = sparqlString.Remove(0, selectMatch.Length);
+                }
+
             var whereMatch = Reg.QueryWhere.Match(sparqlString);
             if (whereMatch.Success)
             {
-                string tripletsGroup = whereMatch.Groups[1].Value;
+                string triplets = whereMatch.Groups["insideWhere"].Value;
                 SparqlTriplet.Gr = Gr = graph;
-                while (tripletsGroup!=string.Empty)
+                while (triplets!=string.Empty)
                 {
                     Match tripletMatch;
-                    if ((tripletMatch = Reg.Triplet.Match(tripletsGroup)).Success)
-                        CreateTriplet(tripletMatch.Groups[1].Value,
-                            tripletMatch.Groups[2].Value,
-                            tripletMatch.Groups[3].Value, valuesByName, false);
-                    else if ((tripletMatch = Reg.TripletOptional.Match(tripletsGroup)).Success)
-                        CreateTriplet(tripletMatch.Groups[1].Value,
-                            tripletMatch.Groups[2].Value,
-                            tripletMatch.Groups[3].Value, valuesByName, true);
-                    else if ((tripletMatch=Reg.Filter.Match(tripletsGroup)).Success)
+                    if ((tripletMatch = Reg.Triplet.Match(triplets)).Success)
+                        CreateTriplet(tripletMatch.Groups[1].Value.Trim(),
+                            tripletMatch.Groups[2].Value.Trim(),
+                            tripletMatch.Groups[3].Value.Trim(), false);
+                    else if ((tripletMatch = Reg.TripletOptional.Match(triplets)).Success)
+                        CreateTriplet(tripletMatch.Groups[1].Value.Trim(),
+                            tripletMatch.Groups[2].Value.Trim(),
+                            tripletMatch.Groups[3].Value.Trim(), true);
+                    else if ((tripletMatch=Reg.Filter.Match(triplets)).Success)
                     {
                         var filter = tripletMatch.Groups["filter"].Value;
                         var filterType = tripletMatch.Groups[1].Value.ToLower();
@@ -67,11 +80,11 @@ namespace CommonRDF
                         }
                         else // common filter
                         {
-                            this.CreateFilterChain(filter, valuesByName);
+                          this.AndOrExpression(filter);
                         }
                     }
                     else throw new Exception("strange query triplet: " + tripletMatch.Value);
-                    tripletsGroup=tripletsGroup.Remove(0, tripletMatch.Length);
+                    triplets=triplets.Remove(0, tripletMatch.Length);
                 }
                 NextMatch = Last;
             }
@@ -84,17 +97,16 @@ namespace CommonRDF
             ParametersNames = valuesByName.Where(v => v.Value.Value == string.Empty).Select(kv => kv.Key).ToArray();
         }
 
-        private void CreateTriplet(string sValue, string pValue, string oValue, Dictionary<string, TValue> valuesByName, bool isOptional)
+     
+
+        private void CreateTriplet(string sValue, string pValue, string oValue, bool isOptional)
         {
-            bool isData;
+            bool isData=true;
             TValue s, p, o;
-            bool isNewS = TestParameter(sValue.TrimStart('<').TrimEnd('>'),
-                out s, valuesByName);
-            bool isNewP = TestParameter(pValue.TrimStart('<').TrimEnd('>'),
-                out p, valuesByName);
-            bool isNewO = TestParameter((isData = oValue.StartsWith("'"))
-                ? oValue.Trim('\'')
-                : oValue.TrimStart('<').TrimEnd('>'), out o, valuesByName);
+            if (pValue == "a") pValue = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+            bool isNewS = TestParameter(ReplaceNamespacePrefix(sValue), out s);
+            bool isNewP = TestParameter(ReplaceNamespacePrefix(pValue), out p);
+            bool isNewO = TestParameter(TestDataConst(oValue, ref isData), out o);
 
             s.SetTargetType(true);
             if (isData)
@@ -140,22 +152,7 @@ namespace CommonRDF
             }
         }
 
-        private static bool TestParameter(string spoValue, out TValue spo, Dictionary<string, TValue> paramByName)
-        {
-            if (!spoValue.StartsWith("?"))
-            {
-                if (!paramByName.TryGetValue(spoValue, out spo))
-                    paramByName.Add(spoValue, spo = new TValue { Value = spoValue });
-            }
-            else
-            {
-                if (paramByName.TryGetValue(spoValue, out spo))
-                    return false;
-                paramByName.Add(spoValue, spo = new TValue());
-                return true;
-            }
-            return false;
-        }
+        private readonly SparqlChainParametred sparqlChainParametred;
 
         #endregion
 

@@ -13,7 +13,7 @@ namespace CommonRDF
         public void Run()
         {
             Query query = null;
-            var text = File.ReadAllText(@"..\..\query.txt");
+            var text = File.ReadAllText(@"..\..\query.rq");
 
             Perfomance.ComputeTime(() =>
                 //@"..\..\query.txt"
@@ -23,7 +23,7 @@ namespace CommonRDF
 
             Perfomance.ComputeTime(()=>query.Match(), "run query ", true);
 
-            if (query.SelectParameters.Count == 0)
+            if (query.SelectParameters.Length == 0)
                 query.OutputParamsAll(@"..\..\Output.txt");
             else
                 query.OutputParamsBySelect(@"..\..\Output.txt");
