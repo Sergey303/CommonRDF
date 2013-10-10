@@ -13,9 +13,12 @@ where { filter (?person=piu_200809051791 ||
 ?s ns:in-org ?inorg. 
 ?s a ns:participation.
 ?inorg ns:name ?orgname. 
-optional {?s ns:from-date ?fd}
-optional {?s ns:to-date ?td} 
 optional {?s ns:role ?ro} 
-filter (( bound(?fd) && bound(?td)) && ?td- ?fd => 10)
+optional 
+	{
+?s ns:from-date ?fd  .
+?s ns:to-date ?td.
+filter (?td- ?fd => 10)
+	} 
 filter ( lang(?personName)=?personNameLang)
 filter ( !langMatches(?personNameLang, "*") || langMatches(?personNameLang, "ru") )}

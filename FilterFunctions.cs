@@ -8,16 +8,16 @@ namespace CommonRDF
 {
     internal static class FilterFunctions
     {
-        internal static void AndOrExpression(this SparqlChainParametred sparqlChain, string s, bool isNot = false)
+        internal static void AndOrExpression(this SparqlChainParametred sparqlChain, string s, bool isOptionals, bool isNot = false)
         {
             Match m;
             if ((m = Reg.ManyNotAllInBrackets.Match(s)).Success)
-                AndOrExpression(sparqlChain, m.Groups["insideOneNot"].Value, !isNot);
+                AndOrExpression(sparqlChain, m.Groups["insideOneNot"].Value, isOptionals, !isNot);
             if ((m = Reg.InsideBrackets.Match(s)).Success)
-                AndOrExpression(sparqlChain, m.Groups["inside"].Value, !isNot);
+                AndOrExpression(sparqlChain, m.Groups["inside"].Value, isOptionals, !isNot);
             if ((m = Reg.AndOr.Match(s)).Success)
                 if (m.Groups["not"].Value != string.Empty)
-                    AndOrExpression(sparqlChain, m.Groups["not"].Value, !isNot);
+                    AndOrExpression(sparqlChain, m.Groups["not"].Value, isOptionals, !isNot);
                 else
                 {
                     var left = m.Groups["insideLeft"].Value;
@@ -28,11 +28,11 @@ namespace CommonRDF
                         right = m.Groups["right"].Value;
 
                     if ((!isNot) && (m.Groups["center"].Value == "||") || (isNot && (m.Groups["center"].Value == "&&")))
-                        sparqlChain.Add(new FilterOr(left, right, sparqlChain, isNot));
+                        sparqlChain.Add(new FilterOr(left, right, sparqlChain, isNot, isOptionals));
                     else //if ((m.Groups["center"].Value == "&&") || (isNot && (m.Groups["center"].Value == "||"))) //&&
                     {
-                        AndOrExpression(sparqlChain, left, isNot);
-                        AndOrExpression(sparqlChain, right, isNot);
+                        AndOrExpression(sparqlChain, left, isOptionals, isNot);
+                        AndOrExpression(sparqlChain, right, isOptionals, isNot);
                     }
 
                 }
@@ -44,16 +44,18 @@ namespace CommonRDF
                     isNot = !isNot;
                     s = m.Groups["insideOneNot"].Value;
                 }
-                AtomPredicate(sparqlChain, s, isNot);
+                AtomPredicate(sparqlChain, s, isNot, isOptionals);
             }
         }
 
-        private static void AtomPredicate(SparqlChainParametred sparqlChain, string s, bool isNot)
+        private static void AtomPredicate(SparqlChainParametred sparqlChain, string s, bool isNot, bool isOptional)
         {
             var m = Reg.RegSameTerm.Match(s);
             var localParameters = new List<FilterParameterInfo>();
             bool isArithmetic = false;
             if (m.Success)
+            {
+                if (isOptional) throw new Exception("optional filter just for math expressions");
                 if (isNot)
                 {
                     var left = GetParameterOrStringOrMath(sparqlChain, m.Groups[1].Value.Trim(), localParameters, ref isArithmetic);
@@ -63,9 +65,10 @@ namespace CommonRDF
                         localParameters, sparqlChain);
                 }
                 else
-                    EqualOrAssign(sparqlChain, m.Groups[1].Value, m.Groups[2].Value);
+                    EqualOrAssign(sparqlChain, m.Groups[1].Value, m.Groups[2].Value);}
             else if ((m = Reg.Bound.Match(s)).Success)
             {
+                if (isOptional) throw new Exception("optional filter just for math expressions");
                 var parameter = GetParameterOrCreate(sparqlChain, m.Groups[1].Value, localParameters);
                 var getValueFromParameter = Expression.Field(parameter.Parameter, typeof (TValue).GetField("Value"));
                 if (!parameter.IsAssigned) throw new ArgumentNullException(m.Groups[1].Value);
@@ -77,6 +80,7 @@ namespace CommonRDF
             }
             else if ((m = Reg.LangMatches.Match(s)).Success)
             {
+                if(isOptional) throw new Exception("optional filter just for math expressions");
                 var langValue = m.Groups[1].Value.Trim();
                 if (m.Groups[2].Value == "*" || m.Groups[2].Value == "\"*\"")
                 {
@@ -109,7 +113,7 @@ namespace CommonRDF
                 var equalityType = m.Groups[2].Value;
                 if (equalityType == "=" && !isNot)
                 {
-                    EqualOrAssign(sparqlChain, m.Groups[1].Value, m.Groups[3].Value);
+                    EqualOrAssign(sparqlChain, m.Groups[1].Value, m.Groups[3].Value, isOptional);
                     return;
                 }
                 Expression expression = Expression.MakeBinary(equalityType.Length > 1
@@ -125,7 +129,11 @@ namespace CommonRDF
                             : ExpressionType.Equal),
                   sparqlChain.GetDoubleArithmeticOrConst(m.Groups[1].Value, localParameters),
                     sparqlChain.GetDoubleArithmeticOrConst(m.Groups[3].Value, localParameters));
-                CreateSelectsNewParameters(new FilterTestDoubles(
+                CreateSelectsNewParameters(isOptional 
+                    ? (FilterTest) 
+                  new FilterTestDoublesOptional(isNot ? Expression.Not(expression) : expression
+                        , localParameters)
+                : new FilterTestDoubles(
                     isNot ? Expression.Not(expression) : expression
                     , localParameters), localParameters, sparqlChain);
             }
@@ -283,7 +291,7 @@ namespace CommonRDF
             return existing;
         }
 
-        private static void EqualOrAssign(this SparqlChainParametred sparqlChain, string left, string right)
+        private static void EqualOrAssign(this SparqlChainParametred sparqlChain, string left, string right, bool isOptional=false)
         {
             bool isLeftParameter = left.StartsWith("?"), isRightParameter = right.StartsWith("?");
             var localParameters = new List<FilterParameterInfo>();
@@ -302,21 +310,23 @@ namespace CommonRDF
                         leftExpr = sparqlChain.GetDoubleArithmeticOrConst(left, localParameters);
                     isArithmetic = isArithmeticSecond;
                 }
+                if (!isArithmetic && isOptional) throw new Exception("optional filter just for math expressions");
                 CreateSelectsNewParameters(isArithmetic
-                    ? new FilterTestDoubles(Expression.Equal(leftExpr, rightExpr), localParameters)
+                    ? isOptional ? (FilterTest) new FilterTestDoublesOptional(Expression.Equal(leftExpr, rightExpr), localParameters)
+                                 : new FilterTestDoubles(Expression.Equal(leftExpr, rightExpr), localParameters)
                     : new FilterTest(Expression.Equal(leftExpr, rightExpr), localParameters),
                     localParameters, sparqlChain);
                 return;
             }
             if (!isLeftParameter) // right parameter
             {
-                EqualOrAssignWithOneSideParameter(sparqlChain, left, right, localParameters);
+                EqualOrAssignWithOneSideParameter(sparqlChain, left, right, localParameters, isOptional);
                 return;
             }
 
             if (!isRightParameter) //left parameter
             {
-                EqualOrAssignWithOneSideParameter(sparqlChain, right, left, localParameters);
+                EqualOrAssignWithOneSideParameter(sparqlChain, right, left, localParameters, isOptional);
                 return;
             }
             //теперь знаем, то слева параметер, можем его создать/использовать
@@ -356,7 +366,7 @@ namespace CommonRDF
             sparqlChain.Add(new FilterAssign(paramLeftInfo.Value, paramRightInfo.Value));
         }
 
-        private static void EqualOrAssignWithOneSideParameter(this SparqlChainParametred sparqlChain, string unparameterSide, string paramOneSide, List<FilterParameterInfo> localParameters)
+        private static void EqualOrAssignWithOneSideParameter(this SparqlChainParametred sparqlChain, string unparameterSide, string paramOneSide, List<FilterParameterInfo> localParameters, bool isOptional)
         {
             var leftParameters = new List<FilterParameterInfo>();
             bool isArithmetic = false;
@@ -364,8 +374,12 @@ namespace CommonRDF
             FilterParameterInfo paramOneSideInfo = sparqlChain.GetParameterOrCreate(paramOneSide, localParameters);
             if (paramOneSideInfo.IsAssigned)
             {
+                if(!isArithmetic && isOptional) throw new Exception("optional filter just for math expressions");
                 CreateSelectsNewParameters(isArithmetic
-                    ? new FilterTestDoubles(Expression.Equal(leftExpression,
+                    ? isOptional ? (FilterTest) new FilterTestDoublesOptional(Expression.Equal(leftExpression,
+                        Expression.Field(paramOneSideInfo.Parameter, typeof(TValue).GetField("DoubleValue"))),
+                        localParameters) 
+                    : new FilterTestDoubles(Expression.Equal(leftExpression,
                         Expression.Field(paramOneSideInfo.Parameter, typeof (TValue).GetField("DoubleValue"))),
                         localParameters)
                     : new FilterTest(Expression.Equal(leftExpression,

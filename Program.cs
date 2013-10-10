@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace CommonRDF
@@ -48,6 +49,7 @@ namespace CommonRDF
           
             //gr.Test();
           //  MethodExpressionsExperiments();
+            //RegexTestManymatches();
         }
 
         private static void MethodExpressionsExperiments()
@@ -62,6 +64,77 @@ namespace CommonRDF
             string p = "1.0";
             Console.WriteLine(fExpres.Compile().DynamicInvoke(p));
             Console.WriteLine(p);
+        }
+
+        public static void RegexTest()
+        {
+            Regex r1 = new Regex("(?<s>(?>^[^<>]*?(((?'Open'<)[^<>]*?)+?((?'Close-Open'>)[^<>]*?)+?)*?(?(Open)(?!))$))");
+            Regex r2 = new Regex("(?<s>^[^<>]*?(((?'Open'<)[^<>]*?)+?((?'Close-Open'>)[^<>]*?)+?)*?(?(Open)(?!))$)");
+            Regex r3 = new Regex("(?<s>^[^<>]*(((?'Open'<)[^<>]*)+((?'Close-Open'>)[^<>]*)+)*(?(Open)(?!))$)");
+            Regex r4 = new Regex("(?<s>(?>^[^<>]*(((?'Open'<)[^<>]*)+((?'Close-Open'>)[^<>]*)+)*(?(Open)(?!))$))");
+            var s =
+                @"optional { filter (?person=piu_20080<9051791 || 				?person=""svet_100616111408_10844"" || (?person=""pavl_100531115859_2020""||                ?person=""pavl_100531115859_6952"")|| ?person=""svet_100616111408_10864""|| ?person=""w20090506_svetlana_5727"" || ?person=""piu_200809051742"")  ?person http://fogid.net/o/name ?personName. ?s http://fogid.net/o/participant ?person. ?s http://fogid.net/o/in-org ?inorg. <?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> http://fogid.net/o/participation. ?inorg http://fogid.net/o/name ?orgname. optional {?s http://fogid.net/o/from-date ?fd}optional {?s http://fogid.net/o/to-date ?td} optional {?s http://fogid.net/o/role ?ro} filter (( bound(?fd) && bound(?td)) && - ?fd + ?td => -(- 1*10+50/10))filter ( lang(?personName)=?personNameLang)filter ( !langMatches(?personNameLang, ""*"") || langMatches(?personNameLang, ""ru"") || langMatches(lang(?personName), ""ru-ru"") >|| langMatches(lang(?personName), ""RU"")|| langMatches(lang(?personName), ""RU-ru""))}<<<<>>>>";
+            for (int i = 0; i < 10; i++)
+            {
+                s += s;
+            }
+            var sl = s.Length;
+            GetValue(r1, s, "r4");
+
+        }
+
+        private static void GetValue(Regex r1, string s, string mesage)
+        {
+            Perfomance.ComputeTime(() =>
+            {
+                var m1 = r1.Match(s);
+                if (m1.Success)
+                {
+                    var ss = m1.Groups["s"].Value;
+                    var ssl = ss.Length;
+                }
+            }, mesage, true);
+        }
+
+        public static void RegexTestManymatches()
+        {
+            Regex QuerySelect = new Regex(@"^\s*(\?(?<p>\S*)\s*)*$");
+            string s = @"?personName ?fd ?td tttttttttttt ?orgname ?rom ";
+            //while (s.Length<1000000)
+            //{
+            //    s += s;
+            //}
+            //var t = s.Length;
+            //Perfomance.ComputeTime(() =>
+            //{
+            //    int i =0;
+            //    foreach (var cap in QuerySelect.Match(s).Groups["p"].Captures)
+            //    {
+            //        i++;
+            //    }
+            //    var ii=i;
+            //},"captures ", true);
+
+            //Regex qs2 = new Regex(@"^\s*\?(?<p>\S*)");
+            //string sc = s.Clone() as string;
+            //Perfomance.ComputeTime(() =>
+            //{
+            //    Match m;
+            //    int i = 0;
+            //    while ((m = qs2.Match(sc)).Success)
+            //    {
+            //        var cap = m.Groups["p"].Value;
+            //        i++;
+            //        sc = sc.Remove(0, m.Length);
+            //    }
+            //    int ii = i;
+            //}, "while remove by one ", true);
+            Regex qs3 = new Regex(@"\G\s*\?\S*");
+            int iii = 0;
+            Perfomance.ComputeTime(() => qs3.Replace(s, (m) => 
+            { var cap = m.Value;
+                iii++;
+                return string.Empty; }), "replace ", true);
         }
     }
 }

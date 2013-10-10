@@ -52,11 +52,11 @@ namespace CommonRDF
         private readonly SparqlChainParametred first;
         private readonly SparqlChainParametred second;
 
-        public FilterOr(string first, string second, SparqlChainParametred sparqlChainRoot, bool isNot)
+        public FilterOr(string first, string second, SparqlChainParametred sparqlChainRoot, bool isNot, bool isOptionals)
         {
             //запомним какие параметры уже были
             var copy = new Dictionary<string, TValue>(sparqlChainRoot.valuesByName);
-            (this.first = new SparqlChainParametred(sparqlChainRoot)).AndOrExpression(first, isNot);
+            (this.first = new SparqlChainParametred(sparqlChainRoot)).AndOrExpression(first, isOptionals, isNot);
             // с помощью копии узнаём какие параметры были добавлены в первой ветви.
             var newParametersInLeft = sparqlChainRoot.valuesByName.Where(p => !copy.ContainsKey(p.Key)).ToList();
             foreach (var parameter in newParametersInLeft)
@@ -65,7 +65,7 @@ namespace CommonRDF
                 parameter.Value.Value = "hasParellellValue";
             }
             //новые параметры в одной ветви будут новыми и во второй
-            (this.second = new SparqlChainParametred(sparqlChainRoot)).AndOrExpression(second, isNot);
+            (this.second = new SparqlChainParametred(sparqlChainRoot)).AndOrExpression(second, isOptionals, isNot);
             //обе цепи ведут к следующему после этого звену.
             
             //каждое условие - ветвь = цепь, в случае успеха вызовет свой послендний NextMatch
@@ -177,7 +177,6 @@ namespace CommonRDF
             return (bool)Method.DynamicInvoke(AllParameters) && NextMatch();
         }
     }
-
     internal class FilterTestDoubles : FilterTest
     {
         public FilterTestDoubles(Expression equalExpression, List<FilterParameterInfo> parameters)
@@ -188,6 +187,18 @@ namespace CommonRDF
         public override bool Match()
         {
             return AllParameters.All(t => (t as TValue).IsDouble) && base.Match();
+        }
+    }
+    internal class FilterTestDoublesOptional : FilterTest
+    {
+        public FilterTestDoublesOptional(Expression equalExpression, List<FilterParameterInfo> parameters)
+            : base(equalExpression, parameters)
+        {
+        }
+
+        public override bool Match()
+        {
+            return (!AllParameters.All(t => (t as TValue).IsDouble) && NextMatch()) || base.Match();
         }
     }
 

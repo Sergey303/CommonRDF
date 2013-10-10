@@ -78,7 +78,7 @@ namespace CommonRDF
         public abstract bool Match();
         public Func<bool> NextMatch;
 
-        public SparqlBase()
+        protected SparqlBase()
         {
             
         }

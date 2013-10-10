@@ -26,3 +26,44 @@ read query  478ticks
 run query  370ticks
 read query  476ticks
 run query  206ticks
+read query  467ticks
+run query  185ticks
+
+
+r1 497ticks
+r2 476ticks
+r2 452ticks
+r2 447ticks
+r1 492ticks
+r1 458ticks
+r3 36ticks
+r3 31ticks
+r3 33ticks
+r4 36ticks
+r4 36ticks
+r4 35ticks
+r4 30ticks
+r4 486ticks
+
+captures  101ticks
+while remove by one  1067 60ticks
+replace  87ticks
+captures  98ticks
+while remove by one  1065 46ticks
+replace  85ticks
+replace  10756ticks
+
+read query  66ticks
+run query  206ticks
+read query  64ticks
+run query  162ticks
+read query  58ticks
+run query  167ticks
+
+
+ optional filter
+
+read query  57ticks
+run query  162ticks
+read query  58ticks
+run query  159ticks

@@ -67,6 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Comments.txt" />
+    <Content Include="Output.txt" />
     <Content Include="Perfomance.txt" />
     <Content Include="query Organizations and events in which participated Andrey Ershov.txt" />
     <None Include="query.rq" />

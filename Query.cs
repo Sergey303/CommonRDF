@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace CommonRDF
 {
-    internal partial class Query : SparqlChainParametred
+    internal class Query : SparqlChainParametred
     {
         public GraphBase Gr;
        // public List<QueryTripletOptional> Optionals;
@@ -28,14 +27,11 @@ namespace CommonRDF
 
         public Query(string sparqlString, GraphBase graph)
         {
-            Match prefixMatch;
-            while ((prefixMatch = Reg.QueryPrefix.Match(sparqlString)).Success)
+            sparqlString = Reg.QueryPrefix.Replace(sparqlString, prefixMatch =>
             {
-                var prefix = prefixMatch.Groups[1].Value;
-                var value = prefixMatch.Groups[2].Value;
-                prefixes.Add(prefix, value);
-                sparqlString = sparqlString.Remove(0, prefixMatch.Length);
-            }
+                prefixes.Add(prefixMatch.Groups[1].Value, prefixMatch.Groups[2].Value);
+                return string.Empty;
+            });
 
             var selectMatch = Reg.QuerySelect.Match(sparqlString);
             if (selectMatch.Success)
@@ -51,53 +47,62 @@ namespace CommonRDF
             var whereMatch = Reg.QueryWhere.Match(sparqlString);
             if (whereMatch.Success)
             {
-                string triplets = whereMatch.Groups["insideWhere"].Value;
+                
                 SparqlTriplet.Gr = Gr = graph;
-                while (triplets!=string.Empty)
-                {
-                    Match tripletMatch;
-                    if ((tripletMatch = Reg.Triplet.Match(triplets)).Success)
-                        CreateTriplet(tripletMatch.Groups[1].Value.Trim(),
-                            tripletMatch.Groups[2].Value.Trim(),
-                            tripletMatch.Groups[3].Value.Trim(), false);
-                    else if ((tripletMatch = Reg.TripletOptional.Match(triplets)).Success)
-                        CreateTriplet(tripletMatch.Groups[1].Value.Trim(),
-                            tripletMatch.Groups[2].Value.Trim(),
-                            tripletMatch.Groups[3].Value.Trim(), true);
-                    else if ((tripletMatch=Reg.Filter.Match(triplets)).Success)
-                    {
-                        var filter = tripletMatch.Groups["filter"].Value;
-                        var filterType = tripletMatch.Groups[1].Value.ToLower();
-                        if (filterType == "regex")
-                        {
-                            var newFilter = new SparqlFilterRegex(filter);
-                            if (!valuesByName.TryGetValue(newFilter.ParameterName, out newFilter.Parameter))
-                            {
-                                valuesByName.Add(newFilter.ParameterName, newFilter.Parameter = new TValue());
-                                throw new NotImplementedException("new parameter in fiter regex");
-                            }
-                            Add(newFilter);
-                        }
-                        else // common filter
-                        {
-                          this.AndOrExpression(filter);
-                        }
-                    }
-                    else throw new Exception("strange query triplet: " + tripletMatch.Value);
-                    triplets=triplets.Remove(0, tripletMatch.Length);
-                }
+                ParseWherePattern(whereMatch.Groups["insideWhere"].Value, false);
                 NextMatch = Last;
             }
-          //  sparqlString = sparqlString.Replace(whereMatch.Groups[0].Value, "");
-            //QueryTriplet.Gr = Gr;
-            //QueryTriplet.Match = Match;
-            //QueryTripletOptional.Gr = Gr;
-            //QueryTripletOptional.MatchOptional = MatchOptional;
             parameters = valuesByName.Values.Where(v => v.Value == string.Empty).ToArray();
             ParametersNames = valuesByName.Where(v => v.Value.Value == string.Empty).Select(kv => kv.Key).ToArray();
         }
 
-     
+        private void ParseWherePattern(string input, bool isOptionals)
+        {
+            while (!string.IsNullOrWhiteSpace(input))
+            {
+                Match m;
+                if ((m = Reg.Triplet.Match(input)).Success)
+                {
+                    CreateTriplet(m.Groups[1].Value, m.Groups[2].Value, m.Groups[3].Value, isOptionals);
+                    return;
+                }
+                input = Reg.TripletDot.Replace(input, m1 =>
+                {
+                    int count = m1.Groups[1].Captures.Count;
+                    for (int i = 0; i < count; i++)
+                        CreateTriplet(m1.Groups[2].Captures[i].Value, m1.Groups[3].Captures[i].Value,
+                            m1.Groups[4].Captures[i].Value, isOptionals);
+                    return string.Empty;
+                });
+                if (!isOptionals) //optional insidde opional
+                    input = Reg.TripletOptional.Replace(input, m1 =>
+                    {
+                        ParseWherePattern(m1.Groups["inside"].Value, true);
+                        return string.Empty;
+                    });
+                input = Reg.Filter.Replace(input, m1 =>
+                {
+                    var filter = m1.Groups["filter"].Value;
+                    var filterType = m1.Groups[1].Value.ToLower();
+                    if (filterType == "regex")
+                    {
+                        var newFilter = new SparqlFilterRegex(filter);
+                        if (!valuesByName.TryGetValue(newFilter.ParameterName, out newFilter.Parameter))
+                        {
+                            valuesByName.Add(newFilter.ParameterName, newFilter.Parameter = new TValue());
+                            throw new NotImplementedException("new parameter in filter regex");
+                        }
+                        Add(newFilter);
+                    }
+                    else // common filter
+                    {
+                        this.AndOrExpression(filter, isOptionals, false);
+                    }
+                    return string.Empty;
+                });
+            }
+        }
+
 
         private void CreateTriplet(string sValue, string pValue, string oValue, bool isOptional)
         {
