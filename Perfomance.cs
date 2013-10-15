@@ -13,16 +13,17 @@ namespace CommonRDF
         /// </summary>
         /// <param name="action">тестируемый метод</param>
         /// <param name="mesage"></param>
-        public static void ComputeTime(this Action action, string mesage)
+        /// <param name="outputFile">if true, write result at file</param>
+        public static void ComputeTime(this Action action, string mesage, bool outputFile = false)
         {
             timer.Restart();
             action.Invoke();
             timer.Stop();
-//            using (StreamWriter file = new StreamWriter(@"F:\projects\CommonRDF\Perfomance.txt", true))
-//            {
-////  Console.WriteLine("{0} {1}", 
-                            Console.WriteLine("{0} {1}ticks", mesage, timer.Elapsed.Ticks/10000L );
-//            }
+            if (!outputFile)
+                Console.WriteLine("{0} {1}ticks", mesage, timer.Elapsed.Ticks);
+            else
+                using (StreamWriter file = new StreamWriter(@"F:\projects\CommonRDF\Perfomance.txt", true))
+                    file.WriteLine("{0} {1}ticks", mesage, timer.Elapsed.Ticks/10000L);
         }
     }
 }

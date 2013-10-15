@@ -1,0 +1,24 @@
+﻿PREFIX ns:    <http://fogid.net/o/>
+prefix rdfs: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+select ?personName ?fd ?td ?orgname ?ro
+where { filter (?person=piu_200809051791 || 
+				?person=ns:svet_100616111408_10844 ||
+                (?person=ns:pavl_100531115859_2020||                
+                ?person=pavl_100531115859_6952)||
+                ?person="svet_100616111408_10864"||
+                ?person="w20090506_svetlana_5727" ||
+                ?person="piu_200809051742") 
+?person ns:name ?personName.
+?s ns:participant ?person.
+?s ns:in-org ?inorg. 
+?s a ns:participation.
+?inorg ns:name ?orgname. 
+optional {?s ns:role ?ro} 
+optional 
+	{
+?s ns:from-date ?fd  .
+?s ns:to-date ?td.
+filter (?td- ?fd => 10)
+	} 
+filter ( lang(?personName)=?personNameLang)
+filter ( !langMatches(?personNameLang, "*") || langMatches(?personNameLang, "ru") )}

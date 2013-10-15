@@ -1,107 +1,69 @@
-﻿cells initiated duration= 2
-After LoadQuads(). duration= 14378
- 185
-cells initiated duration= 3
-After LoadQuads(). duration= 14628
- 263
-cells initiated duration= 2
-After LoadQuads(). duration= 14386
- 186
-cells initiated duration= 2
-After LoadQuads(). duration= 14253
- 191
-cells initiated duration= 2
-After LoadQuads(). duration= 14736
- 217
-cells initiated duration= 2
-After LoadQuads(). duration= 14796
- 183
-cells initiated duration= 2
-After LoadQuads(). duration= 14548
- 3
-cells initiated duration= 3
-After LoadQuads(). duration= 14467
- 3
-cells initiated duration= 6
-After LoadQuads(). duration= 15027
- 15
-cells initiated duration= 2
-After LoadQuads(). duration= 14514
- 30
-cells initiated duration= 2
-After LoadQuads(). duration= 14503
- 28
-cells initiated duration= 3
-After LoadQuads(). duration= 14660
- 186
-cells initiated duration= 2
-After LoadQuads(). duration= 14487
- 187
-cells initiated duration= 2
-After LoadQuads(). duration= 15146
- 181
-cells initiated duration= 2
-After LoadQuads(). duration= 14283
- 179
-cells initiated duration= 2
-After LoadQuads(). duration= 14099
- 181
-cells initiated duration= 2
-After LoadQuads(). duration= 14507
- 243
-cells initiated duration= 2
-After LoadQuads(). duration= 14683
- 184
-cells initiated duration= 2ms 2ticks
-After LoadQuads(). duration= 15146ms 15146ticks
- 191ms 191ticks
-cells initiated duration= 2ms 2ticks
-After LoadQuads(). duration= 15076ms 15076ticks
- 537ms 537ticks
-cells initiated duration= 2ms 2ticks
-After LoadQuads(). duration= 14698ms 14698ticks
- 181ms 181ticks
-cells initiated duration= 2ms 2ticks
-After LoadQuads(). duration= 14471ms 14471ticks
- 29ms 29ticks
-cells initiated duration= 3ms 3ticks
-After LoadQuads(). duration= 14240ms 14240ticks
- 24ms 24ticks
-cells initiated duration= 2ms 2ticks
-After LoadQuads(). duration= 14432ms 14432ticks
- 90ms 90ticks
-cells initiated duration= 2ms 2ticks
-cells initiated duration= 2ms 2ticks
-cells initiated duration= 3ms 3ticks
-After LoadQuads(). duration= 14559ms 14559ticks
-cells initiated duration= 5ms 5ticks
-After LoadQuads(). duration= 14649ms 14649ticks
-cells initiated duration= 2ms 2ticks
-After LoadQuads(). duration= 14439ms 14439ticks
-cells initiated duration= 3ms 3ticks
-After LoadQuads(). duration= 14495ms 14495ticks
-cells initiated duration= 2ms 2ticks
-After LoadQuads(). duration= 14698ms 14698ticks
- mag test piu_200809051791  223274ms 223274ticks
- mag test svet_100616111408_10844  3ms 3ticks
- mag test pavl_100531115859_2020  5ms 5ticks
- mag test pavl_100531115859_6952  6ms 6ticks
- mag test svet_100616111408_10864  41ms 41ticks
- mag test w20090506_svetlana_5727  9ms 9ticks
- mag test piu_200809051742  10ms 10ticks
- 10ms 10ticks
-cells initiated duration= 3ms 3ticks
-After LoadQuads(). duration= 12991ms 12991ticks
- mag test piu_200809051791  75ms 75ticks
- mag test svet_100616111408_10844  11ms 11ticks
- mag test pavl_100531115859_2020  13ms 13ticks
- mag test pavl_100531115859_6952  15ms 15ticks
- mag test svet_100616111408_10864  125ms 125ticks
- mag test w20090506_svetlana_5727  26ms 26ticks
- mag test piu_200809051742  18ms 18ticks
- 18ms 18ticks
-cells initiated duration= 3ms 3ticks
-After LoadQuads(). duration= 14457ms 14457ticks
- mag test piu_200809051791  72ms 72ticks
- 72ms 72ticks
-cells initiated duration= 2ms 2ticks
+﻿read query  1734ticks
+run query  175ticks
+read query  1733ticks
+run query  175ticks
+read query  450ticks
+run query  181ticks
+read query  426ticks
+run query  178ticks
+read query  450ticks
+run query  181ticks
+read query  412ticks
+run query  179ticks
+read query  449ticks
+run query  177ticks
+read query  414ticks
+run query  183ticks
+read query  412ticks
+run query  178ticks
+read query  460ticks
+run query  178ticks
+read query  450ticks
+run query  175ticks
+read query  423ticks
+run query  183ticks
+read query  478ticks
+run query  370ticks
+read query  476ticks
+run query  206ticks
+read query  467ticks
+run query  185ticks
+
+
+r1 497ticks
+r2 476ticks
+r2 452ticks
+r2 447ticks
+r1 492ticks
+r1 458ticks
+r3 36ticks
+r3 31ticks
+r3 33ticks
+r4 36ticks
+r4 36ticks
+r4 35ticks
+r4 30ticks
+r4 486ticks
+
+captures  101ticks
+while remove by one  1067 60ticks
+replace  87ticks
+captures  98ticks
+while remove by one  1065 46ticks
+replace  85ticks
+replace  10756ticks
+
+read query  66ticks
+run query  206ticks
+read query  64ticks
+run query  162ticks
+read query  58ticks
+run query  167ticks
+
+
+ optional filter
+
+read query  57ticks
+run query  162ticks
+read query  58ticks
+run query  159ticks

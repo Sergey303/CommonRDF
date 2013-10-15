@@ -4,201 +4,174 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using sema2012m;
 
 namespace CommonRDF
 {
-    internal class Query
+    internal class Query : SparqlChainParametred
     {
-        public static Regex QuerySelectReg = new Regex(@"select\s+(?<selectGroups>((\?\w+\s+)+|\*))",
-            RegexOptions.Compiled);
-
-        public static Regex QueryWhereReg = new Regex(@"where\s+\{(?<whereGroups>([^{}]*\{[^{}]*\}[^{}]*)*|[^{}]*)\}",
-            RegexOptions.Compiled);
-
-        public static Regex TripletsReg = new Regex(
-            @"((?<s>[^\s]+|'.*')\s+(?<p>[^\s]+|'.*')\s+(?<o>[^\s]+|'.*')\.(\s|$))|optional\s+{\s*(?<os>[^\s]+|'.*')\s+(?<op>[^\s]+|'.*')\s+(?<oo>[^\s]+|'.*')\s*}(\s|$)"
-            );
-
-        public List<string> FiterList;
         public GraphBase Gr;
-        public List<QueryTripletOptional> Optionals;
+       // public List<QueryTripletOptional> Optionals;
         // public TValue[] Parameters;
         public string[] ParametersNames;
         private readonly TValue[] parameters;
         public TValue[] ParametersWithMultiValues;
-        public List<string> SelectParameters;
-        private readonly List<QueryTriplet> triplets;
-        public readonly List<string[]> ParametrsValuesList;
+        public readonly string[] SelectParameters = new string[0];
+        public readonly List<string[]> ParametrsValuesList = new List<string[]>();
+
 
         #region Read
 
-        public Query(string filePath, GraphBase graph)
+        public Query(StreamReader stream, GraphBase graph):this(stream.ReadToEnd(), graph)
         {
-           // ParametrsValuesList = new List<string[]>();
-           //// Gr = graph;
-           // SelectParameters = new List<string>();
-           // //   var parameterTests = new Dictionary<TValue, List<QueryTriplet>>();
-           // // var parametesWithMultiValues = new HashSet<TValue>();
-           // triplets = new List<QueryTriplet>();
-           // Optionals = new List<QueryTripletOptional>();
-            //var paramByName = new Dictionary<string, TValue>();
-            //var optParamHasValues = new HashSet<string>();
-            //var constsByValue = new Dictionary<string, TValue>();
-            using (var f = new StreamReader(filePath))
-            {
-                var qs = f.ReadToEnd();
-                var selectMatch = QuerySelectReg.Match(qs);
-                if (selectMatch.Success)
-                {
-                    string parameters2Select = selectMatch.Groups["selectGroups"].Value.Trim();
-                    if (parameters2Select != "*")
-                        SelectParameters =
-                            parameters2Select.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).ToList();
-                }
-                var whereMatch = QueryWhereReg.Match(qs);
-                if (whereMatch.Success)
-                {
-                    string tripletsGroup = whereMatch.Groups["whereGroups"].Value;
-                    foreach (Match tripletMatch in TripletsReg.Matches(tripletsGroup))
-                    {
-                        //var sMatch = tripletMatch.Groups["s"];
-                        //string pValue;
-                        //bool isOptional = false, isData;
-                        //string oValue;
-                        //if (sMatch.Success)
-                        //{
-                        //    pValue = tripletMatch.Groups["p"].Value;
-                        //    oValue = tripletMatch.Groups["o"].Value;
-
-                        //}
-                        //else if ((sMatch = tripletMatch.Groups["os"]).Success)
-                        //{
-                        //    pValue = tripletMatch.Groups["op"].Value;
-                        //    oValue = tripletMatch.Groups["oo"].Value;
-                        //    isOptional = true;
-                        //}
-                        //else throw new Exception("strange query triplet: " + tripletMatch.Value);
-
-                       
-                     //   TValue s, p, o;
-                     ////   string sValue = sMatch.Value.TrimStart('<').TrimEnd('>');
-                     //   bool isNewS = TestParameter("",
-                     //       out s, constsByValue, paramByName);
-                     //   bool isNewP = TestParameter("",
-                     //       out p, constsByValue, paramByName);
-                     //   bool isNewO = TestParameter("", out o, constsByValue, paramByName);
-
-                        //s.SetTargetType(true);
-                        //if (isData1)
-                        //{
-                        //    o.SetTargetType(false);
-                        //    p.SetTargetType(false);
-                        //}
-                        //else if (!isNewO)
-                        //{
-                        //    o.SetTargetType(true);
-                        //    p.SetTargetType(true);
-                        //}
-                        //else
-                        //{
-                        //    if (p.IsObj != null)
-                        //        o.SetTargetType(p.IsObj.Value);
-                        //    else if (o.IsObj !=null)
-                        //        p.SetTargetType(o.IsObj.Value);
-                        //    else //both unkown
-                        //    {
-                        //        p.SubscribeIsObjSetted(o);
-                        //        o.SubscribeIsObjSetted(p);
-                        //    }
-                        //}
-                        //if (isOptional)
-                        //    Optionals.Add(new QueryTripletOptional(isNewS, isNewP, isNewO,
-                        //        s, p, o,
-                        //        HasOpt(isNewS, optParamHasValues, sValue),
-                        //        HasOpt(isNewP, optParamHasValues, pValue1),
-                        //        HasOpt(isNewO, optParamHasValues, oValue1)));
-                        //else
-                        //    triplets.Add(new QueryTriplet(isNewS, isNewP, isNewO,
-                        //        s, p, o));
-                    }
-                }
-            }
-            //QueryTriplet.Gr = Gr;
-            //QueryTriplet.Match = Match;
-            //QueryTripletOptional.Gr = Gr;
-            //QueryTripletOptional.MatchOptional = MatchOptional;
-            //parameters = paramByName.Values.ToArray();
-            //ParametersNames = paramByName.Keys.ToArray();
         }
 
-        private static bool HasOpt(bool isNew, HashSet<string> optParamHasValues, string spoValue)
+        public Query(string sparqlString, GraphBase graph)
         {
-            bool hasOptS;
-            if (isNew)
+            sparqlString = Reg.QueryPrefix.Replace(sparqlString, prefixMatch =>
             {
-                hasOptS = false;
-                optParamHasValues.Add(spoValue);
+                prefixes.Add(prefixMatch.Groups[1].Value, prefixMatch.Groups[2].Value);
+                return string.Empty;
+            });
+
+            var selectMatch = Reg.QuerySelect.Match(sparqlString);
+            if (selectMatch.Success)
+                if (selectMatch.Groups[1].Value != "*")
+                {
+                    CaptureCollection captureCollection = selectMatch.Groups["p"].Captures;
+                    SelectParameters = new string[captureCollection.Count];
+                    for (int i = 0; i < SelectParameters.Length; i++)
+                        SelectParameters[i] = captureCollection[i].Value;
+                    sparqlString = sparqlString.Remove(0, selectMatch.Length);
+                }
+
+            var whereMatch = Reg.QueryWhere.Match(sparqlString);
+            if (whereMatch.Success)
+            {
+                
+                SparqlTriplet.Gr = Gr = graph;
+                ParseWherePattern(whereMatch.Groups["insideWhere"].Value, false);
+                NextMatch = Last;
+            }
+            parameters = valuesByName.Values.Where(v => v.Value == string.Empty).ToArray();
+            ParametersNames = valuesByName.Where(v => v.Value.Value == string.Empty).Select(kv => kv.Key).ToArray();
+        }
+
+        private void ParseWherePattern(string input, bool isOptionals)
+        {
+            while (!string.IsNullOrWhiteSpace(input))
+            {
+                Match m;
+                if ((m = Reg.Triplet.Match(input)).Success)
+                {
+                    CreateTriplet(m.Groups[1].Value, m.Groups[2].Value, m.Groups[3].Value, isOptionals);
+                    return;
+                }
+                input = Reg.TripletDot.Replace(input, m1 =>
+                {
+                    int count = m1.Groups[1].Captures.Count;
+                    for (int i = 0; i < count; i++)
+                        CreateTriplet(m1.Groups[2].Captures[i].Value, m1.Groups[3].Captures[i].Value,
+                            m1.Groups[4].Captures[i].Value, isOptionals);
+                    return string.Empty;
+                });
+                if (!isOptionals) //optional insidde opional
+                    input = Reg.TripletOptional.Replace(input, m1 =>
+                    {
+                        ParseWherePattern(m1.Groups["inside"].Value, true);
+                        return string.Empty;
+                    });
+                input = Reg.Filter.Replace(input, m1 =>
+                {
+                    var filter = m1.Groups["filter"].Value;
+                    var filterType = m1.Groups[1].Value.ToLower();
+                    if (filterType == "regex")
+                    {
+                        var newFilter = new SparqlFilterRegex(filter);
+                        if (!valuesByName.TryGetValue(newFilter.ParameterName, out newFilter.Parameter))
+                        {
+                            valuesByName.Add(newFilter.ParameterName, newFilter.Parameter = new TValue());
+                            throw new NotImplementedException("new parameter in filter regex");
+                        }
+                        Add(newFilter);
+                    }
+                    else // common filter
+                    {
+                        this.AndOrExpression(filter, isOptionals, false);
+                    }
+                    return string.Empty;
+                });
+            }
+        }
+
+
+        private void CreateTriplet(string sValue, string pValue, string oValue, bool isOptional)
+        {
+            bool isData=true;
+            TValue s, p, o;
+            if (pValue == "a") pValue = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+            bool isNewS = TestParameter(ReplaceNamespacePrefix(sValue), out s);
+            bool isNewP = TestParameter(ReplaceNamespacePrefix(pValue), out p);
+            bool isNewO = TestParameter(TestDataConst(oValue, ref isData), out o);
+
+            s.SetTargetType(true);
+            if (isData)
+            {
+                o.SetTargetType(false);
+                p.SetTargetType(false);
+            }
+            else if (!isNewO)
+            {
+                o.SetTargetType(true);
+                p.SetTargetType(true);
             }
             else
-                hasOptS = optParamHasValues.Contains(spoValue);
-            return hasOptS;
+                p.SyncIsObjectRole(o);
+            if (!isNewP)
+                if (!isNewS)
+                    if (!isNewO)
+                        if (isOptional) return;
+                        else Add(new SampleTriplet(s, p, o));
+                    else if (isOptional) Add(new SelectObjectOprtional(s, p, o));
+                    else Add(new SelectObject(s, p, o));
+                else if (!isNewO)
+                    Add(isOptional
+                        ? new SelectSubjectOpional(s, p, o)
+                        : new SelectSubject(s, p, o));
+                else if (isOptional) Add(new SelectAllSubjectsOptional(s), new SelectObjectOprtional(s, p, o));
+                else Add(new SelectAllSubjects(s), new SelectObject(s, p, o));
+            else if (!isNewS)
+            {
+                if (!isNewO) Add( new SelectPredicate(s, p, o));
+                else
+                {
+                    //Action = SelectPredicateObject;
+                }
+            }
+            else if (!isNewO)
+            {
+                //Action = SelectPredicateSubject;
+            }
+            else
+            {
+                //Action = SelectAll;
+            }
         }
 
-        private static bool TestParameter(string spoValue, out TValue spo,
-            Dictionary<string, TValue> constsByValue, Dictionary<string, TValue> paramByName)
-        {
-            //if (!spoValue.StartsWith("?"))
-            //{
-            //    if (!constsByValue.TryGetValue(spoValue, out spo))
-            //        constsByValue.Add(spoValue, spo = new TValue {Value = spoValue});
-            //}
-            //else
-            //{
-            //    if (paramByName.TryGetValue(spoValue, out spo))
-            //        return false;
-            //    paramByName.Add(spoValue, spo = new TValue());
-            //    return true;
-            //}
-            spo = null;
-            return false;
-        }
+        private readonly SparqlChainParametred sparqlChainParametred;
 
         #endregion
 
 
         #region Run
 
-        public void Run()
+        
+
+
+        private bool Last()
         {
-            Match(0);
+            ParametrsValuesList.Add(parameters.Select(par => par.Value).ToArray());
+            return true;
         }
-
-
-        private void Match(int i)
-        {
-            if (i == triplets.Count)
-            {
-                MatchOptional(0);
-                return;
-            }
-            triplets[i].Action(i + 1);
-        }
-
-       
-
-
-        private void MatchOptional(int i)
-        {
-            if (i == Optionals.Count)
-                ParametrsValuesList.Add(parameters.Select(par => par.Value).ToArray());
-            else
-            {
-             Optionals[i].Action(i+1);
-            }
-        }
-
-       
 
         #endregion
         

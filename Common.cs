@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 
 namespace CommonRDF
 {
@@ -93,5 +94,15 @@ namespace CommonRDF
         public int firstunknown;
         public TVariable subject, predicate, obj;
         public bool option = false;
+    }
+
+    public class FilterRegex : Sample
+    {
+        public readonly Regex RegularExpression;
+
+        public FilterRegex(Regex regularExpression)
+        {
+            this.RegularExpression = regularExpression;
+        }
     }
 }
