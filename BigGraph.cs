@@ -86,11 +86,11 @@ namespace CommonRDF
             buffer.Se();
             buffer.EndSerialFlow();
             graphPxCell = new PxCell(TreePType, graphPath, false);
-            graphPxCell.Fill2(createTreeCell.Root.Get().Value);
+            graphPxCell.Fill2(createTreeCell.Root.Get());
 
             foreach (var node in graphPxCell.Root.Elements())
             {
-                var id = node.Field(3).Get().Value as string;
+                var id = node.Field(3).Get() as string;
                 if (offsetById.ContainsKey(id)) offsetById[id] = node.offset;
                 else offsetById.Add(id,  node.offset);
             }
@@ -108,7 +108,7 @@ namespace CommonRDF
                             .Field(1)
                             .Elements()))
                 {
-                    var id = (string) idOffsetEntry.Field(0).Get().Value;
+                    var id = (string) idOffsetEntry.Field(0).Get();
                     long offsetSubId = 0;
                     if (!offsetById.TryGetValue(id, out offsetSubId)) continue;
                     idOffsetEntry.Field(1).Set(offsetSubId);
@@ -183,11 +183,11 @@ namespace CommonRDF
             if (found.offset == -1 || found.IsEmpty) return Enumerable.Empty<string>();
             int hashCode = predicate.GetHashCode();
             return found.Field(2).Elements()
-                .Where(pRec => (int)pRec.Field(0).Get().Value==hashCode)
+                .Where(pRec => (int)pRec.Field(0).Get()==hashCode)
                 .Select(pRec =>
                     pRec.Field(1)
                         .Elements()
-                        .Select(offEn => (string)offEn.Field(0).Get().Value))
+                        .Select(offEn => (string)offEn.Field(0).Get()))
                 .SelectMany(resultsGroup => resultsGroup);
         }
 
@@ -201,9 +201,9 @@ namespace CommonRDF
                         .Elements()
                         .Select(
                             offEn =>
-                                new PredicateDataTriple(GetPredicateByHash((long)pRec.Field(0).Get().Value),
-                                    (string)offEn.Field(0).Get().Value,
-                                    (string)offEn.Field(1).Get().Value)))
+                                new PredicateDataTriple(GetPredicateByHash((long)pRec.Field(0).Get()),
+                                    (string)offEn.Field(0).Get(),
+                                    (string)offEn.Field(1).Get())))
                 .SelectMany(resultsGroup => resultsGroup);
         }
         string GetPredicateByHash(long hash)
@@ -218,15 +218,15 @@ namespace CommonRDF
             IEnumerable<PxEntry> pxEntries = found.Field(direction).Elements();
             if (predicateSC != null)
                 pxEntries = pxEntries
-                    .Where(pRec => (int) pRec.Field(0).Get().Value == predicateSC.Value);
+                    .Where(pRec => (int) pRec.Field(0).Get() == predicateSC.Value);
             return pxEntries
                 .Select(pRec =>
                     pRec.Field(1)
                         .Elements()
                         .Select(
                             offEn =>
-                                new GraphTripletsTree.IdNodeInfo((string) offEn.Field(0).Get().Value,
-                                    (long) offEn.Field(1).Get().Value)))
+                                new GraphTripletsTree.IdNodeInfo((string) offEn.Field(0).Get(),
+                                    (long) offEn.Field(1).Get())))
                 .SelectMany(resultsGroup => resultsGroup);
             // Еще отбраковка tri => tri.p == predicate 
         }
@@ -237,16 +237,16 @@ namespace CommonRDF
             int e_hs = id.GetHashCode();
             PxEntry found = indexesCell.Root.BinarySearchFirst(element =>
             {
-                int v = (int)element.Field(0).Get().Value;
+                int v = (int)element.Field(0).Get();
                 return v < e_hs ? -1 : (v == e_hs ? 0 : 1);
             });
             if (found.Typ == null) return -1;
             var idOffsetEntry =
                 found.Field(1)
                     .Elements()
-                    .FirstOrDefault(idOffsetEn => (string) idOffsetEn.Field(0).Get().Value == id);
+                    .FirstOrDefault(idOffsetEn => (string) idOffsetEn.Field(0).Get() == id);
             if (idOffsetEntry.Typ == null) return -1;
-            long offestById = (long)idOffsetEntry.Field(1).Get().Value;
+            long offestById = (long)idOffsetEntry.Field(1).Get();
             idInfoCache.Add(id, offestById);
             return offestById;
         }
@@ -273,7 +273,7 @@ namespace CommonRDF
             var ar = indexesCell.Root.Elements()
                 .Select(element => 
                     element.Field(1).Elements()
-                                    .Select(f => f.Field(0).Get().Value)
+                                    .Select(f => f.Field(0).Get())
                                     .ToArray());
             
 

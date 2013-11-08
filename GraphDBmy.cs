@@ -37,11 +37,11 @@ namespace CommonRDF
         {
             string id = "w20070417_5_8436";
             //string id = "piu_200809051791";
-            var qu = cell.Root.BinarySearchFirst(ent => - id.CompareTo(ent.Field(0).Get().Value));
+            var qu = cell.Root.BinarySearchFirst(ent => - id.CompareTo(ent.Field(0).Get()));
             if (qu.IsEmpty) Console.WriteLine("no entry");
             else
             {
-                var valu = qu.Get();
+                var valu = qu.GetValue();
                 Console.WriteLine(valu.Type.Interpret(valu.Value));
             }
         }

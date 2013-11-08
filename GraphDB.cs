@@ -150,11 +150,11 @@ namespace CommonRDF
         {
           string id = "w20070417_5_8436";
             //string id = "piu_200809051791";
-            var qu = pxGraph.Root.BinarySearchFirst(ent => - id.CompareTo(ent.Field(0).Get().Value));
+            var qu = pxGraph.Root.BinarySearchFirst(ent => - id.CompareTo(ent.Field(0).Get()));
             if (qu.IsEmpty) Console.WriteLine("no entry");
             else
             {
-                var valu = qu.Get();
+                var valu = qu.GetValue();
                 Console.WriteLine(valu.Type.Interpret(valu.Value));
             }
         //    string ss = "марч";
@@ -199,9 +199,9 @@ namespace CommonRDF
 
         private IEnumerable<T> GetProperties<T>(string id, int direction, Func<string,Func<string,T>> selector)
         {
-            var qu = pxGraph.Root.BinarySearchFirst(ent => -id.CompareTo(ent.Field(0).Get().Value));
+            var qu = pxGraph.Root.BinarySearchFirst(ent => -id.CompareTo(ent.Field(0).Get()));
             if (qu.IsEmpty) return Enumerable.Empty<T>();
-            return ((object[])((object[])qu.Get().Value)[direction])
+            return ((object[])((object[])qu.Get())[direction])
                 .Cast<object[]>()
                 .SelectMany(axe => ((object[]) axe[1]).Cast<string>().Select(selector((string) axe[0])));
         }
@@ -217,9 +217,9 @@ namespace CommonRDF
 
         private IEnumerable<string> GetProperties(string id, string predicate, int direction)
         {
-            var qu = pxGraph.Root.BinarySearchFirst(ent => -id.CompareTo(ent.Field(0).Get().Value));
+            var qu = pxGraph.Root.BinarySearchFirst(ent => -id.CompareTo(ent.Field(0).Get()));
             if (qu.IsEmpty) return Enumerable.Empty<string>();
-            var axe = ((object[]) ((object[]) qu.Get().Value)[direction])
+            var axe = ((object[]) ((object[]) qu.Get())[direction])
                 .Cast<object[]>()
                 .FirstOrDefault(axe1 => (string) axe1[0] == predicate);
             return axe == null ? Enumerable.Empty<string>() : ((object[])axe[1]).Cast<string>();
@@ -237,11 +237,11 @@ namespace CommonRDF
         }
         public override void GetItembyId(string id)
         {
-            var qu = pxGraph.Root.BinarySearchFirst(ent => -id.CompareTo(ent.Field(0).Get().Value));
+            var qu = pxGraph.Root.BinarySearchFirst(ent => -id.CompareTo(ent.Field(0).Get()));
             if (qu.IsEmpty) Console.WriteLine("no entry");
             else
             {
-                var valu = qu.Get();
+                var valu = qu.GetValue();
                 Console.WriteLine(valu.Type.Interpret(valu.Value));
             }
         }

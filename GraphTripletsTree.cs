@@ -97,8 +97,8 @@ namespace CommonRDF
 
             // произвести объектное представление
             {
-                graph_x.Fill2(graph_a.Root.Get().Value);
-                n4_x.Fill2(n4.Root.Get().Value);
+                graph_x.Fill2(graph_a.Root.Get());
+                n4_x.Fill2(n4.Root.Get());
             }
 
             // ========= Завершение загрузки =========
@@ -128,7 +128,7 @@ namespace CommonRDF
 
             bool firsttime = true;
             bool firstprop = true;
-            foreach (object[] el in quads.Root.Elements().Select(e => e.Value))
+            foreach (object[] el in quads.Root.Elements().Select(e => e.Get()))
             {
                 var record = new GraphTripletsTree.FourFields((int)el[0], (int)el[1], (int)el[2], (long)el[3]);
                 if (firsttime || record.e_hs != hs_e)
@@ -333,7 +333,7 @@ namespace CommonRDF
             quads.S();
             foreach (var tri in triplets.Root.Elements())
             {
-                object[] tri_uni = (object[])tri.Value;
+                object[] tri_uni = (object[])tri.Get();
                 int tag = (int)tri_uni[0];
                 object[] rec = (object[])tri_uni[1];
                 int hs_s = rec[0].GetHashCode();
@@ -341,12 +341,12 @@ namespace CommonRDF
                 if (tag == 1) // объектое свойство
                 {
                     int hs_o = rec[2].GetHashCode();
-                    quads.V(new object[] { hs_s, 0, hs_p, tri.Offset });
-                    quads.V(new object[] { hs_o, 1, hs_p, tri.Offset });
+                    quads.V(new object[] { hs_s, 0, hs_p, tri.offset });
+                    quads.V(new object[] { hs_o, 1, hs_p, tri.offset });
                 }
                 else // поле данных
                 {
-                    quads.V(new object[] { hs_s, 2, hs_p, tri.Offset });
+                    quads.V(new object[] { hs_s, 2, hs_p, tri.offset });
                     if ((string)rec[1] != ONames.p_name) continue;
                     // Поместим информацию в таблицу имен n4
                     string name = (string)rec[2];
@@ -431,7 +431,7 @@ namespace CommonRDF
             int e_hs = id.GetHashCode();
             PxEntry found = graph_x.Root.BinarySearchFirst(element =>
             {
-                int v = (int)element.Field(0).Get().Value;
+                int v = (int)element.Field(0).Get();
                 return v < e_hs ? -1 : (v == e_hs ? 0 : 1);
             });
             return found;
@@ -448,9 +448,9 @@ namespace CommonRDF
         {
             var ent = GetEntryById(id);
             if (ent.IsEmpty) return null;
-            object[] directset = (object[])ent.Field(1).Get().Value;
-            object[] inverseset = showinverse ? (object[])ent.Field(2).Get().Value : null;
-            object[] dataset = (object[])ent.Field(3).Get().Value;
+            object[] directset = (object[])ent.Field(1).Get();
+            object[] inverseset = showinverse ? (object[])ent.Field(2).Get() : null;
+            object[] dataset = (object[])ent.Field(3).Get();
             XElement result = new XElement("record", new XAttribute("id", id));
             foreach (object[] predseq in dataset)
             {
@@ -506,11 +506,11 @@ namespace CommonRDF
                         if (first.Typ == null || !first.Field(1).Elements().Any())
                             continue;
                         yield return
-                            ((OProp)Triplet.Create(GetTriplet((long)first.Field(1).Elements().First().Get().Value))).o
+                            ((OProp)Triplet.Create(GetTriplet((long)first.Field(1).Elements().First().Get()))).o
                             ;
                     }
                 }
-                yield return Triplet.Create(GetTriplet((long)first.Field(1).Elements().First().Get().Value)).s;
+                yield return Triplet.Create(GetTriplet((long)first.Field(1).Elements().First().Get())).s;
             }
         }
         public struct IdNodeInfo
@@ -538,10 +538,10 @@ namespace CommonRDF
                         if (first.Typ == null || !first.Field(1).Elements().Any())
                             continue;
                         yield return
-                           new IdNodeInfo(((OProp)Triplet.Create(GetTriplet((long)first.Field(1).Elements().First().Get().Value))).o, pxe.Get().Offset);
+                           new IdNodeInfo(((OProp)Triplet.Create(GetTriplet((long)first.Field(1).Elements().First().Get()))).o, pxe.GetValue().Offset);
                     }
                 }
-                yield return new IdNodeInfo(Triplet.Create(GetTriplet((long)first.Field(1).Elements().First().Get().Value)).s, pxe.Get().Offset);
+                yield return new IdNodeInfo(Triplet.Create(GetTriplet((long)first.Field(1).Elements().First().Get())).s, pxe.GetValue().Offset);
             }
         }
         public override IEnumerable<PredicateEntityPair> GetDirect(string id, object nodeInfo = null)
@@ -573,12 +573,12 @@ namespace CommonRDF
             IEnumerable<PxEntry> pxEntries = found.Field(direction).Elements();
             if (predicateSC != null)
                 pxEntries = pxEntries
-                    .Where(pRec => (int)pRec.Field(0).Get().Value == predicateSC.Value);
+                    .Where(pRec => (int)pRec.Field(0).Get() == predicateSC.Value);
             return pxEntries
                 .Select(pRec =>
                     pRec.Field(1)
                         .Elements()
-                        .Select(offEn => offEn.Get().Value)
+                        .Select(offEn => offEn.Get())
                         .Cast<long>()
                         .Select(GetTriplet)
                         .Select(Triplet.Create))
@@ -592,7 +592,7 @@ namespace CommonRDF
         internal object GetTriplet(long offTtripl)
         {
             any_triplet.offset = offTtripl;
-            return any_triplet.Get().Value;
+            return any_triplet.Get();
         }
 
         public override IEnumerable<string> GetDirect(string id, string predicate, object nodeInfo = null)
