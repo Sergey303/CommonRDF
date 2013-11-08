@@ -11,23 +11,23 @@ namespace CommonRDF
         internal static void AndOrExpression(this SparqlChainParametred sparqlChain, string s, bool isOptionals, bool isNot = false)
         {
             Match m;
-            if ((m = Reg.ManyNotAllInBrackets.Match(s)).Success)
+            if (s.StartsWith("!") && (m = Reg.ManyNotAllInBrackets.Match(s)).Success)
                 AndOrExpression(sparqlChain, m.Groups["insideOneNot"].Value, isOptionals, !isNot);
-            if ((m = Reg.InsideBrackets.Match(s)).Success)
+            if (s.StartsWith("("))
+            {
+                s = s.TrimEnd();
+                if(s.EndsWith(")") && (m = Reg.InsideBrackets.Match(s)).Success)
                 AndOrExpression(sparqlChain, m.Groups["inside"].Value, isOptionals, !isNot);
-            if ((m = Reg.AndOr.Match(s)).Success)
-                if (m.Groups["not"].Value != string.Empty)
-                    AndOrExpression(sparqlChain, m.Groups["not"].Value, isOptionals, !isNot);
-                else
-                {
-                    var left = m.Groups["insideLeft"].Value;
-                    if (left == string.Empty)
-                        left = m.Groups["left"].Value;
-                    var right = m.Groups["insideRight"].Value;
-                    if (right == string.Empty)
-                        right = m.Groups["right"].Value;
+            }
+           //if ((m = Reg.AndOr.Match(s)).Success)
 
-                    if ((!isNot) && (m.Groups["center"].Value == "||") || (isNot && (m.Groups["center"].Value == "&&")))
+            var leftAndOr = Reg.AndOr.Split(s);
+            if(leftAndOr.Length>1)
+                {
+                    var left = leftAndOr[leftAndOr.Length-3];
+                    var right = leftAndOr[leftAndOr.Length-1];
+                    var center = leftAndOr[leftAndOr.Length - 2];
+                    if ((!isNot) && (center.StartsWith("||")) || (isNot && (center.StartsWith("&&"))))
                         sparqlChain.Add(new FilterOr(left, right, sparqlChain, isNot, isOptionals));
                     else //if ((m.Groups["center"].Value == "&&") || (isNot && (m.Groups["center"].Value == "||"))) //&&
                     {
@@ -39,6 +39,7 @@ namespace CommonRDF
             else
             {
                 //todo must be if and recursive?
+                if(s.StartsWith("!"))
                 while ((m = Reg.ManyNotAtom.Match(s)).Success)
                 {
                     isNot = !isNot;

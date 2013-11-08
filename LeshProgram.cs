@@ -8,6 +8,7 @@ namespace CommonRDF
         public LeshProgram(GraphBase gr)
         {
             this.gr = gr;
+            
         }
 
         public void Run()

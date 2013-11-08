@@ -51,8 +51,8 @@ namespace CommonRDF
                     throw new Exception("to object sets data");
                 else return;
             IsObject = value;
-            if(whenObjSetted!=null)
-                whenObjSetted(value);
+            //if(whenObjSetted!=null)
+            //    whenObjSetted(value);
         }
 
         public void SubscribeIsObjSetted(TValue connect)

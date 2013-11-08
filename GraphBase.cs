@@ -44,16 +44,18 @@ namespace CommonRDF
         public abstract IEnumerable<string> GetData(string id, string predicate, object nodeInfo = null);
         public abstract IEnumerable<DataLangPair> GetDataLangPairs(string id, string predicate, object nodeInfo = null);
         public abstract void GetItembyId(string id);
-        public abstract void Test();
+        public abstract void  Test();
         public abstract string[] SearchByName(string ss);
 
-        public static Regex LangRegex = new Regex("^(.*)@([^@]{1,5})$", RegexOptions.Compiled);
+        public static Regex LangRegex = new Regex("@([^@]{1,5})$");
         public static DataLangPair SplitLang(string dataLang)
         {
-            var m = LangRegex.Match(dataLang);
-            return m.Success
-                ? new DataLangPair(m.Groups[0].Value, m.Groups[1].Value) //TODO Test
-                :new DataLangPair(dataLang, null);
+            string lang = null;
+           return new DataLangPair(LangRegex.Replace(dataLang, match =>
+           {
+               lang = match.Groups[1].Value;
+               return string.Empty;
+           }), lang);
         }
 
         #region Object Node InputMethods

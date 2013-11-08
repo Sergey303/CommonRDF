@@ -20,10 +20,10 @@ namespace CommonRDF
             action.Invoke();
             timer.Stop();
             if (!outputFile)
-                Console.WriteLine("{0} {1}ticks", mesage, timer.Elapsed.Ticks);
+                Console.WriteLine("{0} {1}ms", mesage, timer.Elapsed.TotalMilliseconds);
             else
                 using (StreamWriter file = new StreamWriter(@"F:\projects\CommonRDF\Perfomance.txt", true))
-                    file.WriteLine("{0} {1}ticks", mesage, timer.Elapsed.Ticks/10000L);
+                    file.WriteLine("{0} {1}ms", mesage, timer.Elapsed.TotalMilliseconds);
         }
     }
 }

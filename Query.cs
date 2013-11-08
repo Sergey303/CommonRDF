@@ -27,27 +27,31 @@ namespace CommonRDF
 
         public Query(string sparqlString, GraphBase graph)
         {
+            sparqlString = sparqlString.Trim();
             sparqlString = Reg.QueryPrefix.Replace(sparqlString, prefixMatch =>
             {
                 prefixes.Add(prefixMatch.Groups[1].Value, prefixMatch.Groups[2].Value);
                 return string.Empty;
             });
-
-            var selectMatch = Reg.QuerySelect.Match(sparqlString);
-            if (selectMatch.Success)
+            
+            CaptureCollection captureCollection=null;
+      sparqlString =  Reg.QuerySelect.Replace(sparqlString.TrimStart(), selectMatch =>
+            {
                 if (selectMatch.Groups[1].Value != "*")
-                {
-                    CaptureCollection captureCollection = selectMatch.Groups["p"].Captures;
-                    SelectParameters = new string[captureCollection.Count];
-                    for (int i = 0; i < SelectParameters.Length; i++)
-                        SelectParameters[i] = captureCollection[i].Value;
-                    sparqlString = sparqlString.Remove(0, selectMatch.Length);
-                }
+                    captureCollection = selectMatch.Groups["p"].Captures;
+                return string.Empty;
+            }
+                );
+            if (captureCollection != null)
+            {
+                SelectParameters = new string[captureCollection.Count];
+                for (int i = 0; i < SelectParameters.Length; i++)
+                    SelectParameters[i] = captureCollection[i].Value;
+            }
 
             var whereMatch = Reg.QueryWhere.Match(sparqlString);
             if (whereMatch.Success)
             {
-                
                 SparqlTriplet.Gr = Gr = graph;
                 ParseWherePattern(whereMatch.Groups["insideWhere"].Value, false);
                 NextMatch = Last;
@@ -82,11 +86,9 @@ namespace CommonRDF
                     });
                 input = Reg.Filter.Replace(input, m1 =>
                 {
-                    var filter = m1.Groups["filter"].Value;
-                    var filterType = m1.Groups[1].Value.ToLower();
-                    if (filterType == "regex")
+                    if (m1.Groups[1].Value.ToLower() == "regex")
                     {
-                        var newFilter = new SparqlFilterRegex(filter);
+                        var newFilter = new SparqlFilterRegex(m1.Groups["filter"].Value);
                         if (!valuesByName.TryGetValue(newFilter.ParameterName, out newFilter.Parameter))
                         {
                             valuesByName.Add(newFilter.ParameterName, newFilter.Parameter = new TValue());
@@ -95,9 +97,7 @@ namespace CommonRDF
                         Add(newFilter);
                     }
                     else // common filter
-                    {
-                        this.AndOrExpression(filter, isOptionals, false);
-                    }
+                        this.AndOrExpression(m1.Groups["filter"].Value, isOptionals);
                     return string.Empty;
                 });
             }
@@ -124,8 +124,8 @@ namespace CommonRDF
                 o.SetTargetType(true);
                 p.SetTargetType(true);
             }
-            else
-                p.SyncIsObjectRole(o);
+            //else
+            //    p.SyncIsObjectRole(o);
             if (!isNewP)
                 if (!isNewS)
                     if (!isNewO)

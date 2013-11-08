@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BigGraph.cs" />
     <Compile Include="Common.cs" />
     <Compile Include="Filters.cs" />
     <Compile Include="FilterFunctions.cs" />
@@ -64,6 +65,7 @@
     <Compile Include="SimpleSparql.cs" />
     <Compile Include="SparqlChainParametred.cs" />
     <Compile Include="TValue.cs" />
+    <Compile Include="BigGraphTreeIndex.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Comments.txt" />
@@ -79,6 +81,10 @@
     <Folder Include="DataFreebase\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\BinaryTree\BinaryTree.csproj">
+      <Project>{d59475f5-a3e2-4f90-a5ce-6b1617a344e4}</Project>
+      <Name>BinaryTree</Name>
+    </ProjectReference>
     <ProjectReference Include="C:\Users\Sergey\Source\Repos\PolarDB\PolarDB.csproj">
       <Project>{907bb4af-fbc9-4a1e-8f80-194af9337aa4}</Project>
       <Name>PolarDB</Name>
