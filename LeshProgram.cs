@@ -1,33 +1,59 @@
 ﻿using System.IO;
+using System.Linq;
 
 namespace CommonRDF
 {
-    class LeshProgram
+    internal class LeshProgram
     {
         private readonly GraphBase gr;
+
         public LeshProgram(GraphBase gr)
         {
             this.gr = gr;
-            
+
         }
 
         public void Run()
         {
-            Query query = null;
-            var text = File.ReadAllText(@"..\..\query.rq");
-
-            Perfomance.ComputeTime(() =>
-                //@"..\..\query.txt"
+           // Perfomance.ComputeTime(RunQueries, "first query first run", true);
+            foreach (  var file in new DirectoryInfo(@"..\..\\sparql data\queries").GetFiles())
             {
-                query = new Query(text, gr);
-            }, "read query ", true);
+                Perfomance.ComputeTime(() =>
+                {
+                    Query q = new Query(File.ReadAllText(file.FullName), gr);
+                    q.Match();
+                    var result = q.Results;
+                },file.Name, true);
+            }
+            //Perfomance.ComputeTime(() =>
+            //{
+            //    for (int i = 0; i < 1000; i++)
+            //    {
+            //        runQueries();
+            //    }
+            //}, "1000 runs of first query", true);
+        }
 
-            Perfomance.ComputeTime(()=>query.Match(), "run query ", true);
-
-            if (query.SelectParameters.Length == 0)
-                query.OutputParamsAll(@"..\..\Output.txt");
-            else
-                query.OutputParamsBySelect(@"..\..\Output.txt");
+        private void RunQueries()
+        {
+            var queries = new DirectoryInfo(@"..\..\\sparql data\queries").GetFiles()
+                .Select(path =>
+                {
+                    //if(Path.GetExtension(path).ToLower()!=".rq") continue;"*.rq"
+                    var text = File.ReadAllText(path.FullName);
+                    Query query = null;
+                 //   Perfomance.ComputeTime(() =>
+                    {
+                         query = new Query(text, gr);
+                    } //, "read query ", true);
+                    return new {query, path};
+                })
+                .ToArray();
+            foreach (var qp in queries)
+            {
+                qp.query.Match();
+                qp.query.Output(Path.ChangeExtension(qp.path.FullName.Replace("queries","results"), ".txt"));
+            }
         }
     }
 }

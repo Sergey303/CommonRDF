@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,13 +13,15 @@ namespace CommonRDF
         public GraphBase Gr;
        // public List<QueryTripletOptional> Optionals;
         // public TValue[] Parameters;
-        public string[] ParametersNames;
-        private readonly TValue[] parameters;
-        public TValue[] ParametersWithMultiValues;
-        public readonly string[] SelectParameters = new string[0];
-        public readonly List<string[]> ParametrsValuesList = new List<string[]>();
-
-
+        public readonly string[] ParametersNames;
+      public readonly string[] SelectParameters;
+        public readonly List<Dictionary<string, string>> ParametrsValuesList = new List<Dictionary<string, string>>();
+        private int limit = -1, offset = -1;
+        private Delegate orderBy;
+        private string[] results;
+        private readonly StartNode start;
+        private readonly bool describe;
+        private readonly List<Func<Dictionary<string, string>, string>> construct;
         #region Read
 
         public Query(StreamReader stream, GraphBase graph):this(stream.ReadToEnd(), graph)
@@ -27,149 +30,211 @@ namespace CommonRDF
 
         public Query(string sparqlString, GraphBase graph)
         {
-            sparqlString = sparqlString.Trim();
-            sparqlString = Reg.QueryPrefix.Replace(sparqlString, prefixMatch =>
+             
+            sparqlString = sparqlString.TrimStart();
+            var prefixesMatch = Reg.QueryPrefix.Match(sparqlString);
+            for (int i = 0; i < prefixesMatch.Groups["shortName"].Captures.Count; i++)
+                prefixes.Add(prefixesMatch.Groups["shortName"].Captures[i].Value, prefixesMatch.Groups["url"].Captures[i].Value);
+            sparqlString = sparqlString.Remove(0, prefixesMatch.Length).TrimStart();
+            var m = Reg.QuerySelect.Match(sparqlString);
+            if (m.Success)
             {
-                prefixes.Add(prefixMatch.Groups[1].Value, prefixMatch.Groups[2].Value);
-                return string.Empty;
-            });
-            
-            CaptureCollection captureCollection=null;
-      sparqlString =  Reg.QuerySelect.Replace(sparqlString.TrimStart(), selectMatch =>
-            {
-                if (selectMatch.Groups[1].Value != "*")
-                    captureCollection = selectMatch.Groups["p"].Captures;
-                return string.Empty;
-            }
-                );
-            if (captureCollection != null)
-            {
-                SelectParameters = new string[captureCollection.Count];
+                isDistinct = m.Groups["dist"].Success;
+                isReduce = m.Groups["red"].Success;
+                describe = m.Groups["descr"].Success;
+                var captureCollection = m.Groups["p"].Captures;
+                if (!m.Groups["all"].Success)
+                    SelectParameters = new string[captureCollection.Count];
                 for (int i = 0; i < SelectParameters.Length; i++)
                     SelectParameters[i] = captureCollection[i].Value;
+                sparqlString = sparqlString.Remove(0, m.Length).TrimStart();
             }
-
-            var whereMatch = Reg.QueryWhere.Match(sparqlString);
-            if (whereMatch.Success)
+            else if ((m = Reg.QueryConstruct.Match(sparqlString)).Success)
             {
-                SparqlTriplet.Gr = Gr = graph;
-                ParseWherePattern(whereMatch.Groups["insideWhere"].Value, false);
-                NextMatch = Last;
+                construct = new List<Func<Dictionary<string, string>, string>>
+                {
+                    CreateConstructTriplet(m.Groups["firstS"].Value, m.Groups["firstP"].Value, m.Groups["firstO"].Value)
+                };
+
+                for (int i = 0; i < m.Groups["s"].Captures.Count; i++)
+                    construct.Add(CreateConstructTriplet(m.Groups["s"].Captures[i].Value,
+                        m.Groups["p"].Captures[i].Value, m.Groups["o"].Captures[i].Value));
+                sparqlString = sparqlString.Remove(0, m.Length).TrimStart();
             }
-            parameters = valuesByName.Values.Where(v => v.Value == string.Empty).ToArray();
+             m = Reg.QueryWhere.Match(sparqlString);
+            start = new StartNode();
+            if (m.Success)
+            {
+                SparqlNodeBase.Gr = Gr = graph;
+               var ends= ParseWherePattern(start, m.Groups["insideWhere"].Value, false);
+                foreach (var end in ends)
+                    end.NextMatch = Last;
+                sparqlString = sparqlString.Remove(0, m.Length).TrimStart();
+            }
+            if ((m = Reg.OrderClause.Match(sparqlString)).Success)
+            {
+                var orders = new Func<IEnumerable<Dictionary<string, string>>, IEnumerable<Dictionary<string, string>>>[m.Groups["query"].Captures.Count];
+                for (int i = 0; i < m.Groups["query"].Captures.Count; i++)
+                {
+                    var orderExpr = m.Groups["query"].Captures[i].Value;
+                    if (orderExpr.ToLower().StartsWith("desk"))
+                    {
+                        var paramName = orderExpr.Remove(0, 4).Trim();
+                        if (paramName.StartsWith("xsd:double(str("))
+                        {
+                            paramName = paramName.Remove(0, 15).TrimEnd(' ', ')');
+                            orders[i] = enumerable => enumerable.OrderByDescending(dictionary =>
+                            {
+                                double douleValue;
+                                double.TryParse(dictionary[paramName].Replace(".", ","), out douleValue);
+                                return douleValue;
+                            });
+                        }
+                        else
+                        orders[i]=enumerable => enumerable.OrderByDescending(dictionary => dictionary[paramName]);
+                    }
+                    else
+                    {
+                        string paramName = orderExpr.ToLower().StartsWith("ask") ? orderExpr.Remove(0, 3).Trim() : orderExpr.Trim();
+                        if (paramName.StartsWith("xsd:double(str("))
+                        {
+                            paramName = paramName.Remove(0, 15).TrimEnd(' ', ')');
+                            orders[i] = enumerable => enumerable.OrderBy(dictionary =>
+                            {
+                                double douleValue;
+                                double.TryParse(dictionary[paramName].Replace(".", ","), out douleValue);
+                                return douleValue;
+                            });
+                        }
+                        else
+                        orders[i]=enumerable => enumerable.OrderBy(dictionary => dictionary[paramName]);
+                    }
+                }
+                orderBy = Delegate.Combine(orders);
+                sparqlString = sparqlString.Remove(0, m.Length).TrimStart();
+            }
+            sparqlString = sparqlString.ToLower();
+            if ((m = Reg.Offset.Match(sparqlString)).Success && int.TryParse(m.Groups["count"].Value, out offset))
+                sparqlString = sparqlString.Remove(0, m.Length);
+            if ((m = Reg.Limit.Match(sparqlString)).Success && int.TryParse(m.Groups["count"].Value, out limit)){}
+              //  sparqlString = sparqlString.Remove(0, m.Length);
             ParametersNames = valuesByName.Where(v => v.Value.Value == string.Empty).Select(kv => kv.Key).ToArray();
         }
 
-        private void ParseWherePattern(string input, bool isOptionals)
+        private static Func<Dictionary<string, string>, string> CreateConstructTriplet(string s, string p, string o)
         {
-            while (!string.IsNullOrWhiteSpace(input))
+            bool isSParam = s.StartsWith("?");
+            bool isPParam = p.StartsWith("?");
+            bool isSOaram = o.StartsWith("?");
+            Func<Dictionary<string, string>, string> func;
+            if (isSParam)
+                if (isPParam)
+                    if (isSOaram)
+                        func = dictionary => dictionary[s] + " " + dictionary[p] + " " + dictionary[o];
+                    else func = dictionary => dictionary[s] + " " + dictionary[p] + " " + o;
+                else if (isSOaram)
+                    func = dictionary => dictionary[s] + " " + p + " " + dictionary[o];
+                else func = dictionary => dictionary[s] + " " + p + " " + o;
+            else if (isPParam)
+                if (isSOaram)
+                    func = dictionary => s + " " + dictionary[p] + " " + dictionary[o];
+                else func = dictionary => s + " " + dictionary[p] + " " + o;
+            else if (isSOaram)
+                func = dictionary => s + " " + p + " " + dictionary[o];
+            else func = dictionary => s + " " + p + " " + o;
+            return func;
+        }
+
+        protected IEnumerable<SparqlNodeBase>  ParseWherePattern(SparqlNodeBase root, string input, bool isOptionals)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return new [] {root};
+                 Match m = Reg.Filter.Match(input);
+            if (m.Success)
             {
-                Match m;
-                if ((m = Reg.Triplet.Match(input)).Success)
+                input = input.Remove(0, m.Length);
+                string filterType = m.Groups[1].Value.ToLower();
+                if (filterType == "regex")
                 {
-                    CreateTriplet(m.Groups[1].Value, m.Groups[2].Value, m.Groups[3].Value, isOptionals);
-                    return;
-                }
-                input = Reg.TripletDot.Replace(input, m1 =>
-                {
-                    int count = m1.Groups[1].Captures.Count;
-                    for (int i = 0; i < count; i++)
-                        CreateTriplet(m1.Groups[2].Captures[i].Value, m1.Groups[3].Captures[i].Value,
-                            m1.Groups[4].Captures[i].Value, isOptionals);
-                    return string.Empty;
-                });
-                if (!isOptionals) //optional insidde opional
-                    input = Reg.TripletOptional.Replace(input, m1 =>
+                    var newFilter = new SparqlFilterRegex(m.Groups["filter"].Value);
+                    if (!valuesByName.TryGetValue(newFilter.ParameterName, out newFilter.Parameter))
                     {
-                        ParseWherePattern(m1.Groups["inside"].Value, true);
-                        return string.Empty;
-                    });
-                input = Reg.Filter.Replace(input, m1 =>
-                {
-                    if (m1.Groups[1].Value.ToLower() == "regex")
-                    {
-                        var newFilter = new SparqlFilterRegex(m1.Groups["filter"].Value);
-                        if (!valuesByName.TryGetValue(newFilter.ParameterName, out newFilter.Parameter))
-                        {
-                            valuesByName.Add(newFilter.ParameterName, newFilter.Parameter = new TValue());
-                            throw new NotImplementedException("new parameter in filter regex");
-                        }
-                        Add(newFilter);
+                        valuesByName.Add(newFilter.ParameterName, newFilter.Parameter = new SparqlVariable());
+                        throw new NotImplementedException("new parameter in filter regex");
                     }
-                    else // common filter
-                        this.AndOrExpression(m1.Groups["filter"].Value, isOptionals);
-                    return string.Empty;
-                });
-            }
-        }
-
-
-        private void CreateTriplet(string sValue, string pValue, string oValue, bool isOptional)
-        {
-            bool isData=true;
-            TValue s, p, o;
-            if (pValue == "a") pValue = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
-            bool isNewS = TestParameter(ReplaceNamespacePrefix(sValue), out s);
-            bool isNewP = TestParameter(ReplaceNamespacePrefix(pValue), out p);
-            bool isNewO = TestParameter(TestDataConst(oValue, ref isData), out o);
-
-            s.SetTargetType(true);
-            if (isData)
-            {
-                o.SetTargetType(false);
-                p.SetTargetType(false);
-            }
-            else if (!isNewO)
-            {
-                o.SetTargetType(true);
-                p.SetTargetType(true);
-            }
-            //else
-            //    p.SyncIsObjectRole(o);
-            if (!isNewP)
-                if (!isNewS)
-                    if (!isNewO)
-                        if (isOptional) return;
-                        else Add(new SampleTriplet(s, p, o));
-                    else if (isOptional) Add(new SelectObjectOprtional(s, p, o));
-                    else Add(new SelectObject(s, p, o));
-                else if (!isNewO)
-                    Add(isOptional
-                        ? new SelectSubjectOpional(s, p, o)
-                        : new SelectSubject(s, p, o));
-                else if (isOptional) Add(new SelectAllSubjectsOptional(s), new SelectObjectOprtional(s, p, o));
-                else Add(new SelectAllSubjects(s), new SelectObject(s, p, o));
-            else if (!isNewS)
-            {
-                if (!isNewO) Add( new SelectPredicate(s, p, o));
-                else
-                {
-                    //Action = SelectPredicateObject;
+                   root.NextMatch= newFilter.Match;
+                    return ParseWherePattern(newFilter, input, isOptionals);
                 }
+                if (filterType == "langmatches")
+                {
+                    var parametrs = m.Groups["filter"].Value.Split(',');
+                    var next=this.LangMatch(false, isOptionals, parametrs[0].Trim(), parametrs[1].Trim());
+                    root.NextMatch = next.Match;
+                    return ParseWherePattern(next, input, isOptionals);
+                }
+                // common filter
+                    return
+                        this.AndOrExpression(root, m.Groups["filter"].Value, isOptionals, false)
+                            .SelectMany(f => ParseWherePattern(f, input, isOptionals));
             }
-            else if (!isNewO)
-            {
-                //Action = SelectPredicateSubject;
-            }
-            else
-            {
-                //Action = SelectAll;
-            }
-        }
+            if ((m = Reg.Triplet.Match(input)).Success)
 
-        private readonly SparqlChainParametred sparqlChainParametred;
+            {
+                var next = CreateTriplet(root, m.Groups[1].Value, m.Groups[2].Value, m.Groups[3].Value, isOptionals);
+                return new[] {next};
+            }
+            m = Reg.Union.Match(input);
+            if (m.Success)
+            {
+                input = input.Remove(0, m.Length);
+                var left = m.Groups["inside"].Value;
+                var alternatives = m.Groups["insideAlter"].Captures.Cast<Capture>().Select(c => c.Value).ToArray();                
+                var aLternativesChains = new ALternativesChains(left, (s, nodeStartAlter) => ParseWherePattern(nodeStartAlter,s, isOptionals), valuesByName, alternatives);
+               root.NextMatch= aLternativesChains.Match;
+                if (string.IsNullOrWhiteSpace(input)) return aLternativesChains.Ends;
+                return aLternativesChains.Ends.SelectMany(last => ParseWherePattern(last, input, isOptionals));
+            }
+            m = Reg.TripletDot.Match(input);
+            if (m.Success)
+            {
+                input = input.Remove(0, m.Length);
+                SparqlNodeBase next = root;
+                for (int i = 0; i < m.Groups[1].Captures.Count; i++)
+                   next = CreateTriplet(next, m.Groups[2].Captures[i].Value, m.Groups[3].Captures[i].Value, m.Groups[4].Captures[i].Value, isOptionals);
+                return ParseWherePattern(next,input, isOptionals);
+            }
+            // if (!isOptionals) //optional insidde opional
+            m = Reg.TripletOptional.Match(input);
+            if (m.Success)
+            {
+                input = input.Remove(0, m.Length);
+                var copy = new Dictionary<string, SparqlVariable>(valuesByName);
+                var optionalSparqlTriplets = ParseWherePattern(root, m.Groups["inside"].Value, true).Cast<OptionalSparqlTripletBase>().ToList();
+                var newParameters=valuesByName.Where(pair => string.IsNullOrEmpty(pair.Value.Value) && !copy.ContainsKey(pair.Key)).Select(pair => pair.Value).ToArray();
+                foreach (var sparqlNodeBase in optionalSparqlTriplets)
+                    sparqlNodeBase.Parameters = newParameters;
+                return
+                    optionalSparqlTriplets.SelectMany(inside => ParseWherePattern(inside, input, false));
+            }
+
+           
+            return null;
+        }
+        private readonly bool isReduce;
+        private readonly bool isDistinct;
 
         #endregion
 
 
         #region Run
 
-        
-
+        public bool Match()
+        {
+            return start.Match();
+        }
 
         private bool Last()
         {
-            ParametrsValuesList.Add(parameters.Select(par => par.Value).ToArray());
+            ParametrsValuesList.Add(ParametersNames.ToDictionary(pName => pName, pName=>valuesByName[pName].Value));
             return true;
         }
 
@@ -177,35 +242,83 @@ namespace CommonRDF
         
         #region Output in file
 
-        internal void OutputParamsAll(string outPath)
+        public void Output(string outFilePath)
         {
-            using (var io = new StreamWriter(outPath, true))
-                foreach (var parametrsValues in ParametrsValuesList)
-                {
-                    for (int i = 0; i < parametrsValues.Length; i++)
-                    {
-                        io.WriteLine("{0} {1}", ParametersNames[i], parametrsValues[i]);
-                    }
-                    io.WriteLine();
-                }
+            using (var io = new StreamWriter(outFilePath, true, Encoding.UTF8))
+            {
+                io.WriteLine("start");
+                    foreach (var result in Results)
+                        io.WriteLine(result);
+                io.WriteLine("end");
+                io.WriteLine();
+            }
         }
+       
 
-        internal void OutputParamsBySelect(string outPath)
+
+        public string[] Results
         {
-            var parametrsValuesIndexes = ParametersNames
-                .Select((e, i) => new { e, i });
-            using (var io = new StreamWriter(outPath, true, Encoding.UTF8))
-                foreach (var parametrsValues in ParametrsValuesList)
+            get
+            {
+                if (results != null) return results;
+                IEnumerable<string> prepareRresults;
+                IEnumerable<Dictionary<string, string>> orderedParametrsValuesList = orderBy != null
+                    ? (IEnumerable<Dictionary<string, string>>)orderBy.DynamicInvoke(ParametrsValuesList)
+                    : ParametrsValuesList;
+                if (construct != null)
+                    prepareRresults =
+                        orderedParametrsValuesList.SelectMany(dictionary => construct.Select(func => func(dictionary)));
+                else if (describe)
                 {
-                    foreach (var i in SelectParameters
-                        .Select(p => parametrsValuesIndexes.First(e => e.e == p)))
-                    {
-                        io.WriteLine("{0}", parametrsValues[i.i]);
-                    }
-                    io.WriteLine();
+                    if (SelectParameters == null)
+                        prepareRresults = orderedParametrsValuesList.SelectMany(dict =>
+                            dict.Values.SelectMany(s => 
+                            Gr.GetDirect(s)
+                              .Select(pair => s + " " + pair.predicate + " " + pair.entity)
+                              .Concat(Gr.GetData(s)
+                                        .Select(predValLan => s + " " + predValLan.predicate + " " + predValLan.data))
+                              .Concat(Gr.GetInverse(s)
+                                        .Select(predVal => predVal.entity + " " + predVal.predicate + " " + s))));
+                    else
+                        prepareRresults = orderedParametrsValuesList.SelectMany(dict =>
+                            SelectParameters.Select(pName => dict[pName])
+                                .SelectMany(s =>
+                            Gr.GetDirect(s)
+                                    .Select(pair => s + " " + pair.predicate + " " + pair.entity)
+                                    .Concat(Gr.GetData(s)
+                                            .Select(predValLan => s + " " + predValLan.predicate + " " + predValLan.data))
+                                    .Concat(Gr.GetInverse(s)
+                                            .Select(predVal => predVal.entity + " " + predVal.predicate + " " + s))));
+                 
                 }
-        }
+                else
+                {
+                    if (SelectParameters == null)
+                        prepareRresults = orderedParametrsValuesList.Select(par => string.Join(" ", par.Values));
+                    else
+                        prepareRresults =
+                            orderedParametrsValuesList.Select(
+                                dict => string.Join(" ", SelectParameters.Select(pName => dict[pName])));
+                }
 
+                    if (isDistinct)
+                        prepareRresults = prepareRresults.Distinct();
+                    else if (isReduce) //TODO Reduce
+                        prepareRresults = prepareRresults.Distinct();
+              // if(order)
+
+                    //TODO order of limit offset
+                    if (offset != -1)
+                        prepareRresults = prepareRresults.Skip(offset);
+                    if (limit != -1)
+                        prepareRresults = prepareRresults.Take(limit);
+
+                    return results = prepareRresults.ToArray();
+            }
+        }
         #endregion
+
+     
+
     }
 }

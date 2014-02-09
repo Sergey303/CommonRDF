@@ -1,921 +1,299 @@
-﻿read query  1734ticks
-run query  175ticks
-read query  1733ticks
-run query  175ticks
-read query  450ticks
-run query  181ticks
-read query  426ticks
-run query  178ticks
-read query  450ticks
-run query  181ticks
-read query  412ticks
-run query  179ticks
-read query  449ticks
-run query  177ticks
-read query  414ticks
-run query  183ticks
-read query  412ticks
-run query  178ticks
-read query  460ticks
-run query  178ticks
-read query  450ticks
-run query  175ticks
-read query  423ticks
-run query  183ticks
-read query  478ticks
-run query  370ticks
-read query  476ticks
-run query  206ticks
-read query  467ticks
-run query  185ticks
-
-
-r1 497ticks
-r2 476ticks
-r2 452ticks
-r2 447ticks
-r1 492ticks
-r1 458ticks
-r3 36ticks
-r3 31ticks
-r3 33ticks
-r4 36ticks
-r4 36ticks
-r4 35ticks
-r4 30ticks
-r4 486ticks
-
-captures  101ticks
-while remove by one  1067 60ticks
-replace  87ticks
-captures  98ticks
-while remove by one  1065 46ticks
-replace  85ticks
-replace  10756ticks
-
-read query  66ticks
-run query  206ticks
-read query  64ticks
-run query  162ticks
-read query  58ticks
-run query  167ticks
-
-
- optional filter
-
-read query  57ticks
-run query  162ticks
-read query  58ticks
-run query  159ticks
-read query  53ticks
-run query  0ticks
-read query  7ticks
-run query  0ticks
-
-read query  569869ticks
-run query  1613093ticks
-read query  58,5805ms
-run query  163,9727ms
-
-standart data
-read query  56,3185ms
-run query  1499,0603ms
-read query  54,0677ms
-run query  112,3115ms
-read query  54,6647ms
-run query  106,1297ms
-read query  57,7906ms
-run query  109,7557ms
-read query  909,2498ms
-run query  1697,3955ms
-read query  54,2489ms
-run query  107,341ms
-read query  54,2101ms
-run query  107,3068ms
-read query  81,8233ms
-run query  128,0876ms
-read query  2,5725ms
-run query  52,3397ms
-read query  2,0367ms
-run query  48,7346ms
-read query  2,1888ms
-run query  47,4994ms
-read query  57,0477ms
-run query  106,2827ms
-read query  1,9704ms
-run query  46,8256ms
-read query  2,0354ms
-run query  49,2892ms
-read query  2,0898ms
-run query  47,6625ms
-read query  69,1411ms
-run query  116,5035ms
-read query  2,7427ms
-run query  52,8193ms
-read query  2,0576ms
-run query  47,7515ms
-read query  2,0722ms
-run query  45,381ms
-read query  51,6801ms
-run query  72,0196ms
-read query  0,622ms
-run query  12,5916ms
-read query  0,5444ms
-run query  14,4987ms
-read query  0,5768ms
-run query  13,2205ms
-read query  53,5373ms
-run query  81,6834ms
-read query  0,6758ms
-run query  16,3316ms
-read query  0,6827ms
-run query  15,8872ms
-read query  0,5911ms
-run query  15,1991ms
-read query  57,6328ms
-run query  88,25ms
-read query  0,5822ms
-run query  14,7375ms
-read query  0,5806ms
-run query  15,6706ms
-read query  0,5794ms
-run query  16,7424ms
-read query  50,3667ms
-run query  75,0583ms
-read query  0,6633ms
-run query  13,6491ms
-read query  0,5577ms
-run query  13,5402ms
-read query  0,5745ms
-run query  15,8267ms
-compiled 7,4077ms
-read query  49,6768ms
-run query  71,9938ms
-read query  0,5475ms
-run query  14,8955ms
-read query  0,6597ms
-run query  15,7237ms
-read query  0,5909ms
-run query  13,57ms
-created 0,3013ms
-read query  52,5382ms
-run query  79,042ms
-read query  0,597ms
-run query  14,3398ms
-read query  0,6651ms
-run query  14,29ms
-read query  0,585ms
-run query  15,407ms
-created 0,2967ms
-created 0,0043ms
-created 0,0028ms
-created 0,0079ms
-created 0,0043ms
-created 0,004ms
-created 0,0033ms
-created 0,0099ms
-created 0,0038ms
-created 0,0066ms
-read query  55,4541ms
-run query  81,153ms
-read query  0,6676ms
-run query  14,3428ms
-read query  0,5567ms
-run query  13,9479ms
-read query  0,5977ms
-run query  15,8737ms
-read query  56,725ms
-run query  89,9155ms
-read query  0,6896ms
-run query  13,2491ms
-read query  0,5595ms
-run query  12,913ms
-read query  0,5544ms
-run query  13,5221ms
-read query  35,0933ms
-run query  14,7465ms
-read query  0,3638ms
-run query  0,2842ms
-read query  0,3125ms
-run query  0,2311ms
-read query  0,3638ms
-run query  0,2691ms
-
-compiled release 1,8377ms
-compiled release 1,5583ms
-compiled release 8,3894ms
-compiled release 1,5706ms
-compiled option 1,8783ms
-compiled option 1,8244ms
-single option 0,2087ms
-
-brackets pattern
-single option 433,2223ms
-single option 432,078ms
-single option 449,3004ms
-single option 423,3482ms
-compiled option 246,3213ms
-compiled option 250,8964ms
-compiled 2 assembly 371,0113ms
-compiled 2 assembly 288,816ms
-compiled 2 assembly 369,2508ms
-
-read query  175,5207ms
-run query  15,4532ms
-read query  0,4329ms
-run query  0,3492ms
-read query  0,4347ms
-run query  0,2599ms
-read query  0,3497ms
-run query  0,2857ms
-
-read query  39,2107ms
-run query  14,9243ms
-read query  0,3179ms
-run query  0,2987ms
-read query  0,313ms
-run query  0,2809ms
-read query  0,2916ms
-run query  0,2265ms
-
-read query  34,8435ms
-run query  14,845ms
-read query  0,315ms
-run query  0,2604ms
-read query  0,302ms
-run query  0,2617ms
-read query  0,3181ms
-run query  0,2094ms
-
-read query  34,6611ms
-run query  13,2299ms
-read query  0,3602ms
-run query  0,3347ms
-read query  0,3293ms
-run query  0,3074ms
-read query  0,3462ms
-run query  0,2732ms
-
-read query  36,4346ms
-run query  14,759ms
-read query  0,3199ms
-run query  0,2324ms
-read query  0,3061ms
-run query  0,2288ms
-read query  0,2992ms
-run query  0,2173ms
-
-read query  32,1316ms
-run query  15,6086ms
-read query  0,4681ms
-run query  0,2798ms
-read query  0,3485ms
-run query  0,2691ms
-read query  0,3684ms
-run query  0,2372ms
-
-read query  34,8715ms
-run query  73,2319ms
-read query  0,3133ms
-run query  0,2819ms
-read query  0,2928ms
-run query  0,2199ms
-read query  0,2895ms
-run query  0,2058ms
-
-read query  86,9055ms
-run query  16,7442ms
-read query  0,349ms
-run query  0,3018ms
-read query  0,3505ms
-run query  0,2352ms
-read query  0,323ms
-run query  0,24ms
-
-read query  34,8129ms
-run query  15,4652ms
-read query  0,3676ms
-run query  0,2482ms
-read query  0,3648ms
-run query  0,2337ms
-read query  0,3352ms
-run query  0,2811ms
-
-read query  33,5242ms
-run query  13,2679ms
-read query  0,3702ms
-run query  0,3089ms
-read query  0,46ms
-run query  0,2758ms
-read query  0,3615ms
-run query  0,2684ms
-
-read query  30,3666ms
-run query  13,8433ms
-read query  0,3638ms
-run query  0,2553ms
-read query  0,4322ms
-run query  0,2375ms
-read query  0,3242ms
-run query  0,2497ms
-
-read query  38,2988ms
-run query  17,5308ms
-read query  0,3571ms
-run query  0,2541ms
-read query  0,4334ms
-run query  0,3227ms
-read query  0,3878ms
-run query  0,2421ms
-
-read query  45,695ms
-run query  13,5611ms
-read query  0,3429ms
-run query  0,2523ms
-read query  0,3776ms
-run query  0,2436ms
-read query  0,3538ms
-run query  0,2219ms
-
-read query  89,9297ms
-run query  13,1781ms
-read query  0,3717ms
-run query  0,249ms
-read query  0,3579ms
-run query  0,252ms
-read query  0,3329ms
-run query  0,3028ms
-
-read query  30,9761ms
-run query  14,0782ms
-read query  0,4393ms
-run query  0,2694ms
-read query  0,4378ms
-run query  0,3607ms
-read query  0,5227ms
-run query  0,2645ms
-
-read query  30,5031ms
-run query  13,0587ms
-read query  0,3398ms
-run query  0,2536ms
-read query  0,3515ms
-run query  0,2393ms
-read query  0,3508ms
-run query  0,2265ms
-
-read query  33,9796ms
-run query  15,3772ms
-read query  0,3184ms
-run query  0,2291ms
-read query  0,3025ms
-run query  0,2189ms
-read query  0,2906ms
-run query  0,2206ms
-
-read query  40,8831ms
-run query  15,5509ms
-read query  0,3548ms
-run query  0,2273ms
-read query  0,3043ms
-run query  0,2329ms
-read query  0,287ms
-run query  0,2224ms
-
-read query  44,6719ms
-run query  16,747ms
-read query  0,4475ms
-run query  0,3184ms
-read query  0,5475ms
-run query  0,3054ms
-read query  0,5018ms
-run query  0,3153ms
-
-read query  42,1943ms
-run query  15,4892ms
-read query  0,5204ms
-run query  0,3153ms
-read query  0,4615ms
-run query  0,2564ms
-read query  0,4791ms
-run query  0,3268ms
-read query  35,8349ms
-run query  14,0117ms
-read query  0,3615ms
-run query  0,2518ms
-read query  0,3329ms
-run query  0,2354ms
-read query  0,4291ms
-run query  0,237ms
-read query  39,1285ms
-run query  15,6545ms
-read query  0,326ms
-run query  0,2296ms
-read query  0,3135ms
-run query  0,2528ms
-read query  0,324ms
-run query  0,2689ms
-read query  42,2749ms
-run query  16,0086ms
-read query  0,3543ms
-run query  0,2388ms
-read query  0,3941ms
-run query  0,262ms
-read query  0,3485ms
-run query  0,2199ms
-read query  45,6856ms
-run query  17,0932ms
-read query  0,35ms
-run query  0,2439ms
-read query  0,3686ms
-run query  0,386ms
-read query  0,376ms
-run query  0,3018ms
-read query  37,6786ms
-run query  18,8797ms
-read query  0,3556ms
-run query  0,2344ms
-read query  0,3207ms
-run query  0,2291ms
-read query  0,3013ms
-run query  0,2145ms
-read query  34,0375ms
-run query  16,0857ms
-read query  0,3207ms
-run query  0,2255ms
-read query  0,3079ms
-run query  0,2237ms
-read query  0,2798ms
-run query  0,2071ms
-read query  34,3429ms
-run query  14,7709ms
-read query  0,3191ms
-run query  0,3056ms
-read query  0,3232ms
-run query  0,2097ms
-read query  0,2985ms
-run query  0,2235ms
-read query  35,5005ms
-run query  14,6949ms
-read query  0,315ms
-run query  0,2224ms
-read query  0,2916ms
-run query  0,2214ms
-read query  0,2839ms
-run query  0,2602ms
-read query  48,5398ms
-run query  17,2981ms
-read query  0,3574ms
-run query  0,3222ms
-read query  0,4735ms
-run query  0,2964ms
-read query  0,4375ms
-run query  0,2375ms
-read query  32,164ms
-run query  13,8772ms
-read query  0,3528ms
-run query  0,2533ms
-read query  0,4194ms
-run query  0,2867ms
-read query  0,4041ms
-run query  0,3179ms
-read query  36,9836ms
-run query  13,1893ms
-read query  0,3577ms
-run query  0,2972ms
-read query  0,3459ms
-run query  0,2456ms
-read query  0,3574ms
-run query  0,227ms
-read query  35,6956ms
-run query  13,2883ms
-read query  0,3867ms
-run query  0,3569ms
-read query  0,5671ms
-run query  0,289ms
-read query  0,3977ms
-run query  0,2456ms
-read query  38,5364ms
-run query  13,2692ms
-read query  0,3408ms
-run query  0,2487ms
-read query  0,4066ms
-run query  0,2553ms
-read query  0,3602ms
-run query  0,2286ms
-read query  34,9925ms
-run query  14,8222ms
-read query  0,3301ms
-run query  0,3051ms
-read query  0,4367ms
-run query  0,2337ms
-read query  0,3337ms
-run query  0,2204ms
-read query  33,1098ms
-run query  15,5308ms
-read query  0,3263ms
-run query  0,2242ms
-read query  0,3334ms
-run query  0,2245ms
-read query  0,2862ms
-run query  0,2344ms
-read query  40,3963ms
-run query  14,7799ms
-read query  0,3168ms
-run query  0,2143ms
-read query  0,3071ms
-run query  0,2061ms
-read query  0,3763ms
-run query  0,2791ms
-read query  34,4771ms
-run query  16,2089ms
-read query  2,6141ms
-run query  0,2275ms
-read query  0,4401ms
-run query  0,237ms
-read query  0,36ms
-run query  0,2661ms
-read query  37,4449ms
-run query  18,6787ms
-read query  0,4031ms
-run query  0,2224ms
-read query  0,3883ms
-run query  0,2209ms
-read query  0,6391ms
-run query  0,2237ms
-read query  50,2334ms
-run query  17,2662ms
-read query  0,351ms
-run query  0,2222ms
-read query  2,994ms
-run query  0,224ms
-read query  0,4444ms
-run query  0,2625ms
-read query  38,8502ms
-run query  14,9692ms
-read query  0,4184ms
-run query  0,2257ms
-read query  0,34ms
-run query  0,2518ms
-read query  0,351ms
-run query  0,2747ms
-
-read query  33,7535ms
-run query  16,2362ms
-read query  0,4692ms
-run query  0,2548ms
-read query  0,411ms
-run query  0,2849ms
-read query  0,3694ms
-run query  0,24ms
-read query  35,5132ms
-run query  14,7528ms
-read query  0,3125ms
-run query  0,2362ms
-read query  0,3559ms
-run query  0,2847ms
-read query  0,3207ms
-run query  0,2673ms
-read query  34,2776ms
-run query  13,3633ms
-read query  0,4495ms
-run query  0,2793ms
-read query  0,5061ms
-run query  0,2982ms
-read query  0,4406ms
-run query  0,2724ms
-read query  31,7754ms
-run query  13,3746ms
-read query  0,3691ms
-run query  0,2671ms
-read query  0,4153ms
-run query  0,2553ms
-read query  0,3536ms
-run query  0,2377ms
-read query  31,6968ms
-run query  13,1791ms
-read query  0,3434ms
-run query  0,249ms
-read query  0,3406ms
-run query  0,2673ms
-read query  0,349ms
-run query  0,2331ms
-read query  53,9631ms
-run query  14,3918ms
-read query  0,3745ms
-run query  0,2515ms
-read query  0,4314ms
-run query  0,2765ms
-read query  0,3878ms
-run query  0,2916ms
-read query  38,471ms
-run query  13,1383ms
-read query  0,3574ms
-run query  0,2612ms
-read query  0,3645ms
-run query  0,2548ms
-read query  0,352ms
-run query  0,2403ms
-read query  34,4156ms
-run query  13,5976ms
-read query  0,3569ms
-run query  0,3105ms
-read query  0,3735ms
-run query  0,2543ms
-read query  0,3444ms
-run query  0,2814ms
-read query  35,8275ms
-run query  17,3573ms
-read query  0,3301ms
-run query  0,2372ms
-read query  0,3306ms
-run query  0,3025ms
-read query  0,3977ms
-run query  0,2362ms
-read query  34,3505ms
-run query  15,4762ms
-read query  0,3663ms
-run query  0,3444ms
-read query  0,4176ms
-run query  0,2793ms
-read query  0,5044ms
-run query  0,2434ms
-read query  12991,2865ms
-run query  14,1558ms
-read query  6001,4374ms
-run query  0,3916ms
-
-read query  53,6464ms
-run query  18,3972ms
-read query  1,0654ms
-run query  2,3947ms
-read query  1,1682ms
-run query  2,4365ms
-read query  1,4558ms
-run query  2,011ms
-
-read query  35,8671ms
-run query  15,7698ms
-read query  1,2935ms
-run query  2,2337ms
-read query  1,1272ms
-run query  1,9982ms
-read query  1,4889ms
-run query  2,337ms
-
-read query  32,3574ms
-run query  15,294ms
-read query  1,0675ms
-run query  1,9069ms
-read query  1,0728ms
-run query  1,8979ms
-read query  1,0733ms
-run query  1,9204ms
-read query  48,5926ms
-run query  18,7238ms
-read query  1,3996ms
-run query  2,0189ms
-read query  1,1481ms
-run query  2,4562ms
-read query  1,4984ms
-run query  2,0405ms
-read query  37,3053ms
-run query  16,2908ms
-read query  1,0496ms
-run query  1,8806ms
-read query  1,1328ms
-run query  2,1214ms
-read query  1,3379ms
-run query  1,9801ms
-read query  11889,0371ms
-run query  16,6289ms
-read query  6402,8415ms
-run query  2,0061ms
-read query  1,3249ms
-run query  1,978ms
-read query  1,4428ms
-run query  3,6882ms
-read query  34,9718ms
-run query  15,2049ms
-read query  1,2264ms
-run query  2,0023ms
-read query  1,1624ms
-run query  2,5827ms
-read query  1,2126ms
-run query  2,0084ms
-read query  35,2525ms
-run query  16,4184ms
-read query  1,0524ms
-run query  2,0092ms
-read query  1,5887ms
-run query  2,0135ms
-read query  1,4673ms
-run query  2,4352ms
-read query  42,713ms
-run query  20,3876ms
-read query  1,0616ms
-run query  1,9158ms
-read query  1,0458ms
-run query  2,484ms
-read query  1,0146ms
-run query  1,94ms
-read query  54,5823ms
-run query  23,6388ms
-read query  1,0169ms
-run query  1,8074ms
-read query  1,2726ms
-run query  2,1924ms
-read query  1,2149ms
-run query  2,026ms
-read query  40,3425ms
-run query  18,1051ms
-read query  1,1914ms
-run query  1,9143ms
-read query  1,2193ms
-run query  2,3434ms
-read query  0,9835ms
-run query  2,2342ms
-read query  35,0631ms
-run query  18,0778ms
-read query  1,1909ms
-run query  1,9043ms
-read query  1,0259ms
-run query  2,5256ms
-read query  1,2159ms
-run query  2,3202ms
-read query  43,3501ms
-run query  17,2182ms
-read query  1,3096ms
-run query  2,1505ms
-read query  1,1613ms
-run query  2,2495ms
-read query  0,9603ms
-run query  2,1145ms
-read query  37,7097ms
-run query  16,9769ms
-read query  0,9557ms
-run query  1,8714ms
-read query  1,2489ms
-run query  2,2982ms
-read query  0,9465ms
-run query  1,7994ms
-read query  43,8335ms
-run query  95,3813ms
-read query  1,1044ms
-run query  66,6228ms
-read query  1,1366ms
-run query  66,8162ms
-read query  1,1636ms
-run query  69,909ms
-read query  36,631ms
-run query  89,0069ms
-read query  0,9394ms
-run query  56,8568ms
-read query  0,9406ms
-run query  61,111ms
-read query  0,9621ms
-run query  59,9716ms
-read query  35,2259ms
-run query  118,2746ms
-read query  1,5448ms
-run query  75,2597ms
-read query  0,947ms
-run query  56,6132ms
-read query  0,981ms
-run query  61,1319ms
-read query  37,4232ms
-run query  108,7811ms
-read query  1,1249ms
-run query  67,2611ms
-read query  1,3657ms
-run query  66,8134ms
-read query  1,1483ms
-run query  67,4346ms
-read query  36,3195ms
-run query  99,9577ms
-read query  0,9389ms
-run query  59,818ms
-read query  0,982ms
-run query  58,1966ms
-read query  1,0111ms
-run query  59,2429ms
-read query  36,0046ms
-read query  58,8926ms
-read query  78888,4964ms
-read query  10782,0452ms
-read query  34,1964ms
-read query  32,6978ms
-read query  32,3296ms
-read query  34,5485ms
-read query  31,2728ms
-read query  32,7187ms
-read query  31,1422ms
-read query  31,2078ms
-read query  31,068ms
-read query  32,3646ms
-read query  34,3679ms
-run query  100,4976ms
-read query  2,7006ms
-run query  70,481ms
-read query  0,9516ms
-run query  49,1142ms
-read query  0,9922ms
-run query  49,8232ms
-read query  62,3975ms
-run query  76,971ms
-read query  1,2991ms
-run query  55,5317ms
-read query  1,131ms
-run query  60,873ms
-read query  2,1355ms
-run query  56,604ms
-read query  35,031ms
-run query  81,4558ms
-read query  0,9544ms
-run query  63,0792ms
-read query  1,4203ms
-run query  53,8718ms
-read query  0,9682ms
-run query  57,9338ms
-read query  44,4768ms
-run query  86,5864ms
-read query  1,1261ms
-run query  59,7821ms
-read query  1,5027ms
-run query  55,9057ms
-read query  1,1828ms
-run query  55,9945ms
-
-
-read query  35,8128ms
-run query  79,3037ms
-read query  0,9355ms
-run query  49,2185ms
-read query  0,9583ms
-run query  48,7266ms
-read query  1,0197ms
-run query  48,3684ms
-read query  71,3ms
-run query  62,8169ms
-read query  1,1274ms
-run query  35,2359ms
-read query  1,1626ms
-run query  33,5053ms
-read query  1,2631ms
-run query  28,2341ms
-
-read query  36,5187ms
-run query  55,9039ms
-read query  1,097ms
-run query  26,8168ms
-read query  1,1555ms
-run query  27,3776ms
-read query  1,1756ms
-run query  27,1184ms
-
-read query  36,259ms
-run query  54,9597ms
-read query  1,1075ms
-run query  27,5338ms
-read query  1,1167ms
-run query  26,7949ms
-read query  1,1677ms
-run query  28,3102ms
-read query  36,1587ms
-run query  7700,6024ms
-read query  1,1402ms
-run query  26,3966ms
-read query  1,1389ms
-run query  28,4035ms
-read query  1,5208ms
-run query  28,1673ms
-read query  57,0952ms
-read query  34,1123ms
-read query  31,0879ms
-read query  34,0837ms
-
-read query  33,5114ms
-run query  56,0841ms
-read query  1,1095ms
-run query  28,7784ms
-read query  1,1448ms
-run query  27,4986ms
-read query  1,1522ms
-run query  27,5039ms
-
-read query  33,6056ms
-run query  57,6277ms
-read query  1,5262ms
-run query  27,0329ms
-read query  1,1363ms
-run query  26,8429ms
-read query  1,2598ms
-run query  26,7587ms
-read query  66,8936ms
-run query  3350,4625ms
-read query  2,4534ms
-run query  30,4034ms
-read query  1,4147ms
-run query  25,9859ms
-read query  1,1397ms
-run query  26,2007ms
+﻿create load graph 10M 1512924,8838ms
+first query first run 345,8016ms
+1000 runs of first query 355,6066ms
+create load graph 10M 84,6757ms
+first query first run 10,9544ms
+1000 runs of first query 138,014ms
+create load graph 10M 46,6843ms
+first query first run 7,664ms
+1000 runs of first query 139,296ms
+create load graph 10M 45,837ms
+first query first run 7,5181ms
+1000 runs of first query 146,5891ms
+create load graph 10M 54,1622ms
+create load graph 10M 99,2702ms
+create load graph 10M 49,4476ms
+first query first run 8,1028ms
+1000 runs of first query 146,6352ms
+create load graph 10M 49,8897ms
+create load graph 10M 48,9167ms
+create load graph 10M 48,8739ms
+create load graph 10M 47,2781ms
+first query first run 53,2543ms
+1000 runs of first query 456,0233ms
+create load graph 10M 47,5838ms
+create load graph 10M 54,6975ms
+create load graph 10M 86954,4007ms
+first query first run 2734,6079ms
+1000 runs of first query 444,9751ms
+create load graph 10M 46603,684ms
+first query first run 36,1762ms
+1000 runs of first query 421,0086ms
+create load graph 10M 2149,1264ms
+first query first run 36,5894ms
+1000 runs of first query 420,3441ms
+create load graph 10M 48,2734ms
+create load graph 10M 1181,3048ms
+first query first run 36,2267ms
+1000 runs of first query 425,5805ms
+create load graph 10M 38617414,0636ms
+first query first run 344879,0371ms
+graph 100M ok 38617436ms1000 runs of first query 34698147,8148ms
+create load graph 10M 34,0964ms
+create load graph 10M 62380,6624ms
+first query first run 72,8353ms
+1000 runs of first query 467,9569ms
+create load graph 10M 75011,3509ms
+first query first run 114,0393ms
+1000 runs of first query 532,3072ms
+create load graph 10M 56553,1116ms
+first query first run 64,2113ms
+1000 runs of first query 473,8524ms
+create load graph 10M 55335,225ms
+first query first run 64,5233ms
+1000 runs of first query 469,8665ms
+create load graph 10M 4392,7145ms
+first query first run 42,5197ms
+1000 runs of first query 488,3808ms
+create load graph 10M 51,2469ms
+first query first run 53,5348ms
+1000 runs of first query 450,9423ms
+create load graph 10M 54,5828ms
+first query first run 51,1798ms
+1000 runs of first query 447,6716ms
+create load graph 10M 29300,3045ms
+first query first run 41,1955ms
+1000 runs of first query 461,3559ms
+create load graph 10M 2437290,244ms
+first query first run 34219,4652ms
+1000 runs of first query 3936357,3738ms
+create load graph 10M 2548491,3064ms
+create load graph 10M 1451,7676ms
+create load graph 10M 894,8173ms
+first query first run 2111,8023ms
+1000 runs of first query 208334,6444ms
+create load graph 10M 834,6658ms
+create load graph 10M 27,6196ms
+create load graph 10M 29,1897ms
+create load graph 10M 1390,5986ms
+create load graph 10M 28,3632ms
+create load graph 10M 1657,7833ms
+create load graph 10M 481,946ms
+create load graph 10M 1363,9138ms
+create load graph 10M 1048,4933ms
+first query first run 3232363,5452ms
+create load graph 10M 7657,6775ms
+create load graph 10M 755,3347ms
+create load graph 10M 1833,9076ms
+first query first run 2293508,3717ms
+create load graph 10M 926,674ms
+create load graph 10M 32,973ms
+create load graph 10M 28,5938ms
+create load graph 10M 32,8018ms
+create load graph 10M 545,3654ms
+create load graph 10M 29,7595ms
+create load graph 10M 29,1365ms
+create load graph 10M 31,5338ms
+create load graph 10M 33,5917ms
+create load graph 10M 2160,9738ms
+create load graph 10M 41,1772ms
+create load graph 10M 37,8196ms
+create load graph 10M 584,3684ms
+create load graph 10M 32,9812ms
+create load graph 10M 1692,4863ms
+create load graph 10M 1722,6765ms
+create load graph 10M 72,9692ms
+create load graph 10M 1792,8053ms
+create load graph 10M 105,57ms
+create load graph 10M 123,5103ms
+create load graph 10M 28,2659ms
+create load graph 10M 788,8744ms
+create load graph 10M 3258716,3317ms
+create load graph 10M 1402,9886ms
+create load graph 10M 2996229,9271ms
+create load graph 10M 1344,5526ms
+create load graph 10M 2682404,5386ms
+create load graph 10M 2391969,0948ms
+create load graph 10M 3327103,2112ms
+create load graph 10M 363,6167ms
+create load graph 10M 303,2732ms
+create load graph 10M 942,2587ms
+create load graph 10M 31,414ms
+create load graph 10M 37,0441ms
+create load graph 10M 3767,5184ms
+create load graph 10M 2292,5793ms
+create load graph 10M 30,7484ms
+create load graph 10M 28,4234ms
+create load graph 10M 374,69ms
+create load graph 10M 31,598ms
+create load graph 10M 149,8686ms
+create load graph 10M 174,5947ms
+create load graph 10M 228,7578ms
+create load graph 10M 29,0382ms
+create load graph 10M 29,0029ms
+create load graph 10M 2275,0382ms
+create load graph 10M 30,396ms
+create load graph 10M 1513,7967ms
+create load graph 10M 812,7751ms
+create load graph 10M 2624,1805ms
+first query first run 111802,0797ms
+create load graph 10M 408,3848ms
+first query first run 14910,2421ms
+1000 runs of first query 19851,4037ms
+create load graph 10M 878,2032ms
+create load graph 10M 303,1429ms
+create load graph 10M 34,2777ms
+create load graph 10M 829,9167ms
+create load graph 10M 1026,6067ms
+first query first run 4617428,315ms
+create load graph 10M 8749,5787ms
+first query first run 1993,1494ms
+1000 runs of first query 86223,1454ms
+create load graph 10M 786,9435ms
+first query first run 233,4097ms
+1000 runs of first query 66495,2793ms
+create load graph 10M 861,7638ms
+create load graph 10M 737,2949ms
+first query first run 13296,4347ms
+create load graph 10M 506,0133ms
+create load graph 10M 65,16ms
+create load graph 10M 1959,4059ms
+create load graph 10M 192,1693ms
+create load graph 10M 30,8557ms
+create load graph 10M 64,5127ms
+create load graph 10M 33,2046ms
+first query first run 17501,4519ms
+create load graph 10M 38,6058ms
+first query first run 305,6314ms
+1000 runs of first query 69192,2594ms
+create load graph 10M 30,7198ms
+first query first run 303,9642ms
+create load graph 10M 29,8254ms
+create load graph 10M 29,251ms
+create load graph 10M 37,0382ms
+create load graph 10M 36,0578ms
+first query first run 14994,1769ms
+create load graph 10M 31,5036ms
+create load graph 10M 74,1433ms
+create load graph 10M 53877,9284ms
+first query first run 30304,6864ms
+create load graph 10M 5069,9759ms
+first query first run 307,3675ms
+create load graph 10M 32,4743ms
+first query first run 336,7821ms
+create load graph 10M 6355,0951ms
+first query first run 1581,0643ms
+create load graph 10M 2859,0226ms
+first query first run 1033,4363ms
+create load graph 10M 198,6605ms
+create load graph 10M 40,8047ms
+create load graph 10M 31,5185ms
+create load graph 10M 168,5642ms
+first query first run 22601,935ms
+create load graph 10M 32,2368ms
+create load graph 10M 32,9804ms
+create load graph 10M 32,2659ms
+create load graph 10M 32,4876ms
+create load graph 10M 32,2025ms
+create load graph 10M 33,6285ms
+create load graph 10M 32,1886ms
+first query first run 389877,7256ms
+create load graph 10M 108,1261ms
+create load graph 10M 39,9247ms
+create load graph 10M 57,8692ms
+first query first run 203107,5963ms
+create load graph 10M 30,8593ms
+first query first run 561,4888ms
+create load graph 10M 32,0486ms
+create load graph 10M 33,3303ms
+create load graph 10M 36,6898ms
+query1.rq 96,2355ms
+query10.rq 9,4185ms
+query11.rq 22,5765ms
+query12.rq 6,8198ms
+query2.rq 3,3684ms
+query3.rq 28,7518ms
+query4.rq 7,909ms
+query5.rq 28,3456ms
+query6.rq 53,6261ms
+query7.rq 3,0566ms
+query8.rq 3,2082ms
+query9.rq 0,6112ms
+create load graph 1M 183225,4777ms
+query1.rq 339,3404ms
+query10.rq 5,7795ms
+query11.rq 37,9651ms
+query12.rq 7,5289ms
+query2.rq 3,9385ms
+query3.rq 624,0439ms
+query4.rq 122,67ms
+query5.rq 40,6478ms
+query6.rq 1049,2849ms
+query7.rq 3,7509ms
+query8.rq 5,951ms
+query9.rq 0,6036ms
+create load graph 10M 3299979,0345ms
+query1.rq 450090,3313ms
+query10.rq 27603,3321ms
+query11.rq 7757,8714ms
+query12.rq 1579,9981ms
+query2.rq 2254,2912ms
+query3.rq 225096,9013ms
+query4.rq 1316,0537ms
+query5.rq 25696,3774ms
+query6.rq 151711,093ms
+query7.rq 3837,4364ms
+query8.rq 45,8972ms
+query9.rq 48,9483ms
+create load graph 10M 106,5199ms
+query1.rq 2359,296ms
+query10.rq 1047,9904ms
+query11.rq 134,2696ms
+query12.rq 110,1338ms
+query2.rq 175,8548ms
+query3.rq 4453,2231ms
+query4.rq 936,067ms
+query5.rq 160,8586ms
+query6.rq 13335,7779ms
+query7.rq 31,7179ms
+query8.rq 3,0635ms
+query9.rq 529,0547ms
+create load graph 1M 194856,9312ms
+query1.rq 291,3919ms
+query10.rq 5,5844ms
+query11.rq 18,7478ms
+query12.rq 12,327ms
+query2.rq 3,5279ms
+query3.rq 556,5914ms
+query4.rq 130,392ms
+query5.rq 33,0152ms
+query6.rq 1151,4884ms
+query7.rq 3,0843ms
+query8.rq 3,2061ms
+query9.rq 11,4682ms
+create load graph 10M 3557196,1846ms
+query1.rq 404187,2066ms
+query10.rq 24770,5806ms
+query11.rq 6017,4305ms
+query12.rq 1462,129ms
+query2.rq 1008,0181ms
+query3.rq 42331,2772ms
+query4.rq 1504,8111ms
+query5.rq 27313,0598ms
+query6.rq 111260,6557ms
+query7.rq 2552,7383ms
+query8.rq 43,4106ms
+query9.rq 697,173ms
+create load graph 10M 1916,5677ms
+query1.rq 79,8269ms
+query10.rq 6,0155ms
+query11.rq 18,4785ms
+query12.rq 5,0919ms
+query2.rq 5,0267ms
+query3.rq 3,0185ms
+query4.rq 1,3223ms
+query5.rq 10,0272ms
+query6.rq 17,7377ms
+query7.rq 1,9221ms
+query8.rq 3,864ms
+query9.rq 0,1402ms

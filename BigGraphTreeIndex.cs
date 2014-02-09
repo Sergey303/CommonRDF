@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using BinaryTree;
 using PolarDB;
 
 namespace CommonRDF
@@ -10,7 +9,7 @@ namespace CommonRDF
     class BigGraphIndexTree : GraphBase
     {
         private PxCell graphPxCell;
-        private BTree indexTree;
+        private PaCell indexTree;
         private readonly GraphTripletsTree graphTripletsTree;
         public override void Load(params string[] rdfFiles)
         {
