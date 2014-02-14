@@ -28,55 +28,45 @@ namespace CommonRDF
         private PaCell directCell, dataCell;
         private readonly string directCellPath;
         private readonly string dataCellPath;
-        private FixedIndex<string> directObjIndex, inverseObjIndex, inverseDataIndex, directDataIndex;
-        private FixedIndex<SubjPred> spDirectIndex, opDirectIndex, opDataIndex, spDataIndex;
+        private static Func<PaEntry, SubjPred> opKeyProducer;
+        private static Func<PaEntry, SubjPred> spKeyProducer;
+        private static Func<PaEntry, string> sKeyProducer;
+        private static Func<PaEntry, string> oKeyProducer;
+        //private FixedIndex<string> directObjIndex, inverseObjIndex, inverseDataIndex, directDataIndex;
+        private FixedIndex spDirectIndex, opDirectIndex, opDataIndex, spDataIndex;
 
         public PolarBasedRdfGraph(DirectoryInfo path)
         {
             this.path = path.FullName;
             if (!path.Exists) path.Create();
-            directCell = new PaCell(ptDirects, directCellPath = Path.Combine(path.FullName, "rdf.direct.pac"),
-                File.Exists(directCellPath));
-            dataCell = new PaCell(ptData, dataCellPath = Path.Combine(path.FullName, "rdf.data.pac"),
-                File.Exists(dataCellPath));
+            directCell = new PaCell(ptDirects, directCellPath = Path.Combine(path.FullName, "rdf.direct.pac"), File.Exists(directCellPath));
+            dataCell = new PaCell(ptData, dataCellPath = Path.Combine(path.FullName, "rdf.data.pac"), File.Exists(dataCellPath));  
+            opKeyProducer = entry => 
+                new SubjPred
+                {
+                    subj = (string) entry.Field(2).Get(),
+                    pred = (string) entry.Field(1).Get()
+                };
+            spKeyProducer = entry =>
+                new SubjPred
+                {
+                    subj = (string) entry.Field(0).Get(),
+                    pred = (string) entry.Field(1).Get()
+                };
+            oKeyProducer = entry =>
+                (string) entry.Field(2).Get();
+            sKeyProducer = entry =>
+                (string) entry.Field(0).Get();
             if (dataCell.IsEmpty || directCell.IsEmpty) return;
             CreateIndexes();
         }
 
         private void CreateIndexes()
         {
-            directDataIndex = new FixedIndex<string>(path + "s of data", dataCell.Root, entry => (string) entry.Field(0).Get());
-            directObjIndex = new FixedIndex<string>(path + "s of direct", directCell.Root, entry => (string)entry.Field(0).Get());
-            inverseObjIndex = new FixedIndex<string>(path + "o of direct", directCell.Root, entry => (string)entry.Field(2).Get());
-            inverseDataIndex = new FixedIndex<string>(path + "o of data", dataCell.Root, entry => (string)entry.Field(2).Get());
-            spDataIndex = new FixedIndex<SubjPred>(path + "s and p of data", dataCell.Root,
-                entry =>
-                    new SubjPred
-                    {
-                        subj = (string) entry.Field(0).Get(),
-                        pred = (string) entry.Field(1).Get()
-                    });
-            spDirectIndex = new FixedIndex<SubjPred>(path + "s and p of direct", directCell.Root,
-                entry =>
-                    new SubjPred
-                    {
-                        subj = (string) entry.Field(0).Get(),
-                        pred = (string) entry.Field(1).Get()
-                    });
-            opDirectIndex = new FixedIndex<SubjPred>("o and p of direct", directCell.Root,
-                entry =>
-                    new SubjPred
-                    {
-                        subj = (string) entry.Field(2).Get(),
-                        pred = (string) entry.Field(1).Get()
-                    });
-            opDataIndex = new FixedIndex<SubjPred>("o and p of data", dataCell.Root,
-             entry =>
-                 new SubjPred
-                 {
-                     subj = (string)entry.Field(2).Get(),
-                     pred = (string)entry.Field(1).Get()
-                 });
+            spDataIndex = new FixedIndex(path + "s and p of data", dataCell.Root);
+            spDirectIndex = new FixedIndex(path + "s and p of direct", directCell.Root);
+            opDirectIndex = new FixedIndex("o and p of direct", directCell.Root);
+            opDataIndex = new FixedIndex("o and p of data", dataCell.Root);
         }
 
         public void Load(int tripletsCountLimit, params string[] filesPaths)
@@ -110,40 +100,32 @@ namespace CommonRDF
 
         internal void LoadIndexes()
         {
-            if (directDataIndex == null)
+            if (spDataIndex != null)
+            {
+                spDataIndex.Close();
+                spDirectIndex.Close();
+                opDirectIndex.Close();
+                opDataIndex.Close();
+            }
                 CreateIndexes();
-            directDataIndex.Close();
-            directObjIndex.Close();
-            inverseObjIndex.Close();
-            spDataIndex.Close();
-            spDirectIndex.Close();
-            opDirectIndex.Close();
-            opDataIndex.Close();
-            inverseDataIndex.Close();
-            CreateIndexes();
 
-            directDataIndex.Load(null);
-            directObjIndex.Load(null);
-            inverseObjIndex.Load(null);
-            inverseDataIndex.Load(null);
-            var subjPredComparer = new SubjPredComparer();
-            spDataIndex.Load(subjPredComparer);
-            spDirectIndex.Load(subjPredComparer);
-            opDirectIndex.Load(subjPredComparer);
-            opDataIndex.Load(subjPredComparer);
+            spDataIndex.Load(spKeyProducer);
+            spDirectIndex.Load(spKeyProducer);
+            opDirectIndex.Load(spKeyProducer);
+            opDataIndex.Load(spKeyProducer);
         }
 
 
         public string GetItem(string id)
         {
             return
-                directObjIndex.GetAllByKey(id)
+                spDirectIndex.GetAllByKey<string>(id, sKeyProducer)
                     .Select(spo => spo.Type.Interpret(spo.Get()))
                     .Concat(
-                        inverseObjIndex.GetAllByKey(id)
+                        opDirectIndex.GetAllByKey(id, oKeyProducer)
                             .Select(spo => spo.Type.Interpret(spo.Get()))
                             .Concat(
-                                directDataIndex.GetAllByKey(id)
+                                spDataIndex.GetAllByKey(id, sKeyProducer)
                                     .Select(spo => spo.Type.Interpret(spo.Get()))))
                     .Aggregate((all, one) => all + one);
         }
@@ -151,21 +133,21 @@ namespace CommonRDF
         public XElement GetItemByIdBasic(string id, bool addinverse)
         {
             var type =
-                spDirectIndex.GetFirstByKey(new SubjPred {pred = ONames.rdftypestring, subj = id});
+                spDirectIndex.GetFirstByKey(new SubjPred {pred = ONames.rdftypestring, subj = id}, spKeyProducer);
             XElement res = new XElement("record", new XAttribute("id", id),
-                type.offset == long.MinValue ? null : new XAttribute("type", ((object[]) type.Get())[2]),
-                directDataIndex.GetAllByKey(id).Select(entry => entry.Get()).Cast<object[]>().Select(v3 =>
+                type.offset == Int64.MinValue ? null : new XAttribute("type", ((object[]) type.Get())[2]),
+                spDataIndex.GetAllByKey(id, sKeyProducer).Select(entry => entry.Get()).Cast<object[]>().Select(v3 =>
                     new XElement("field", new XAttribute("prop", v3[1]),
-                        string.IsNullOrEmpty((string) v3[3]) ? null : new XAttribute(ONames.xmllang, v3[3]),
+                        String.IsNullOrEmpty((string) v3[3]) ? null : new XAttribute(ONames.xmllang, v3[3]),
                         v3[2])),
-                directObjIndex.GetAllByKey(id).Select(entry => entry.Get()).Cast<object[]>().Select(v2 =>
+                spDirectIndex.GetAllByKey(id, sKeyProducer).Select(entry => entry.Get()).Cast<object[]>().Select(v2 =>
                     new XElement("direct", new XAttribute("prop", v2[1]),
                         new XElement("record", new XAttribute("id", v2[2])))),
                 null);
             // Обратные ссылки
             if (addinverse)
             {
-                var query = inverseObjIndex.GetAllByKey(id);
+                var query = opDirectIndex.GetAllByKey(id, oKeyProducer);
                 string predicate = null;
                 XElement inverse = null;
                 foreach (PaEntry en in query)
@@ -212,7 +194,8 @@ namespace CommonRDF
         {
             IEnumerable<PredicateEntityPair> cached;
             if (cacheDirect.TryGetValue(id, out cached)) return cached;
-            cacheDirect.Add(id,cached=directObjIndex.GetAllByKey(id).Select(entry => new PredicateEntityPair((string)entry.Field(1).Get(), (string)entry.Field(2).Get())));
+            cacheDirect.Add(id,cached=spDirectIndex.GetAllByKey(id, sKeyProducer)
+                       .Select(entry => new PredicateEntityPair((string)entry.Field(1).Get(), (string)entry.Field(2).Get())));
             return cached; 
         }
 
@@ -236,7 +219,7 @@ namespace CommonRDF
 
             cacheObjInverse.Add(id,
                 cached =
-                    inverseObjIndex.GetAllByKey(id)
+                    opDirectIndex.GetAllByKey(id, oKeyProducer)
                         .Select(entry => new PredicateEntityPair((string) entry.Field(1).Get(), (string) entry.Field(0).Get())));
             return cached;
         }
@@ -247,7 +230,7 @@ namespace CommonRDF
             if (cacheData.TryGetValue(id, out cached)) return cached;
             cacheData.Add(id,
                 cached =
-                    directDataIndex.GetAllByKey(id)
+                    spDataIndex.GetAllByKey(id, sKeyProducer)
                         .Select(
                             entry =>
                                 new PredicateDataTriple((string) entry.Field(1).Get(), (string) entry.Field(2).Get(),
@@ -261,7 +244,7 @@ namespace CommonRDF
             if (cacheDataInverse.TryGetValue(data, out cached)) return cached;
             cacheDataInverse.Add(data,
                 cached =
-                   inverseDataIndex.GetAllByKey(data)
+                   opDataIndex.GetAllByKey(data, oKeyProducer)
                         .Select(entry => new PredicateEntityPair((string)entry.Field(1).Get(), (string)entry.Field(0).Get())));
             return cached;
         }
@@ -272,7 +255,7 @@ namespace CommonRDF
             if (cacheDirectPredicate.TryGetValue(id+predicate, out cached)) return cached;
             cacheDirectPredicate.Add(id + predicate,
                 cached =
-                    spDirectIndex.GetAllByKey(new SubjPred(id, predicate))
+                    spDirectIndex.GetAllByKey(new SubjPred(id, predicate), spKeyProducer)
                         .Select(entry => (string) entry.Field(2).Get()));
             return cached;
         }
@@ -283,7 +266,7 @@ namespace CommonRDF
             if (cacheInverseDirectPredicate.TryGetValue(id + predicate, out cached)) return cached;
             cacheInverseDirectPredicate.Add(id + predicate,
                 cached =
-                    opDirectIndex.GetAllByKey(new SubjPred(id, predicate))
+                    opDirectIndex.GetAllByKey(new SubjPred(id, predicate), opKeyProducer)
                         .Select(entry => (string)entry.Field(0).Get()));
             return cached;
         }
@@ -294,7 +277,7 @@ namespace CommonRDF
             if (cacheDataPredicate.TryGetValue(id + predicate, out cached)) return cached;
             cacheDataPredicate.Add(id + predicate,
                 cached =
-                    spDataIndex.GetAllByKey(new SubjPred(id, predicate))
+                    spDataIndex.GetAllByKey(new SubjPred(id, predicate), spKeyProducer)
                         .Select(entry =>(string)entry.Field(2).Get()));
             return cached;
         }
@@ -305,7 +288,7 @@ namespace CommonRDF
             if (cacheInverseDataPredicate.TryGetValue(data + predicate, out cached)) return cached;
             cacheInverseDataPredicate.Add(data + predicate,
                 cached =
-                    opDataIndex.GetAllByKey(new SubjPred(data, predicate))
+                    opDataIndex.GetAllByKey(new SubjPred(data, predicate), opKeyProducer)
                         .Select(entry => (string)entry.Field(0).Get()));
             return cached;
         }
@@ -316,7 +299,7 @@ namespace CommonRDF
             if (cacheDataLangPredicate.TryGetValue(id+predicate, out cached)) return cached;
             cacheDataLangPredicate.Add(id + predicate,
                 cached =
-                    spDataIndex.GetAllByKey(new SubjPred(id, predicate))
+                    spDataIndex.GetAllByKey(new SubjPred(id, predicate), spKeyProducer)
                         .Select(entry => new DataLangPair((string)entry.Field(2).Get(), (string)entry.Field(3).Get())));
             return cached;
         }

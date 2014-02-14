@@ -15,7 +15,12 @@ namespace CommonRDF
 
         public void Run()
         {
-           // Perfomance.ComputeTime(RunQueries, "first query first run", true);
+            gr.GetData(string.Empty);
+            gr.GetDirect(string.Empty);
+            gr.GetInverse(string.Empty);
+            gr.GetSubjectsByData(string.Empty);
+            // Perfomance.ComputeTime(RunQueries, "first query first run", true);
+
             foreach (  var file in new DirectoryInfo(@"..\..\\sparql data\queries").GetFiles())
             {
                 Perfomance.ComputeTime(() =>
@@ -25,6 +30,7 @@ namespace CommonRDF
                     var result = q.Results;
                 },file.Name, true);
             }
+           
             //Perfomance.ComputeTime(() =>
             //{
             //    for (int i = 0; i < 1000; i++)

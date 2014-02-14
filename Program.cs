@@ -43,10 +43,8 @@ namespace CommonRDF
             {
                 gr = new PolarBasedRdfGraph(directoryInfo);
                // gr.CreateGraph();
-                gr.Load(@"D:\deployed\dataset_100M.ttl");
-            }
-
-                , "create load graph 10M", true);
+                gr.Load(@"D:\deployed\dataset1M.ttl");
+            }, "create load graph 1M", true);
    
             Console.WriteLine("Graph ok duration=" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
             //Console.WriteLine("Test ok duration========================" + (DateTime.Now - tt0).Ticks / 10000L); tt0 = DateTime.Now;
