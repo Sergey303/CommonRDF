@@ -1,0 +1,25 @@
+﻿Тест моего решения, у меня рестарта нет, id не меняется
+cells initiated duration= 2
+After LoadQuads(). duration= 14807
+ mag test 0  289
+ mag test 1  21
+ mag test 2  21
+ mag test 3  21
+ mag test 4  23
+ mag test 5  21
+ mag test 6  26
+ mag test 7  21
+ mag test 8  22
+ mag test 9  22
+cells initiated duration= 2
+After LoadQuads(). duration= 14361
+ mag test 0  253
+ mag test 1  22
+ mag test 2  26
+ mag test 3  23
+ mag test 4  21
+ mag test 5  38
+ mag test 6  21
+ mag test 7  21
+ mag test 8  21
+ mag test 9  21

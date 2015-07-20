@@ -1,0 +1,93 @@
+﻿//enable nodeInfo
+Sort quads(). duration= 6076ticks
+ mag test piu_200809051791 =  123ticks
+ mag test piu_200809051791 =  30ticks
+ mag test piu_200809051791 =  29ticks
+ mag test piu_200809051791 =  30ticks
+ mag test piu_200809051791 =  31ticks
+ mag test piu_200809051791 =  30ticks
+Sort quads(). duration= 6076ticks
+ mag test piu_200809051791 =  84ticks
+ mag test piu_200809051791 =  38ticks
+ mag test piu_200809051791 =  31ticks
+ mag test piu_200809051791 =  34ticks
+ mag test piu_200809051791 =  33ticks
+ mag test piu_200809051791 =  31ticks
+
+ //disable nodeInfo
+Sort quads(). duration= 6041ticks
+ mag test piu_200809051791 =  136ticks
+ mag test piu_200809051791 =  48ticks
+ mag test piu_200809051791 =  47ticks
+ mag test piu_200809051791 =  51ticks
+ mag test piu_200809051791 =  45ticks
+ mag test piu_200809051791 =  50ticks
+Sort quads(). duration= 5921ticks
+ mag test piu_200809051791 =  80ticks
+ mag test piu_200809051791 =  31ticks
+ mag test piu_200809051791 =  30ticks
+ mag test piu_200809051791 =  36ticks
+ mag test piu_200809051791 =  32ticks
+ mag test piu_200809051791 =  32ticks
+Sort quads(). duration= 5941ticks
+ mag test piu_200809051791 =  79ticks
+ mag test piu_200809051791 =  31ticks
+ mag test piu_200809051791 =  30ticks
+ mag test piu_200809051791 =  36ticks
+ mag test piu_200809051791 =  35ticks
+ mag test piu_200809051791 =  32ticks
+
+ //enable 
+Sort quads(). duration= 6213ticks
+ mag test piu_200809051791 =  75ticks
+ mag test piu_200809051791 =  34ticks
+ mag test piu_200809051791 =  33ticks
+ mag test piu_200809051791 =  31ticks
+ mag test piu_200809051791 =  31ticks
+ mag test piu_200809051791 =  33ticks
+Sort quads(). duration= 5965ticks
+ mag test piu_200809051791 =  77ticks
+ mag test piu_200809051791 =  30ticks
+ mag test piu_200809051791 =  30ticks
+ mag test piu_200809051791 =  33ticks
+ mag test piu_200809051791 =  28ticks
+ mag test piu_200809051791 =  28ticks
+
+// remove console output
+Sort quads(). duration= 6059ticks
+ mag test piu_200809051791 =  51ticks
+ mag test piu_200809051791 =  8ticks
+ mag test piu_200809051791 =  7ticks
+ mag test piu_200809051791 =  6ticks
+ mag test piu_200809051791 =  7ticks
+ mag test piu_200809051791 =  7ticks
+Sort quads(). duration= 6028ticks
+ mag test piu_200809051791 =  58ticks
+ mag test piu_200809051791 =  7ticks
+ mag test piu_200809051791 =  7ticks
+ mag test piu_200809051791 =  7ticks
+ mag test piu_200809051791 =  7ticks
+ mag test piu_200809051791 =  7ticks
+ 
+ //disable nodeInfo
+Sort quads(). duration= 6178ticks
+ mag test piu_200809051791 =  137ticks
+ mag test piu_200809051791 =  15ticks
+ mag test piu_200809051791 =  15ticks
+ mag test piu_200809051791 =  15ticks
+ mag test piu_200809051791 =  15ticks
+ mag test piu_200809051791 =  16ticks
+Sort quads(). duration= 6063ticks
+ mag test piu_200809051791 =  57ticks
+ mag test piu_200809051791 =  11ticks
+ mag test piu_200809051791 =  12ticks
+ mag test piu_200809051791 =  10ticks
+ mag test piu_200809051791 =  10ticks
+ mag test piu_200809051791 =  10ticks
+Sort quads(). duration= 6032ticks
+ mag test piu_200809051791 =  55ticks
+ mag test piu_200809051791 =  19ticks
+ mag test piu_200809051791 =  10ticks
+ mag test piu_200809051791 =  10ticks
+ mag test piu_200809051791 =  11ticks
+ mag test piu_200809051791 =  10ticks

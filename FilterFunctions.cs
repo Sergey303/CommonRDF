@@ -16,9 +16,6 @@ namespace CommonRDF
             if ((m = Reg.InsideBrackets.Match(s)).Success)
                 AndOrExpression(sparqlChain, m.Groups["inside"].Value, isOptionals, !isNot);
             if ((m = Reg.AndOr.Match(s)).Success)
-                if (m.Groups["not"].Value != string.Empty)
-                    AndOrExpression(sparqlChain, m.Groups["not"].Value, isOptionals, !isNot);
-                else
                 {
                     var left = m.Groups["insideLeft"].Value;
                     if (left == string.Empty)
