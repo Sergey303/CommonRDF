@@ -1,2 +1,28 @@
+<<<<<<< HEAD
 ﻿select ?fd ?td ?orgname ?ro 
 where { ?s http://fogid.net/o/participant piu_200809051791. ?s http://fogid.net/o/in-org ?inorg. ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> http://fogid.net/o/participation. ?inorg http://fogid.net/o/name ?orgname. optional {?s http://fogid.net/o/from-date ?fd} optional {?s http://fogid.net/o/to-date ?td} optional {?s http://fogid.net/o/role ?ro} }
+=======
+PREFIX ns:    <http://fogid.net/o/>
+prefix rdfs: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+select ?personName ?fd ?td ?orgname ?ro
+where {
+{ filter (?person=piu_200809051791 || ?person=ns:svet_100616111408_10844 ||
+                (?person=ns:pavl_100531115859_2020 ||                                ?person=pavl_100531115859_6952)
+}
+union { 
+ filter (?person="svet_100616111408_10864"||
+                ?person="w20090506_svetlana_5727" ||
+                ?person="piu_200809051742" )
+	}
+?person ns:name ?personName.
+?s ns:participant ?person.
+?s ns:in-org ?inorg. 
+?s a ns:participation.
+?inorg ns:name ?orgname. 
+optional {?s ns:role ?ro} 
+optional 
+        { ?s ns:from-date ?fd  }
+optional 
+        {		?s ns:to-date ?td } 
+}
+>>>>>>> 5b07a7d99da1a84c4d159acd03a3aad69dc94ef7

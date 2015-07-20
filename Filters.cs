@@ -9,10 +9,17 @@ namespace CommonRDF
     /// <summary>
     /// FILTER regex(?title, "^SPARQL")
     /// </summary>
+<<<<<<< HEAD
     class SparqlFilterRegex : SparqlBase
     {
         private static readonly Regex RegFilteRregex = new Regex(@"^(\?\w+), " + "\"(.*?)\"" + @"(,\s*" + "\"(?<flags>[ismx]*)?\")*$", RegexOptions.Compiled);
         public TValue Parameter;
+=======
+    class SparqlFilterRegex : SparqlNodeBase
+    {
+        private static readonly Regex RegFilteRregex = new Regex(@"^(\?\w+), " + "\"(.*?)\"" + @"(,\s*" + "\"(?<flags>[ismx]*)?\")*$", RegexOptions.Compiled);
+        public SparqlVariable Parameter;
+>>>>>>> 5b07a7d99da1a84c4d159acd03a3aad69dc94ef7
         public readonly string ParameterName;
         private readonly Regex regularExpression;
 
@@ -43,6 +50,7 @@ namespace CommonRDF
         }
     }
 
+<<<<<<< HEAD
     /// <summary>
     /// filter expr1 || expr2
     /// </summary>
@@ -132,6 +140,14 @@ namespace CommonRDF
         private readonly TValue value;
 
         public FilterAssign(TValue newParamter, TValue value)
+=======
+    internal class FilterAssign : SparqlNodeBase
+    {
+        private readonly SparqlVariable newParamter;
+        private readonly SparqlVariable value;
+
+        public FilterAssign(SparqlVariable newParamter, SparqlVariable value)
+>>>>>>> 5b07a7d99da1a84c4d159acd03a3aad69dc94ef7
         {
             this.newParamter = newParamter;
             this.value = value;
@@ -145,9 +161,15 @@ namespace CommonRDF
     }
     internal class FilterAssignCalculated : FilterTest
     {
+<<<<<<< HEAD
         private readonly TValue newParamter;
 
         public FilterAssignCalculated(TValue newParamter,
+=======
+        private readonly SparqlVariable newParamter;
+
+        public FilterAssignCalculated(SparqlVariable newParamter,
+>>>>>>> 5b07a7d99da1a84c4d159acd03a3aad69dc94ef7
             Expression calcExpression,
             List<FilterParameterInfo> parameters)
             : base(calcExpression, parameters)
@@ -161,7 +183,11 @@ namespace CommonRDF
             return NextMatch();
         }
     }
+<<<<<<< HEAD
     internal class FilterTest : SparqlBase
+=======
+    internal class FilterTest : SparqlNodeBase
+>>>>>>> 5b07a7d99da1a84c4d159acd03a3aad69dc94ef7
     {
         protected readonly object[] AllParameters;
         protected readonly Delegate Method;
@@ -186,10 +212,35 @@ namespace CommonRDF
 
         public override bool Match()
         {
+<<<<<<< HEAD
             return AllParameters.All(t => (t as TValue).IsDouble) && base.Match();
         }
     }
     internal class FilterTestDoublesOptional : FilterTest
+=======
+            return AllParameters.All(t => ((SparqlVariable) t).IsDouble) && base.Match();
+        }
+    }
+
+    internal class FilterTestOptional : OptionalSparqlTripletBase
+    {
+        protected readonly object[] AllParameters;
+        protected readonly Delegate Method;
+
+        public FilterTestOptional(Expression equalExpression, List<FilterParameterInfo> parameters)
+        {
+            Method = Expression.Lambda(equalExpression, parameters.Select(p => p.Parameter)).Compile();
+            AllParameters = parameters.Select(p => p.Value).ToArray();
+        }
+
+        public override bool Match()
+        {
+            bool isCurrent = (bool)Method.DynamicInvoke(AllParameters);
+            return isCurrent ? NextMatch() : OptionalFailMatch();
+        }
+    }
+    internal class FilterTestDoublesOptional : FilterTestOptional
+>>>>>>> 5b07a7d99da1a84c4d159acd03a3aad69dc94ef7
     {
         public FilterTestDoublesOptional(Expression equalExpression, List<FilterParameterInfo> parameters)
             : base(equalExpression, parameters)
@@ -198,7 +249,12 @@ namespace CommonRDF
 
         public override bool Match()
         {
+<<<<<<< HEAD
             return (!AllParameters.All(t => (t as TValue).IsDouble) && NextMatch()) || base.Match();
+=======
+            var currentSuccesful = AllParameters.All(t => ((SparqlVariable) t).IsDouble) && (bool) Method.DynamicInvoke(AllParameters);
+            return currentSuccesful ? NextMatch() : OptionalFailMatch();
+>>>>>>> 5b07a7d99da1a84c4d159acd03a3aad69dc94ef7
         }
     }
 
@@ -206,7 +262,11 @@ namespace CommonRDF
     {
         public ParameterExpression Parameter;
         public bool IsAssigned;
+<<<<<<< HEAD
         public TValue Value;
+=======
+        public SparqlVariable Value;
+>>>>>>> 5b07a7d99da1a84c4d159acd03a3aad69dc94ef7
     }
 
    

@@ -22,7 +22,11 @@ namespace CommonRDF
             if (!outputFile)
                 Console.WriteLine("{0} {1}ms", mesage, timer.Elapsed.TotalMilliseconds);
             else
+<<<<<<< HEAD
                 using (StreamWriter file = new StreamWriter(@"..\Perfomance.txt", true))
+=======
+                using (StreamWriter file = new StreamWriter(@"F:\projects\CommonRDF\Perfomance.txt", true))
+>>>>>>> 5b07a7d99da1a84c4d159acd03a3aad69dc94ef7
                     file.WriteLine("{0} {1}ms", mesage, timer.Elapsed.TotalMilliseconds);
         }
     }

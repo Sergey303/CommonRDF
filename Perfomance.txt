@@ -1,1 +1,354 @@
+<<<<<<< HEAD
 ﻿
+=======
+﻿create load graph 10M 1512924,8838ms
+first query first run 345,8016ms
+1000 runs of first query 355,6066ms
+create load graph 10M 84,6757ms
+first query first run 10,9544ms
+1000 runs of first query 138,014ms
+create load graph 10M 46,6843ms
+first query first run 7,664ms
+1000 runs of first query 139,296ms
+create load graph 10M 45,837ms
+first query first run 7,5181ms
+1000 runs of first query 146,5891ms
+create load graph 10M 54,1622ms
+create load graph 10M 99,2702ms
+create load graph 10M 49,4476ms
+first query first run 8,1028ms
+1000 runs of first query 146,6352ms
+create load graph 10M 49,8897ms
+create load graph 10M 48,9167ms
+create load graph 10M 48,8739ms
+create load graph 10M 47,2781ms
+first query first run 53,2543ms
+1000 runs of first query 456,0233ms
+create load graph 10M 47,5838ms
+create load graph 10M 54,6975ms
+create load graph 10M 86954,4007ms
+first query first run 2734,6079ms
+1000 runs of first query 444,9751ms
+create load graph 10M 46603,684ms
+first query first run 36,1762ms
+1000 runs of first query 421,0086ms
+create load graph 10M 2149,1264ms
+first query first run 36,5894ms
+1000 runs of first query 420,3441ms
+create load graph 10M 48,2734ms
+create load graph 10M 1181,3048ms
+first query first run 36,2267ms
+1000 runs of first query 425,5805ms
+create load graph 10M 38617414,0636ms
+first query first run 344879,0371ms
+graph 100M ok 38617436ms1000 runs of first query 34698147,8148ms
+create load graph 10M 34,0964ms
+create load graph 10M 62380,6624ms
+first query first run 72,8353ms
+1000 runs of first query 467,9569ms
+create load graph 10M 75011,3509ms
+first query first run 114,0393ms
+1000 runs of first query 532,3072ms
+create load graph 10M 56553,1116ms
+first query first run 64,2113ms
+1000 runs of first query 473,8524ms
+create load graph 10M 55335,225ms
+first query first run 64,5233ms
+1000 runs of first query 469,8665ms
+create load graph 10M 4392,7145ms
+first query first run 42,5197ms
+1000 runs of first query 488,3808ms
+create load graph 10M 51,2469ms
+first query first run 53,5348ms
+1000 runs of first query 450,9423ms
+create load graph 10M 54,5828ms
+first query first run 51,1798ms
+1000 runs of first query 447,6716ms
+create load graph 10M 29300,3045ms
+first query first run 41,1955ms
+1000 runs of first query 461,3559ms
+create load graph 10M 2437290,244ms
+first query first run 34219,4652ms
+1000 runs of first query 3936357,3738ms
+create load graph 10M 2548491,3064ms
+create load graph 10M 1451,7676ms
+create load graph 10M 894,8173ms
+first query first run 2111,8023ms
+1000 runs of first query 208334,6444ms
+create load graph 10M 834,6658ms
+create load graph 10M 27,6196ms
+create load graph 10M 29,1897ms
+create load graph 10M 1390,5986ms
+create load graph 10M 28,3632ms
+create load graph 10M 1657,7833ms
+create load graph 10M 481,946ms
+create load graph 10M 1363,9138ms
+create load graph 10M 1048,4933ms
+first query first run 3232363,5452ms
+create load graph 10M 7657,6775ms
+create load graph 10M 755,3347ms
+create load graph 10M 1833,9076ms
+first query first run 2293508,3717ms
+create load graph 10M 926,674ms
+create load graph 10M 32,973ms
+create load graph 10M 28,5938ms
+create load graph 10M 32,8018ms
+create load graph 10M 545,3654ms
+create load graph 10M 29,7595ms
+create load graph 10M 29,1365ms
+create load graph 10M 31,5338ms
+create load graph 10M 33,5917ms
+create load graph 10M 2160,9738ms
+create load graph 10M 41,1772ms
+create load graph 10M 37,8196ms
+create load graph 10M 584,3684ms
+create load graph 10M 32,9812ms
+create load graph 10M 1692,4863ms
+create load graph 10M 1722,6765ms
+create load graph 10M 72,9692ms
+create load graph 10M 1792,8053ms
+create load graph 10M 105,57ms
+create load graph 10M 123,5103ms
+create load graph 10M 28,2659ms
+create load graph 10M 788,8744ms
+create load graph 10M 3258716,3317ms
+create load graph 10M 1402,9886ms
+create load graph 10M 2996229,9271ms
+create load graph 10M 1344,5526ms
+create load graph 10M 2682404,5386ms
+create load graph 10M 2391969,0948ms
+create load graph 10M 3327103,2112ms
+create load graph 10M 363,6167ms
+create load graph 10M 303,2732ms
+create load graph 10M 942,2587ms
+create load graph 10M 31,414ms
+create load graph 10M 37,0441ms
+create load graph 10M 3767,5184ms
+create load graph 10M 2292,5793ms
+create load graph 10M 30,7484ms
+create load graph 10M 28,4234ms
+create load graph 10M 374,69ms
+create load graph 10M 31,598ms
+create load graph 10M 149,8686ms
+create load graph 10M 174,5947ms
+create load graph 10M 228,7578ms
+create load graph 10M 29,0382ms
+create load graph 10M 29,0029ms
+create load graph 10M 2275,0382ms
+create load graph 10M 30,396ms
+create load graph 10M 1513,7967ms
+create load graph 10M 812,7751ms
+create load graph 10M 2624,1805ms
+first query first run 111802,0797ms
+create load graph 10M 408,3848ms
+first query first run 14910,2421ms
+1000 runs of first query 19851,4037ms
+create load graph 10M 878,2032ms
+create load graph 10M 303,1429ms
+create load graph 10M 34,2777ms
+create load graph 10M 829,9167ms
+create load graph 10M 1026,6067ms
+first query first run 4617428,315ms
+create load graph 10M 8749,5787ms
+first query first run 1993,1494ms
+1000 runs of first query 86223,1454ms
+create load graph 10M 786,9435ms
+first query first run 233,4097ms
+1000 runs of first query 66495,2793ms
+create load graph 10M 861,7638ms
+create load graph 10M 737,2949ms
+first query first run 13296,4347ms
+create load graph 10M 506,0133ms
+create load graph 10M 65,16ms
+create load graph 10M 1959,4059ms
+create load graph 10M 192,1693ms
+create load graph 10M 30,8557ms
+create load graph 10M 64,5127ms
+create load graph 10M 33,2046ms
+first query first run 17501,4519ms
+create load graph 10M 38,6058ms
+first query first run 305,6314ms
+1000 runs of first query 69192,2594ms
+create load graph 10M 30,7198ms
+first query first run 303,9642ms
+create load graph 10M 29,8254ms
+create load graph 10M 29,251ms
+create load graph 10M 37,0382ms
+create load graph 10M 36,0578ms
+first query first run 14994,1769ms
+create load graph 10M 31,5036ms
+create load graph 10M 74,1433ms
+create load graph 10M 53877,9284ms
+first query first run 30304,6864ms
+create load graph 10M 5069,9759ms
+first query first run 307,3675ms
+create load graph 10M 32,4743ms
+first query first run 336,7821ms
+create load graph 10M 6355,0951ms
+first query first run 1581,0643ms
+create load graph 10M 2859,0226ms
+first query first run 1033,4363ms
+create load graph 10M 198,6605ms
+create load graph 10M 40,8047ms
+create load graph 10M 31,5185ms
+create load graph 10M 168,5642ms
+first query first run 22601,935ms
+create load graph 10M 32,2368ms
+create load graph 10M 32,9804ms
+create load graph 10M 32,2659ms
+create load graph 10M 32,4876ms
+create load graph 10M 32,2025ms
+create load graph 10M 33,6285ms
+create load graph 10M 32,1886ms
+first query first run 389877,7256ms
+create load graph 10M 108,1261ms
+create load graph 10M 39,9247ms
+create load graph 10M 57,8692ms
+first query first run 203107,5963ms
+create load graph 10M 30,8593ms
+first query first run 561,4888ms
+create load graph 10M 32,0486ms
+create load graph 10M 33,3303ms
+create load graph 10M 36,6898ms
+query1.rq 96,2355ms
+query10.rq 9,4185ms
+query11.rq 22,5765ms
+query12.rq 6,8198ms
+query2.rq 3,3684ms
+query3.rq 28,7518ms
+query4.rq 7,909ms
+query5.rq 28,3456ms
+query6.rq 53,6261ms
+query7.rq 3,0566ms
+query8.rq 3,2082ms
+query9.rq 0,6112ms
+create load graph 1M 183225,4777ms
+query1.rq 339,3404ms
+query10.rq 5,7795ms
+query11.rq 37,9651ms
+query12.rq 7,5289ms
+query2.rq 3,9385ms
+query3.rq 624,0439ms
+query4.rq 122,67ms
+query5.rq 40,6478ms
+query6.rq 1049,2849ms
+query7.rq 3,7509ms
+query8.rq 5,951ms
+query9.rq 0,6036ms
+create load graph 10M 3299979,0345ms
+query1.rq 450090,3313ms
+query10.rq 27603,3321ms
+query11.rq 7757,8714ms
+query12.rq 1579,9981ms
+query2.rq 2254,2912ms
+query3.rq 225096,9013ms
+query4.rq 1316,0537ms
+query5.rq 25696,3774ms
+query6.rq 151711,093ms
+query7.rq 3837,4364ms
+query8.rq 45,8972ms
+query9.rq 48,9483ms
+create load graph 10M 106,5199ms
+query1.rq 2359,296ms
+query10.rq 1047,9904ms
+query11.rq 134,2696ms
+query12.rq 110,1338ms
+query2.rq 175,8548ms
+query3.rq 4453,2231ms
+query4.rq 936,067ms
+query5.rq 160,8586ms
+query6.rq 13335,7779ms
+query7.rq 31,7179ms
+query8.rq 3,0635ms
+query9.rq 529,0547ms
+create load graph 1M 194856,9312ms
+query1.rq 291,3919ms
+query10.rq 5,5844ms
+query11.rq 18,7478ms
+query12.rq 12,327ms
+query2.rq 3,5279ms
+query3.rq 556,5914ms
+query4.rq 130,392ms
+query5.rq 33,0152ms
+query6.rq 1151,4884ms
+query7.rq 3,0843ms
+query8.rq 3,2061ms
+query9.rq 11,4682ms
+create load graph 10M 3557196,1846ms
+query1.rq 404187,2066ms
+query10.rq 24770,5806ms
+query11.rq 6017,4305ms
+query12.rq 1462,129ms
+query2.rq 1008,0181ms
+query3.rq 42331,2772ms
+query4.rq 1504,8111ms
+query5.rq 27313,0598ms
+query6.rq 111260,6557ms
+query7.rq 2552,7383ms
+query8.rq 43,4106ms
+query9.rq 697,173ms
+create load graph 10M 1916,5677ms
+query1.rq 79,8269ms
+query10.rq 6,0155ms
+query11.rq 18,4785ms
+query12.rq 5,0919ms
+query2.rq 5,0267ms
+query3.rq 3,0185ms
+query4.rq 1,3223ms
+query5.rq 10,0272ms
+query6.rq 17,7377ms
+query7.rq 1,9221ms
+query8.rq 3,864ms
+query9.rq 0,1402ms
+create load graph 10M 1192322,9252ms
+query1.rq 67,9707ms
+query10.rq 6,1453ms
+query11.rq 22,5558ms
+query12.rq 18,5345ms
+query2.rq 4,9156ms
+query3.rq 3,5901ms
+query4.rq 2,8449ms
+query5.rq 17,4456ms
+query6.rq 17,4405ms
+query7.rq 11,8376ms
+query8.rq 4,8526ms
+query9.rq 12,0132ms
+create load graph 1M 131942,5013ms
+query1.rq 48,5598ms
+query10.rq 7,1311ms
+query11.rq 17,089ms
+query12.rq 16,0064ms
+query2.rq 4,6946ms
+query3.rq 3,415ms
+query4.rq 3,104ms
+query5.rq 17,9288ms
+query6.rq 16,6264ms
+query7.rq 3,8356ms
+query8.rq 3,6589ms
+query9.rq 11,5393ms
+query1.rq 0,6604ms
+query10.rq 0,7318ms
+query11.rq 1,1117ms
+query12.rq 0,9056ms
+query2.rq 0,4776ms
+query3.rq 1,0915ms
+query4.rq 0,8106ms
+query5.rq 1,8087ms
+query6.rq 0,2526ms
+query7.rq 0,7927ms
+query8.rq 0,678ms
+query9.rq 0,1548ms
+create load graph 1M 109755,0258ms
+query1.rq 44,8404ms
+query10.rq 5,5112ms
+query11.rq 15,2323ms
+query12.rq 40,8698ms
+query2.rq 3,4032ms
+query3.rq 2,0345ms
+query4.rq 1,4657ms
+query5.rq 14,9039ms
+query6.rq 15,314ms
+query7.rq 2,4556ms
+query8.rq 2,4295ms
+query9.rq 10,3692ms
+>>>>>>> 5b07a7d99da1a84c4d159acd03a3aad69dc94ef7

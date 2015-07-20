@@ -13,16 +13,16 @@ namespace CommonRDF
     class GraphTripletsTree : GraphBase
     {
         private readonly string path;
-        private PType tp_triplets;
-        private PType tp_quads;
-        private PType tp_n4;
-        private PType tp_graph;
+        internal static PType tp_triplets;
+        internal static PType tp_quads;
+        internal static PType tp_n4;
+        internal static PType tp_graph;
         private PType tp_predicateRole;
 
         private PaCell triplets;
         private PaEntry any_triplet;
 
-        private PxCell graph_x;
+        internal PxCell graph_x;
         private PxCell n4_x;
 
         public GraphTripletsTree(string path)
@@ -71,8 +71,7 @@ namespace CommonRDF
             PaCell graph_a = null;
             PaCell n4 = null;
             triplets = new PaCell(tp_triplets, path + "triplets.pac");
-
-            Perfomance.ComputeTime(() =>
+            
             {
                 quads = new PaCell(tp_quads, path + "quads.pac", false);
                 graph_a = new PaCell(tp_graph, path + "graph_a.pac", false);                
@@ -82,27 +81,25 @@ namespace CommonRDF
                 n4_x.Clear();
                 n4 = new PaCell(tp_n4, path + "n4.pac", false);
                 n4.Clear();
-            }, "cells initiated duration=");
+            }
 
 
-            Perfomance.ComputeTime(() => LoadQuads(n4, quads), "After LoadQuads(). duration=");
+            LoadQuads(n4, quads, triplets);
 
             // Сортировка квадриков
-           Perfomance.ComputeTime( quads.Root.Sort<EntVidPredOff>," sort quards duration=");
+            quads.Root.Sort<EntVidPredOff>();
 
             // Сортировка таблицы имен
             n4.Root.Sort<N4rec>();
-           
-            
-           Perfomance.ComputeTime(()=> FormingSerialGraph(new SerialBuffer(graph_a, 3), quads),
-            "Forming serial graph ok. duration=");
+
+
+            FormingSerialGraph(new SerialBuffer(graph_a, 3), quads);
 
             // произвести объектное представление
-            Perfomance.ComputeTime(()=>
             {
-                graph_x.Fill2(graph_a.Root.Get().Value);
-            n4_x.Fill2(n4.Root.Get().Value);
-            }, "Forming fixed graph ok. duration=" );
+                graph_x.Fill2(graph_a.Root.Get());
+                n4_x.Fill2(n4.Root.Get());
+            }
 
             // ========= Завершение загрузки =========
             // Закроем файлы и уничтожим ненужные
@@ -119,7 +116,7 @@ namespace CommonRDF
             InitCells();
         }
         // ============ Технические методы ============
-        private void FormingSerialGraph(ISerialFlow serial, PaCell quads)
+        internal static void FormingSerialGraph(ISerialFlow serial, PaCell quads)
         {
             serial.StartSerialFlow();
             serial.S();
@@ -131,7 +128,7 @@ namespace CommonRDF
 
             bool firsttime = true;
             bool firstprop = true;
-            foreach (object[] el in quads.Root.Elements().Select(e => e.Value))
+            foreach (object[] el in quads.Root.Elements().Select(e => e.Get()))
             {
                 var record = new GraphTripletsTree.FourFields((int)el[0], (int)el[1], (int)el[2], (long)el[3]);
                 if (firsttime || record.e_hs != hs_e)
@@ -242,10 +239,10 @@ namespace CommonRDF
             any_triplet = triplets.Root.Element(0);
         }
 
-        private delegate void QuadAction(string id, string property,
+        internal delegate void QuadAction(string id, string property,
              string value, bool isObj = true, string lang = null);
-        
-        private static void ReadFile(string filePath, QuadAction quadAction)
+
+        internal static void ReadFile(string filePath, QuadAction quadAction)
         {
             var extension = Path.GetExtension(filePath);
             if (extension == null || !File.Exists(filePath)) return;
@@ -328,7 +325,7 @@ namespace CommonRDF
 
         #endregion
 
-        private void LoadQuads(PaCell n4, PaCell quads)
+        internal static void LoadQuads(PaCell n4, PaCell quads, PaCell triplets)
         {
             n4.StartSerialFlow();
             n4.S();
@@ -336,7 +333,7 @@ namespace CommonRDF
             quads.S();
             foreach (var tri in triplets.Root.Elements())
             {
-                object[] tri_uni = (object[])tri.Value;
+                object[] tri_uni = (object[])tri.Get();
                 int tag = (int)tri_uni[0];
                 object[] rec = (object[])tri_uni[1];
                 int hs_s = rec[0].GetHashCode();
@@ -344,12 +341,12 @@ namespace CommonRDF
                 if (tag == 1) // объектое свойство
                 {
                     int hs_o = rec[2].GetHashCode();
-                    quads.V(new object[] { hs_s, 0, hs_p, tri.Offset });
-                    quads.V(new object[] { hs_o, 1, hs_p, tri.Offset });
+                    quads.V(new object[] { hs_s, 0, hs_p, tri.offset });
+                    quads.V(new object[] { hs_o, 1, hs_p, tri.offset });
                 }
                 else // поле данных
                 {
-                    quads.V(new object[] { hs_s, 2, hs_p, tri.Offset });
+                    quads.V(new object[] { hs_s, 2, hs_p, tri.offset });
                     if ((string)rec[1] != ONames.p_name) continue;
                     // Поместим информацию в таблицу имен n4
                     string name = (string)rec[2];
@@ -434,7 +431,7 @@ namespace CommonRDF
             int e_hs = id.GetHashCode();
             PxEntry found = graph_x.Root.BinarySearchFirst(element =>
             {
-                int v = (int)element.Field(0).Get().Value;
+                int v = (int)element.Field(0).Get();
                 return v < e_hs ? -1 : (v == e_hs ? 0 : 1);
             });
             return found;
@@ -451,9 +448,9 @@ namespace CommonRDF
         {
             var ent = GetEntryById(id);
             if (ent.IsEmpty) return null;
-            object[] directset = (object[])ent.Field(1).Get().Value;
-            object[] inverseset = showinverse ? (object[])ent.Field(2).Get().Value : null;
-            object[] dataset = (object[])ent.Field(3).Get().Value;
+            object[] directset = (object[])ent.Field(1).Get();
+            object[] inverseset = showinverse ? (object[])ent.Field(2).Get() : null;
+            object[] dataset = (object[])ent.Field(3).Get();
             XElement result = new XElement("record", new XAttribute("id", id));
             foreach (object[] predseq in dataset)
             {
@@ -509,14 +506,44 @@ namespace CommonRDF
                         if (first.Typ == null || !first.Field(1).Elements().Any())
                             continue;
                         yield return
-                            ((OProp)Triplet.Create(GetTriplet((long)first.Field(1).Elements().First().Get().Value))).o
+                            ((OProp)Triplet.Create(GetTriplet((long)first.Field(1).Elements().First().Get()))).o
                             ;
                     }
                 }
-                yield return Triplet.Create(GetTriplet((long)first.Field(1).Elements().First().Get().Value)).s;
+                yield return Triplet.Create(GetTriplet((long)first.Field(1).Elements().First().Get())).s;
             }
         }
+        public struct IdNodeInfo
+        {
+            public string Id;
+            public long NodeInfo;
 
+            public IdNodeInfo(string id, long nodeInfo)
+            {
+                Id = id;
+                NodeInfo = nodeInfo;
+            }
+        }
+        public IEnumerable<IdNodeInfo> GetEntitiesWithIdNodeInfo()
+        {
+            foreach (PxEntry pxe in graph_x.Root.Elements())
+            {
+                var first = pxe.Field(1).Elements().FirstOrDefault();
+                if (first.Typ == null || !first.Field(1).Elements().Any())
+                {
+                    first = pxe.Field(2).Elements().FirstOrDefault();
+                    if (first.Typ == null || !first.Field(1).Elements().Any())
+                    {
+                        first = pxe.Field(3).Elements().FirstOrDefault();
+                        if (first.Typ == null || !first.Field(1).Elements().Any())
+                            continue;
+                        yield return
+                           new IdNodeInfo(((OProp)Triplet.Create(GetTriplet((long)first.Field(1).Elements().First().Get()))).o, pxe.GetValue().Offset);
+                    }
+                }
+                yield return new IdNodeInfo(Triplet.Create(GetTriplet((long)first.Field(1).Elements().First().Get())).s, pxe.GetValue().Offset);
+            }
+        }
         public override IEnumerable<PredicateEntityPair> GetDirect(string id, object nodeInfo = null)
         {
             return GetProperty(id, 1, t => t.s == id, nodeInfo)
@@ -539,7 +566,6 @@ namespace CommonRDF
 
         private IEnumerable<Triplet> GetProperty(string id, int direction, Predicate<Triplet> predicateValuesTest, object node = null, int? predicateSC = null)
         {
-            //PxEntry found = GetEntryById(id);
             PxEntry found = (node is long?)
                 ?  GetEntryByOffset(((long?)node).Value) : GetEntryById(id);
             if (found.IsEmpty) return Enumerable.Empty<Triplet>();
@@ -547,12 +573,12 @@ namespace CommonRDF
             IEnumerable<PxEntry> pxEntries = found.Field(direction).Elements();
             if (predicateSC != null)
                 pxEntries = pxEntries
-                    .Where(pRec => (int)pRec.Field(0).Get().Value == predicateSC.Value);
+                    .Where(pRec => (int)pRec.Field(0).Get() == predicateSC.Value);
             return pxEntries
                 .Select(pRec =>
                     pRec.Field(1)
                         .Elements()
-                        .Select(offEn => offEn.Get().Value)
+                        .Select(offEn => offEn.Get())
                         .Cast<long>()
                         .Select(GetTriplet)
                         .Select(Triplet.Create))
@@ -563,10 +589,10 @@ namespace CommonRDF
             // Еще отбраковкаtri => tri is OProp && tri.s == id &&
         }
 
-        private object GetTriplet(long offTtripl)
+        internal object GetTriplet(long offTtripl)
         {
             any_triplet.offset = offTtripl;
-            return any_triplet.Get().Value;
+            return any_triplet.Get();
         }
 
         public override IEnumerable<string> GetDirect(string id, string predicate, object nodeInfo = null)
@@ -605,8 +631,14 @@ namespace CommonRDF
 
         public override void Test()
         {
-            Console.WriteLine(string.Join(" ", SearchByName("Ершов Андрей Петрович")));
-            string id = "w20070417_5_8436";
+            //Console.WriteLine(string.Join(" ", SearchByName("Ершов Андрей Петрович")));
+            string id = "p0014881";
+            int nodeInfo = 40530268;
+            foreach (var predicateDataTriple in GetDirect(id, nodeInfo))
+            {
+                Console.WriteLine("{0} {1}", predicateDataTriple.predicate, predicateDataTriple.entity);
+            }
+        
             GetItembyId(id);
             id = "piu_200809051791";
             GetItembyId(id);
@@ -646,9 +678,8 @@ namespace CommonRDF
 
 
         #endregion
-       
 
-        private void InitTypes()
+        internal static void InitTypes()
         {
             tp_triplets =
                 new PTypeSequence(

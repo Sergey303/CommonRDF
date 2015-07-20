@@ -28,8 +28,8 @@ namespace CommonRDF
                 }
                 string idd = "ns:m.05ypwqv"; //"ns:m.0hz6pwx";
                 //foreach (var qu in gr.GetData(idd)) Console.WriteLine("\t{0} {1}", qu.predicate, qu.data);
-                XElement portrait = ((GraphTripletsTree) gr).GetPortraitSimple(idd, true);
-                if (portrait != null) Console.WriteLine(portrait.ToString());
+              //  XElement portrait = ((GraphTripletsTree) gr).GetPortraitSimple(idd, true);
+               // if (portrait != null) Console.WriteLine(portrait.ToString());
 
                 return;
             }
